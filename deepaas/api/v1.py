@@ -19,6 +19,8 @@ from flask_restplus import fields
 import werkzeug
 import werkzeug.exceptions as exceptions
 
+import deepaas
+
 api = flask_restplus.Namespace(
     'model',
     description='Model information, inference and training operations')
@@ -39,6 +41,17 @@ data_parser.add_argument('url',
                          required=False,
                          action="append")
 
+model_meta = api.model('ModelMetadata', {
+    'id': fields.String(required=True, description='Model identifier'),
+    'name': fields.String(required=True, description='Model name'),
+    'description': fields.String(required=True,
+                                 description='Model description'),
+    'license': fields.String(required=False, description='Model license'),
+    'author': fields.String(required=False, description='Model author'),
+    'version': fields.String(required=False, description='Model version'),
+    'url': fields.String(required=False, description='Model url'),
+})
+
 label_prediction = api.model('LabelPrediction', {
     'label_id': fields.String(required=False, description='Label identifier'),
     'label': fields.String(required=True, description='Class label'),
@@ -54,10 +67,19 @@ response = api.model('ModelResponse', {
 })
 
 
+@api.marshal_with(model_meta, envelope='resource')
 @api.route('/')
 class BaseModel(flask_restplus.Resource):
     def get(self):
         """Return model information."""
+        r = {
+            "id": "0",
+            "name": "Not a model",
+            "description": "Placeholder metadata, model not implemented",
+            "author": "Alvaro Lopez Garcia",
+            "version": deepaas.__version__,
+        }
+        return r
         raise exceptions.NotImplemented()
 
 
