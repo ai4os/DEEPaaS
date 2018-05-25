@@ -5,3 +5,4 @@ pbr>=1.8
 
 enum34
 flask-restplus
+stevedore
