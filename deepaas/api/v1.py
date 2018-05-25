@@ -29,7 +29,14 @@ data_parser.add_argument('data',
                          help="Data file to perform inference.",
                          type=werkzeug.FileStorage,
                          location='files',
-                         required=True,
+                         required=False,
+                         action="append")
+
+data_parser.add_argument('url',
+                         help="URL to retrieve data to perform inference.",
+                         type=str,
+                         location='urls',
+                         required=False,
                          action="append")
 
 label_prediction = api.model('LabelPrediction', {
@@ -60,6 +67,12 @@ class ModelPredict(flask_restplus.Resource):
     @api.expect(data_parser)
     def post(self):
         """Make a prediction given the input data."""
+
+        args = data_parser.parse_args()
+
+        if not any([args["url"], args["data"]]):
+            raise exceptions.BadRequest("You must provide either 'url' or "
+                                        "'data' in the payload")
 
         raise exceptions.NotImplemented("Not implemented by underlying model")
 
