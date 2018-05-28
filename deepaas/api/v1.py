@@ -52,10 +52,27 @@ model_meta = api.model('ModelMetadata', {
     'url': fields.String(required=False, description='Model url'),
 })
 
+
+prediction_links = api.model('PredictionLinks', {
+    "link": fields.String(required=True,
+                          description="Link name"),
+
+    "url": fields.String(required=True,
+                         description="Link URL"),
+})
+
+prediction_info = api.model('PredictionInfo', {
+    "info": fields.String(required=False,
+                          description="Prediction Information"),
+    "links": fields.List(fields.Nested(prediction_links),
+                         required=False)
+})
+
 label_prediction = api.model('LabelPrediction', {
     'label_id': fields.String(required=False, description='Label identifier'),
     'label': fields.String(required=True, description='Class label'),
-    'probability': fields.Float(required=True)
+    'probability': fields.Float(required=True),
+    'info': fields.Nested(prediction_info),
 })
 
 response = api.model('ModelResponse', {
