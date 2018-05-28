@@ -31,15 +31,15 @@ data_parser.add_argument('data',
                          help="Data file to perform inference.",
                          type=werkzeug.FileStorage,
                          location='files',
-                         required=False,
-                         action="append")
+                         dest='files',
+                         required=True)
 
-data_parser.add_argument('url',
-                         help="URL to retrieve data to perform inference.",
-                         type=str,
-                         location='urls',
-                         required=False,
-                         action="append")
+# data_parser.add_argument('url',
+#                          help="URL to retrieve data to perform inference.",
+#                          type=str,
+#                          dest='urls',
+#                          required=False,
+#                          action="append")
 
 model_meta = api.model('ModelMetadata', {
     'id': fields.String(required=True, description='Model identifier'),
@@ -109,9 +109,9 @@ class ModelPredict(flask_restplus.Resource):
 
         args = data_parser.parse_args()
 
-        if not any([args["url"], args["data"]]):
-            raise exceptions.BadRequest("You must provide either 'url' or "
-                                        "'data' in the payload")
+#        if not any([args["urls"], args["files"]]):
+#            raise exceptions.BadRequest("You must provide either 'url' or "
+#                                        "'data' in the payload")
 
         raise exceptions.NotImplemented("Not implemented by underlying model")
 
