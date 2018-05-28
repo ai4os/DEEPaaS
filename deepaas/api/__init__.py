@@ -19,6 +19,7 @@ import flask_restplus
 
 import deepaas
 from deepaas.api import v1
+from deepaas import loading
 
 app = flask.Flask(__name__)
 app.config.SWAGGER_UI_DOC_EXPANSION = 'list'
@@ -34,4 +35,5 @@ api.add_namespace(v1.api, path="/model")
 
 
 def get_app():
+#    print "Loaded models %s" % loading.get_available_model_names()
     return app

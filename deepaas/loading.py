@@ -16,7 +16,7 @@
 
 import stevedore
 
-MODEL_NAMESPACE = "deepaas.model"
+MODEL_NAMESPACE = "deepaas.model.predict"
 
 
 def get_available_model_names():
@@ -37,7 +37,6 @@ def get_available_models():
     :rtype: dict
     """
     mgr = stevedore.ExtensionManager(namespace=MODEL_NAMESPACE,
-                                     invoke_on_load=True,
                                      propagate_map_exceptions=True)
 
-    return dict(mgr.map(lambda ext: (ext.entry_point.name, ext.obj)))
+    return dict(mgr.map(lambda ext: (ext.entry_point.name, ext.plugin)))

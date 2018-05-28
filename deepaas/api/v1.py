@@ -14,12 +14,19 @@
 # License for the specific language governing permissions and limitations
 # under the License.
 
+import json
+
 import flask_restplus
 from flask_restplus import fields
 import werkzeug
 import werkzeug.exceptions as exceptions
 
 import deepaas
+from deepaas import loading
+
+MODEL = None
+# FIXME(aloga): we are only using one
+MODEL = loading.get_available_models().items()[0]
 
 api = flask_restplus.Namespace(
     'model',
@@ -27,6 +34,7 @@ api = flask_restplus.Namespace(
 
 # This should be removed with marshmallow whenever flask-restplus is ready
 data_parser = api.parser()
+# FIXME(aloga): only handling one file
 data_parser.add_argument('data',
                          help="Data file to perform inference.",
                          type=werkzeug.FileStorage,
@@ -112,9 +120,14 @@ class ModelPredict(flask_restplus.Resource):
 #        if not any([args["urls"], args["files"]]):
 #            raise exceptions.BadRequest("You must provide either 'url' or "
 #                                        "'data' in the payload")
+        if not MODEL:
+            raise exceptions.NotImplemented("Not implemented by underlying model")
 
-        raise exceptions.NotImplemented("Not implemented by underlying model")
+        # FIXME(aloga): only handling one file
+        data = [args["files"].read()]
 
+        ret = MODEL[1](data)
+        return ret
 
 @api.route('/train')
 class ModelTrain(flask_restplus.Resource):
