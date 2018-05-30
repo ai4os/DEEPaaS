@@ -99,7 +99,6 @@ class BaseModel(flask_restplus.Resource):
             "version": deepaas.__version__,
         }
         return r
-        raise exceptions.NotImplemented()
 
 
 @api.marshal_with(response, envelope='resource')

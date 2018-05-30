@@ -19,8 +19,10 @@ import flask_restplus
 import mock
 import six
 
+import deepaas
 from deepaas import api
 from deepaas.api import v1
+import deepaas.model
 from deepaas.tests import base
 
 
@@ -75,9 +77,30 @@ class TestApiV1(base.TestCase):
             data={"data": (f, "foo.txt")})
         self.assertEqual(501, ret.status_code)
 
+    def test_predict_with_model(self):
+        m = mock.Mock()
+        m.return_value = {}
+        content = b"foo"
+        f = six.BytesIO(b"foo")
+        with mock.patch.object(deepaas.model, "MODEL", ("fake", m)):
+            ret = self.app.post(
+                "/model/predict",
+                data={"data": (f, "foo.txt")})
+            m.assert_called_with([content])
+            self.assertEqual(200, ret.status_code)
+            self.assertEqual({}, ret.json)
+
     def test_get_metadata(self):
+        meta = {
+            "description": "Placeholder metadata, model not implemented",
+            "author": "Alvaro Lopez Garcia",
+            "id": "0",
+            "version": deepaas.__version__,
+            "name": "Not a model"
+        }
         ret = self.app.get("/model/")
         self.assert_ok(ret)
+        self.assertDictEqual(meta, ret.json)
 
     def test_bad_metods_metadata(self):
         for i in (self.app.post, self.app.put, self.app.delete):
