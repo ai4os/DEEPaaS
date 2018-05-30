@@ -14,8 +14,6 @@
 # License for the specific language governing permissions and limitations
 # under the License.
 
-import json
-
 import flask_restplus
 from flask_restplus import fields
 import werkzeug
@@ -121,13 +119,15 @@ class ModelPredict(flask_restplus.Resource):
 #            raise exceptions.BadRequest("You must provide either 'url' or "
 #                                        "'data' in the payload")
         if not MODEL:
-            raise exceptions.NotImplemented("Not implemented by underlying model")
+            raise exceptions.NotImplemented("Not implemented by underlying "
+                                            "model")
 
         # FIXME(aloga): only handling one file
         data = [args["files"].read()]
 
         ret = MODEL[1](data)
         return ret
+
 
 @api.route('/train')
 class ModelTrain(flask_restplus.Resource):

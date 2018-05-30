@@ -35,5 +35,5 @@ api.add_namespace(v1.api, path="/model")
 
 
 def get_app():
-#    print "Loaded models %s" % loading.get_available_model_names()
+    print("Loaded models %s" % loading.get_available_model_names())
     return app
