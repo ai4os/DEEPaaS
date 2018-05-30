@@ -13,3 +13,4 @@ testrepository>=0.0.18
 testtools>=1.4.0
 
 mock>=1.2
+six
