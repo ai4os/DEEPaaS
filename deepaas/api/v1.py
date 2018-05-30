@@ -20,11 +20,7 @@ import werkzeug
 import werkzeug.exceptions as exceptions
 
 import deepaas
-from deepaas import loading
-
-MODEL = None
-# FIXME(aloga): we are only using one
-MODEL = loading.get_available_models().items()[0]
+from deepaas import model
 
 api = flask_restplus.Namespace(
     'model',
@@ -118,14 +114,14 @@ class ModelPredict(flask_restplus.Resource):
 #        if not any([args["urls"], args["files"]]):
 #            raise exceptions.BadRequest("You must provide either 'url' or "
 #                                        "'data' in the payload")
-        if not MODEL:
+        if not model.MODEL:
             raise exceptions.NotImplemented("Not implemented by underlying "
                                             "model")
 
         # FIXME(aloga): only handling one file
         data = [args["files"].read()]
 
-        ret = MODEL[1](data)
+        ret = model.MODEL[1](data)
         return ret
 
 
