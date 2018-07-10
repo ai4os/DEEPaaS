@@ -16,11 +16,11 @@
 
 from deepaas import loading
 
+MODELS = {}
+
 try:
     # FIXME(aloga): we are only using one
-    # FIXME(aloga): use a singleton here
-    MODEL = loading.get_available_models().items()[0]
+    MODELS = loading.get_available_models()
 except Exception as e:
     # TODO(aloga): use logging, not prints
-    print("Cannot load model: %s" % e)
-    MODEL = None
+    print("Cannot load any models: %s" % e)
