@@ -31,12 +31,12 @@ api = flask_restplus.Api(
     description='DEEP as a Service (DEEPaaS) API endpoint.',
 )
 
-api.add_namespace(v1.api, path="/model")
+api.add_namespace(v1.api, path="/models")
 
 
 def get_app():
     # This code needs to be refactores, we are currntly accessing the models
     # from two different places, both from loading and from models, and we need
     # to add a single interface.
-    print("Loaded models %s" % loading.get_available_model_names())
+    print("Loaded models: %s" % list(loading.get_available_model_names()))
     return app

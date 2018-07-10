@@ -14,16 +14,16 @@
 # License for the specific language governing permissions and limitations
 # under the License.
 
+import flask
 import flask_restplus
 from flask_restplus import fields
 import werkzeug
 import werkzeug.exceptions as exceptions
 
-import deepaas
 from deepaas import model
 
 api = flask_restplus.Namespace(
-    'model',
+    'models',
     description='Model information, inference and training operations')
 
 # This should be removed with marshmallow whenever flask-restplus is ready
@@ -43,6 +43,11 @@ data_parser.add_argument('data',
 #                          required=False,
 #                          action="append")
 
+model_links = api.model('Location', {
+    "rel": fields.String(required=True),
+    "href": fields.Url(required=True)
+})
+
 model_meta = api.model('ModelMetadata', {
     'id': fields.String(required=True, description='Model identifier'),
     'name': fields.String(required=True, description='Model name'),
@@ -51,8 +56,38 @@ model_meta = api.model('ModelMetadata', {
     'license': fields.String(required=False, description='Model license'),
     'author': fields.String(required=False, description='Model author'),
     'version': fields.String(required=False, description='Model version'),
-    'url': fields.String(required=False, description='Model url'),
+    'url': fields.Url(required=False, description='Model url'),
+    'links': fields.List(fields.Nested(model_links))
 })
+
+models = api.model('Models', {
+    'models': fields.List(fields.Nested(model_meta)),
+})
+
+
+@api.marshal_with(models, envelope='resource')
+@api.route('/')
+class Models(flask_restplus.Resource):
+    def get(self):
+        """Return loaded models and its information.
+
+        DEEPaaS can load several models and server them on the same endpoint,
+        making a call to the root of the models namespace will return the
+        loaded models, as long as their basic metadata.
+        """
+
+        models = []
+        for name, _ in model.MODELS.items():
+            m = {
+                "id": name,
+                "name": name,
+                "links": [{
+                    "rel": "self",
+                    "href": "%s/%s" % (flask.request.path, name),
+                }]
+            }
+            models.append(m)
+        return {"models": models}
 
 
 prediction_links = api.model('PredictionLinks', {
@@ -87,47 +122,58 @@ response = api.model('ModelResponse', {
 
 
 @api.marshal_with(model_meta, envelope='resource')
-@api.route('/')
+@api.route('/<string:model_name>')
 class BaseModel(flask_restplus.Resource):
-    def get(self):
-        """Return model information."""
-        r = {
-            "id": "0",
-            "name": "Not a model",
-            "description": "Placeholder metadata, model not implemented",
-            "author": "Alvaro Lopez Garcia",
-            "version": deepaas.__version__,
+    def get(self, model_name):
+        """Return <model_name> models metadata."""
+        if model_name not in model.MODELS:
+            raise exceptions.NotFound(description="No model %s is found" %
+                                      model_name)
+
+        m = {
+            "id": model_name,
+            "name": model_name,
+            "links": [{
+                "rel": "self",
+                "href": "%s" % flask.request.path,
+            }]
         }
-        return r
+        return m
 
 
 @api.marshal_with(response, envelope='resource')
-@api.route('/predict')
+@api.route('/<string:model_name>/predict')
 class ModelPredict(flask_restplus.Resource):
     @api.expect(data_parser)
-    def post(self):
+    def post(self, model_name):
         """Make a prediction given the input data."""
+        if model_name not in model.MODELS:
+            raise exceptions.NotFound(description="No model %s is found" %
+                                      model_name)
 
         args = data_parser.parse_args()
 
 #        if not any([args["urls"], args["files"]]):
 #            raise exceptions.BadRequest("You must provide either 'url' or "
 #                                        "'data' in the payload")
-        if not model.MODEL:
-            raise exceptions.NotImplemented("Not implemented by underlying "
-                                            "model")
+#        if model.MODELS[model_name]:
+#            raise exceptions.NotImplemented("Not implemented by underlying "
+#                                            "model")
 
         # FIXME(aloga): only handling one file
         data = [args["files"].read()]
 
-        ret = model.MODEL[1](data)
+        ret = model.MODELS[model_name](data)
         return ret
 
 
-@api.route('/train')
+@api.route('/<string:model_name>/train')
 class ModelTrain(flask_restplus.Resource):
     @api.doc('Retrain model')
-    def put(self):
+    def put(self, model_name):
         """Retrain model with available data."""
+        if model_name not in model.MODELS:
+            raise exceptions.NotFound(description="No model %s is found" %
+                                      model_name)
 
         raise exceptions.NotImplemented("Not implemented by underlying model")
