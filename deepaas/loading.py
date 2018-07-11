@@ -16,7 +16,7 @@
 
 import stevedore
 
-MODEL_NAMESPACE = "deepaas.model.predict"
+MODEL_NAMESPACE = "deepaas.model"
 
 
 def get_available_model_names():
