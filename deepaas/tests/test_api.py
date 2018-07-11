@@ -107,17 +107,52 @@ class TestApiV1(base.TestCase):
             data={"data": (f, "foo.txt")})
         self.assertEqual(501, ret.status_code)
 
-    @unittest.skip("does not work after refactoring")
-    def test_predict_with_model(self):
-        m = mock.Mock()
-        m.return_value = {}
+    def test_predict_urls_not_implemented(self):
+        ret = self.app.post(
+            "/models/deepaas-test/predict",
+            data={"url": "http://example.org/"})
+        self.assertEqual(501, ret.status_code)
+
+    def test_predict_various_urls_not_implemented(self):
+        ret = self.app.post(
+            "/models/deepaas-test/predict",
+            data={"url": ["http://example.org/", "http://example.com"]})
+        self.assertEqual(501, ret.status_code)
+
+    def test_predict_data_with_model(self):
+        m = mock.MagicMock()
         content = b"foo"
         f = six.BytesIO(b"foo")
-        with mock.patch.object(deepaas.model, "MODEL", ("fake", m)):
+        with mock.patch.object(deepaas.model, "MODELS", {"fake": m}):
+            m.predict_data.return_value = {}
             ret = self.app.post(
-                "/models/predict",
+                "/models/fake/predict",
                 data={"data": (f, "foo.txt")})
-            m.assert_called_with([content])
+            m.predict_data.assert_called_with([content])
+            self.assertEqual(200, ret.status_code)
+            self.assertEqual({}, ret.json)
+
+    def test_predict_url_with_model(self):
+        m = mock.MagicMock()
+        url = ["http://example.com"]
+        with mock.patch.object(deepaas.model, "MODELS", {"fake": m}):
+            m.predict_url.return_value = {}
+            ret = self.app.post(
+                "/models/fake/predict",
+                data={"url": url})
+            m.predict_url.assert_called_with(url)
+            self.assertEqual(200, ret.status_code)
+            self.assertEqual({}, ret.json)
+
+    def test_predict_various_urls_with_model(self):
+        m = mock.MagicMock()
+        url = ["http://example.org/", "http://example.com"]
+        with mock.patch.object(deepaas.model, "MODELS", {"fake": m}):
+            m.predict_url.return_value = {}
+            ret = self.app.post(
+                "/models/fake/predict",
+                data={"url": url})
+            m.predict_url.assert_called_with(url)
             self.assertEqual(200, ret.status_code)
             self.assertEqual({}, ret.json)
 
