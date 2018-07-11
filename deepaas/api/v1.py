@@ -77,15 +77,17 @@ class Models(flask_restplus.Resource):
         """
 
         models = []
-        for name, _ in model.MODELS.items():
+        for name, obj in model.MODELS.items():
             m = {
                 "id": name,
                 "name": name,
                 "links": [{
                     "rel": "self",
-                    "href": "%s/%s" % (flask.request.path, name),
+                    "href": "%s%s" % (flask.request.path, name),
                 }]
             }
+            meta = obj.get_metadata()
+            m.update(meta)
             models.append(m)
         return {"models": models}
 
@@ -130,6 +132,8 @@ class BaseModel(flask_restplus.Resource):
             raise exceptions.NotFound(description="No model %s is found" %
                                       model_name)
 
+        obj = model.MODELS.get(model_name)
+
         m = {
             "id": model_name,
             "name": model_name,
@@ -138,6 +142,8 @@ class BaseModel(flask_restplus.Resource):
                 "href": "%s" % flask.request.path,
             }]
         }
+        meta = obj.get_metadata()
+        m.update(meta)
         return m
 
 
@@ -151,6 +157,8 @@ class ModelPredict(flask_restplus.Resource):
             raise exceptions.NotFound(description="No model %s is found" %
                                       model_name)
 
+        obj = model.MODELS.get(model_name)
+
         args = data_parser.parse_args()
 
 #        if not any([args["urls"], args["files"]]):
@@ -163,7 +171,7 @@ class ModelPredict(flask_restplus.Resource):
         # FIXME(aloga): only handling one file
         data = [args["files"].read()]
 
-        ret = model.MODELS[model_name](data)
+        ret = obj.predict_data(data)
         return ret
 
 
@@ -176,4 +184,6 @@ class ModelTrain(flask_restplus.Resource):
             raise exceptions.NotFound(description="No model %s is found" %
                                       model_name)
 
-        raise exceptions.NotImplemented("Not implemented by underlying model")
+        obj = model.MODELS.get(model_name)
+        ret = obj.train()
+        return ret

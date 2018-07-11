@@ -19,7 +19,7 @@ import flask_restplus
 
 import deepaas
 from deepaas.api import v1
-from deepaas import loading
+from deepaas import model
 
 app = flask.Flask(__name__)
 app.config.SWAGGER_UI_DOC_EXPANSION = 'list'
@@ -35,8 +35,5 @@ api.add_namespace(v1.api, path="/models")
 
 
 def get_app():
-    # This code needs to be refactores, we are currntly accessing the models
-    # from two different places, both from loading and from models, and we need
-    # to add a single interface.
-    print("Loaded models: %s" % list(loading.get_available_model_names()))
+    print("Loaded models: %s" % model.MODELS.keys())
     return app
