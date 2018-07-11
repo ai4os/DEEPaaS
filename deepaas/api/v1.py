@@ -28,20 +28,28 @@ api = flask_restplus.Namespace(
 
 # This should be removed with marshmallow whenever flask-restplus is ready
 data_parser = api.parser()
-# FIXME(aloga): only handling one file
+
+# FIXME(aloga): currently we allow only to upload one file. There is a bug in
+# the Swagger UI that makes impossible to upload several files, although this
+# works if the request is not done through swagger. Since providing a UI and an
+# API that behave differently is incoherent, only allow one file for the time
+# being.
+#
+# See https://github.com/noirbizarre/flask-restplus/issues/491 for more details
+# on the bug.
 data_parser.add_argument('data',
                          help="Data file to perform inference.",
                          type=werkzeug.FileStorage,
-                         location='files',
+                         location="files",
                          dest='files',
-                         required=True)
+                         required=False)
 
-# data_parser.add_argument('url',
-#                          help="URL to retrieve data to perform inference.",
-#                          type=str,
-#                          dest='urls',
-#                          required=False,
-#                          action="append")
+data_parser.add_argument('url',
+                         help="URL to retrieve data to perform inference.",
+                         type=str,
+                         dest='urls',
+                         required=False,
+                         action="append")
 
 model_links = api.model('Location', {
     "rel": fields.String(required=True),
@@ -161,17 +169,20 @@ class ModelPredict(flask_restplus.Resource):
 
         args = data_parser.parse_args()
 
-#        if not any([args["urls"], args["files"]]):
-#            raise exceptions.BadRequest("You must provide either 'url' or "
-#                                        "'data' in the payload")
-#        if model.MODELS[model_name]:
-#            raise exceptions.NotImplemented("Not implemented by underlying "
-#                                            "model")
+        if (not any([args["urls"], args["files"]]) or
+                all([args["urls"], args["files"]])):
+            raise exceptions.BadRequest("You must provide either 'url' or "
+                                        "'data' in the payload")
 
-        # FIXME(aloga): only handling one file
-        data = [args["files"].read()]
-
-        ret = obj.predict_data(data)
+        if args["files"]:
+            # FIXME(aloga): only handling one file, see comment on top of file
+            # and https://github.com/noirbizarre/flask-restplus/issues/491 for
+            # more details
+            # data = [f.read() for f in args["files"]]
+            data = [args["files"].read()]
+            ret = obj.predict_data(data)
+        elif args["urls"]:
+            ret = obj.predict_url(args["urls"])
         return ret
 
 
