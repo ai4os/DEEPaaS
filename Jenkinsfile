@@ -11,7 +11,7 @@ pipeline {
         stage('Style Analysis') {
             steps {
                 echo 'Running flake8..'
-                //sh 'tox -e pep8'
+                sh 'tox -e pep8'
 				//timeout(time: 5, unit: 'MINUTES') {
 				//	sh 'bin/code-analysis' step([$class: 'WarningsPublisher',
 				//		parserConfigurations: [[
