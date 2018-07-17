@@ -22,9 +22,12 @@ pipeline {
 				}
             }
         }
+
         stage('Unit tests') {
             steps {
                 echo 'Computing coverage..'
+                sh 'tox -e cover'
+                publishHTML([allowMissing: false, alwaysLinkToLastBuild: false, keepAll: false, reportDir: 'cover', reportFiles: 'index.html', reportName: 'Coverage report', reportTitles: ''])
             }
         }
     }
