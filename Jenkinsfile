@@ -2,25 +2,25 @@ pipeline {
     agent any
     
     stages {
-		stage('Fetch code') {
-        	steps {
-				checkout scm
-			}
-		}
+        stage('Fetch code') {
+            steps {
+                checkout scm
+            }
+        }
 
         stage('Style Analysis') {
             steps {
                 echo 'Running flake8..'
-				timeout(time: 5, unit: 'MINUTES') {
-					sh 'tox -e pep8'
+                timeout(time: 5, unit: 'MINUTES') {
+                    sh 'tox -e pep8'
                     echo 'Parsing pep8 logs..'
                     step([$class: 'WarningsPublisher',
-						parserConfigurations: [[
-							parserName: 'Pep8', pattern: '.tox/pep8/log/*.log'
-						]], unstableTotalAll: '0', usePreviousBuildAsReference: true
+                        parserConfigurations: [[
+                            parserName: 'Pep8', pattern: '.tox/pep8/log/*.log'
+                        ]], unstableTotalAll: '0', usePreviousBuildAsReference: true
 
-					])
-				}
+                    ])
+                }
             }
         }
 
@@ -39,7 +39,7 @@ pipeline {
                              reportTitles: ''])
 
                 echo 'Generating Cobertura report..'
-				writeFile file: 'tox.ini.cobertura', text: '''[tox]
+                writeFile file: 'tox.ini.cobertura', text: '''[tox]
 envlist = cobertura
 
 [testenv]
@@ -52,7 +52,7 @@ deps = pytest-cov
        -r{toxinidir}/requirements.txt
        -r{toxinidir}/test-requirements.txt
 commands = py.test --cov=deepaas --cov-report=xml --cov-report=term-missing deepaas/tests'''
-				sh 'tox -c tox.ini.cobertura'
+                sh 'tox -c tox.ini.cobertura'
                 cobertura autoUpdateHealth: false,
                           autoUpdateStability: false,
                           coberturaReportFile: '**/coverage.xml',
