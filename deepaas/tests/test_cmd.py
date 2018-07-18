@@ -14,6 +14,8 @@
 # License for the specific language governing permissions and limitations
 # under the License.
 
+import sys
+
 import mock
 
 from deepaas.cmd import run
@@ -25,6 +27,24 @@ class TestRun(base.TestCase):
     def test_run(self, mock_get_app):
         m = mock.MagicMock()
         mock_get_app.return_value = m
-        run.main()
+        with mock.patch.object(sys, 'argv', ["deepaas-run"]):
+            run.main()
         mock_get_app.assert_called_once()
-        m.run.assert_called_with(host="0.0.0.0", debug=mock.ANY)
+        m.run.assert_called_with(host="127.0.0.1",
+                                 port=5000,
+                                 debug=mock.ANY)
+
+    @mock.patch("deepaas.api.get_app")
+    def test_run_custom_ip_port(self, mock_get_app):
+        m = mock.MagicMock()
+        mock_get_app.return_value = m
+        ip = "1.1.1.1"
+        port = 1234
+        self.flags(listen_ip=ip)
+        self.flags(listen_port=port)
+        with mock.patch.object(sys, 'argv', ["deepaas-run"]):
+            run.main()
+        mock_get_app.assert_called_once()
+        m.run.assert_called_with(host=ip,
+                                 port=port,
+                                 debug=mock.ANY)

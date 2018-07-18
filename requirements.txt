@@ -3,6 +3,8 @@
 # process, which may cause wedges in the gate later.
 pbr>=1.8
 
+oslo.config>=2.3.0 # Apache-2.0
+
 enum34
 flask-restplus
 werkzeug
