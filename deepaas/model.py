@@ -14,9 +14,36 @@
 # License for the specific language governing permissions and limitations
 # under the License.
 
+from oslo_log import log
 import werkzeug.exceptions as exceptions
 
 from deepaas import loading
+
+LOG = log.getLogger(__name__)
+
+# Model registry
+MODELS = {}
+MODELS_LOADED = False
+
+
+def register_models():
+    global MODELS
+    global MODELS_LOADED
+
+    if MODELS_LOADED:
+        return
+
+    MODELS = {}
+    try:
+        for name, model in loading.get_available_models().items():
+            MODELS[name] = BaseModel(name, model)
+    except Exception as e:
+        LOG.warning("Error loading models %s", e)
+
+    if not MODELS:
+        LOG.info("No models found, loading test model")
+        MODELS["deepaas-test"] = TestModel("deepaas-test")
+    MODELS_LOADED = True
 
 
 class BaseModel(object):
@@ -74,19 +101,3 @@ class TestModel(BaseModel):
             "version": "0.0.1",
         }
         return d
-
-
-def populate_models():
-    models = {}
-    try:
-        for name, model in loading.get_available_models().items():
-            models[name] = BaseModel(name, model)
-    except Exception as e:
-        # TODO(aloga): use logging, not prints
-        print("Cannot load any models: %s" % e)
-    if not models:
-        print("Loading test model")
-        models["deepaas-test"] = TestModel("deepaas-test")
-    return models
-
-MODELS = populate_models()

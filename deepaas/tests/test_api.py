@@ -30,7 +30,7 @@ from deepaas.tests import base
 
 
 class TestApi(base.TestCase):
-    @mock.patch('deepaas.api.app')
+    @mock.patch('deepaas.api.APP')
     def test_get_app(self, mock_app):
         self.assertEqual(mock_app, api.get_app())
 
@@ -61,6 +61,8 @@ class TestApiV1(base.TestCase):
 
         api = flask_restplus.Api(app, doc=False)
         api.add_namespace(v1.api)
+
+        deepaas.model.register_models()
 
         self.app = app.test_client()
         self.assertEqual(app.debug, True)

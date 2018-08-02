@@ -18,7 +18,9 @@
 import sys
 
 from oslo_config import cfg
+from oslo_log import log as logging
 
+import deepaas
 from deepaas import api
 from deepaas import config
 
@@ -47,11 +49,16 @@ CONF.register_cli_opts(cli_opts)
 
 def main():
     config.parse_args(sys.argv)
+    logging.setup(CONF, "deepaas")
+    log = logging.getLogger(__name__)
+
+    log.info("Starting DEEPaaS version %s", deepaas.__version__)
+
     app = api.get_app()
     app.run(
-        debug=True,
         host=CONF.listen_ip,
         port=CONF.listen_port,
+        debug=CONF.debug,
     )
 
 
