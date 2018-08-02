@@ -14,12 +14,23 @@
 # License for the specific language governing permissions and limitations
 # under the License.
 
+import logging
+import warnings
+
 from oslo_config import cfg
+from oslo_log import log
 
 import deepaas
 
+logging.captureWarnings(True)
+warnings.simplefilter("default", DeprecationWarning)
+
 
 def parse_args(argv, default_config_files=None):
+    log.register_options(cfg.CONF)
+
+    log.set_defaults(default_log_levels=log.get_default_log_levels())
+
     cfg.CONF(argv[1:],
              project='deepaas',
              version=deepaas.__version__,

@@ -16,24 +16,37 @@
 
 import flask
 import flask_restplus
+from oslo_log import log as logging
 
 import deepaas
 from deepaas.api import v1
 from deepaas import model
 
-app = flask.Flask(__name__)
-app.config.SWAGGER_UI_DOC_EXPANSION = 'list'
+LOG = logging.getLogger(__name__)
 
-api = flask_restplus.Api(
-    app,
-    version=deepaas.__version__,
-    title='DEEP as a Service API endpoint',
-    description='DEEP as a Service (DEEPaaS) API endpoint.',
-)
-
-api.add_namespace(v1.api, path="/models")
+APP = None
 
 
 def get_app():
-    print("Loaded models: %s" % model.MODELS.keys())
-    return app
+    global APP
+
+    if APP:
+        return APP
+
+    model.register_models()
+
+    APP = flask.Flask(__name__)
+    APP.config.SWAGGER_UI_DOC_EXPANSION = 'list'
+
+    api = flask_restplus.Api(
+        APP,
+        version=deepaas.__version__,
+        title='DEEP as a Service API endpoint',
+        description='DEEP as a Service (DEEPaaS) API endpoint.',
+    )
+
+    api.add_namespace(v1.api, path="/models")
+
+    LOG.info("Serving loaded models: %s", model.MODELS.keys())
+
+    return APP
