@@ -72,8 +72,8 @@ commands = py.test --cov=deepaas --cov-report=xml --cov-report=term-missing deep
                           zoomCoverageChart: false
             }
         }
-
-		stage('Build and Push Docker image/s') {
+        
+        stage('Build and Push Docker image/s') {
             when {
                 anyOf {
                     branch 'master'
@@ -98,7 +98,9 @@ commands = py.test --cov=deepaas --cov-report=xml --cov-report=term-missing deep
             post {
                 success {
                     echo "Pushing Docker image ${IMAGE_ID}.."
-                    sh "${docker_alias} push $IMAGE_ID"
+                    withDockerRegistry([credentialsId: 'indigobot', url: '']) {
+                        sh "${docker_alias} push $IMAGE_ID"
+                    }
                 }
                 failure {
                     echo 'Docker image building failed, removing dangling images..'
