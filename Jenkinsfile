@@ -1,6 +1,11 @@
 pipeline {
     agent any
     
+	environment {
+        docker_alias = "docker -H tcp://127.0.0.1:2376"
+        docker_repo = "indigodatacloud/deepaas"
+    }
+
     stages {
         stage('Fetch code') {
             steps {
@@ -67,5 +72,45 @@ commands = py.test --cov=deepaas --cov-report=xml --cov-report=term-missing deep
                           zoomCoverageChart: false
             }
         }
+        
+        stage('Build and Push Docker image/s') {
+            when {
+                anyOf {
+                    branch 'master'
+                    buildingTag()
+                }
+            }
+            agent {
+                label 'docker-build'
+            }
+            steps {
+                checkout scm
+                script {
+                    if (env.BRANCH_NAME == 'master') {
+                        IMAGE_ID = env.docker_repo + ':latest'
+                    }
+                    else {
+                        IMAGE_ID = env.docker_repo + ':' + env.TAG_NAME
+                    }
+                }
+                sh "${docker_alias} build --force-rm -t $IMAGE_ID ./docker"
+            }
+            post {
+                success {
+                    echo "Pushing Docker image ${IMAGE_ID}.."
+                    withDockerRegistry([credentialsId: 'indigobot', url: '']) {
+                        sh "${docker_alias} push $IMAGE_ID"
+                    }
+                }
+                failure {
+                    echo 'Docker image building failed, removing dangling images..'
+                    sh '${docker_alias} rmi \$(\${docker_alias} images -f "dangling=true" -q)'
+                }
+                always {
+                    cleanWs()
+                }
+            }
+        } // docker stage
+
     }
 }
