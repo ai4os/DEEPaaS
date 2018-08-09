@@ -1,7 +1,7 @@
 pipeline {
     agent any
     
-	environment {
+    environment {
         docker_alias = "docker -H tcp://127.0.0.1:2376"
         docker_repo = "indigodatacloud/deepaas"
     }
