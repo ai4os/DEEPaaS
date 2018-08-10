@@ -1,79 +1,81 @@
+@Library(['github.com/indigo-dc/jenkins-pipeline-library']) _
+
 pipeline {
-    agent any
+    agent {
+        label 'python'
+    }
     
     environment {
-        docker_alias = "docker -H tcp://127.0.0.1:2376"
-        docker_repo = "indigodatacloud/deepaas"
+        dockerhub_repo = "indigodatacloud/deepaas"
+        tox_envs = """
+[testenv:cobertura]
+commands = py.test --cov=deepaas --cov-report=xml --cov-report=term-missing deepaas/tests
+[testenv:bandit-report]
+commands = 
+    - mkdir /tmp/bandit
+    - bandit -r deepaas -x tests -s B110,B410 -f html -o /tmp/bandit/index.html"""
     }
 
     stages {
-        stage('Fetch code') {
+        stage('Code fetching') {
             steps {
                 checkout scm
             }
         }
 
-        stage('Style Analysis') {
+        stage('Environment setup') {
             steps {
-                echo 'Running flake8..'
-                timeout(time: 5, unit: 'MINUTES') {
-                    sh 'tox -e pep8'
-                    echo 'Parsing pep8 logs..'
-                    step([$class: 'WarningsPublisher',
-                        parserConfigurations: [[
-                            parserName: 'Pep8', pattern: '.tox/pep8/log/*.log'
-                        ]], unstableTotalAll: '0', usePreviousBuildAsReference: true
-
-                    ])
+                PipRequirements('pytest\npytest-cov', 'test-requirements.txt')
+                ToxConfig(tox_envs)
+            }
+            post {
+                always {
+                    archiveArtifacts artifacts: '*requirements.txt,*tox*.ini'
                 }
             }
         }
 
-        stage('Unit tests') {
+        stage('Style analysis') {
             steps {
-                echo 'Computing unit testing coverage..'
-                sh 'tox -e cover'
-
-                echo 'Generating HTML report..'
-                publishHTML([allowMissing: false,
-                             alwaysLinkToLastBuild: false,
-                             keepAll: false,
-                             reportDir: 'cover',
-                             reportFiles: 'index.html',
-                             reportName: 'Coverage report',
-                             reportTitles: ''])
-
-                echo 'Generating Cobertura report..'
-                writeFile file: 'tox.ini.cobertura', text: '''[tox]
-envlist = cobertura
-
-[testenv]
-usedevelop = True
-install_command = pip install -U {opts} {packages}
-setenv =
-   VIRTUAL_ENV={envdir}
-deps = pytest-cov
-       nose
-       -r{toxinidir}/requirements.txt
-       -r{toxinidir}/test-requirements.txt
-commands = py.test --cov=deepaas --cov-report=xml --cov-report=term-missing deepaas/tests'''
-                sh 'tox -c tox.ini.cobertura'
-                cobertura autoUpdateHealth: false,
-                          autoUpdateStability: false,
-                          coberturaReportFile: '**/coverage.xml',
-                          conditionalCoverageTargets: '70, 0, 0',
-                          failUnhealthy: false,
-                          failUnstable: false,
-                          lineCoverageTargets: '80, 0, 0',
-                          maxNumberOfBuilds: 0,
-                          methodCoverageTargets: '80, 0, 0',
-                          onlyStable: false,
-                          sourceEncoding: 'ASCII',
-                          zoomCoverageChart: false
+                ToxEnvRun('pep8')
+            }
+            post {
+                always {
+                    WarningsReport('Pep8')
+                }
             }
         }
-        
-        stage('Build and Push Docker image/s') {
+
+        stage('Unit testing coverage') {
+            steps {
+                ToxEnvRun('cover')
+                ToxEnvRun('cobertura')
+            }
+            post {
+                success {
+                    HTMLReport('cover', 'index.html', 'coverage.py report')
+                    CoberturaReport('**/coverage.xml')
+                }
+            }
+        }
+
+        stage('Security scanner') {
+            steps {
+                ToxEnvRun('bandit-report')
+                script {
+                    if (currentBuild.result == 'FAILURE') {
+                        currentBuild.result = 'UNSTABLE'
+                    }
+                }
+            }
+            post {
+                always {
+                    HTMLReport("/tmp/bandit", 'index.html', 'Bandit report')
+                }
+            }
+        }
+
+        stage('DockerHub delivery') {
             when {
                 anyOf {
                     branch 'master'
@@ -86,31 +88,20 @@ commands = py.test --cov=deepaas --cov-report=xml --cov-report=term-missing deep
             steps {
                 checkout scm
                 script {
-                    if (env.BRANCH_NAME == 'master') {
-                        IMAGE_ID = env.docker_repo + ':latest'
-                    }
-                    else {
-                        IMAGE_ID = env.docker_repo + ':' + env.TAG_NAME
-                    }
+                    image_id = DockerBuild(dockerhub_repo, env.BRANCH_NAME)
                 }
-                sh "${docker_alias} build --force-rm -t $IMAGE_ID ./docker"
             }
             post {
                 success {
-                    echo "Pushing Docker image ${IMAGE_ID}.."
-                    withDockerRegistry([credentialsId: 'indigobot', url: '']) {
-                        sh "${docker_alias} push $IMAGE_ID"
-                    }
+                    DockerPush(image_id)
                 }
                 failure {
-                    echo 'Docker image building failed, removing dangling images..'
-                    sh '${docker_alias} rmi \$(\${docker_alias} images -f "dangling=true" -q)'
+                    DockerClean()
                 }
                 always {
                     cleanWs()
                 }
             }
-        } // docker stage
-
+        }
     }
 }
