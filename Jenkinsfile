@@ -1,3 +1,5 @@
+#!/usr/bin/groovy
+
 @Library(['github.com/indigo-dc/jenkins-pipeline-library']) _
 
 pipeline {
