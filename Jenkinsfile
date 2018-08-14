@@ -66,6 +66,7 @@ commands =
                 label 'sloc'
             }
             steps {
+                checkout scm
                 SLOCRun()
             }
             post {
