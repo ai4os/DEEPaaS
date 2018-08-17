@@ -18,9 +18,13 @@ import os
 
 import fixtures
 from oslo_config import cfg
+from oslo_config import fixture as config_fixture
+from oslo_log import log as logging
 import testtools
 
 CONF = cfg.CONF
+logging.register_options(CONF)
+
 
 _TRUE_VALUES = ('True', 'true', '1', 'yes')
 
@@ -41,6 +45,8 @@ class TestCase(testtools.TestCase):
             test_timeout = 0
         if test_timeout > 0:
             self.useFixture(fixtures.Timeout(test_timeout, gentle=True))
+
+        self.useFixture(config_fixture.Config(CONF))
 
         if os.environ.get('TESTR_STDOUT_CAPTURE') in _TRUE_VALUES:
             stdout = self.useFixture(fixtures.StringStream('stdout')).stream
