@@ -39,13 +39,13 @@ def register_models():
     MODELS = {}
     try:
         for name, model in loading.get_available_models().items():
-            MODELS[name] = BaseModel(name, model)
+            MODELS[name] = ModelWrapper(name, model)
     except Exception as e:
-        LOG.warning("Error loading models %s", e)
+        LOG.warning("Error loading models: %s", e)
 
     if not MODELS:
         LOG.info("No models found, loading test model")
-        MODELS["deepaas-test"] = TestModel()
+        MODELS["deepaas-test"] = ModelWrapper("deepaas-test", TestModel())
     MODELS_LOADED = True
 
 
@@ -67,6 +67,7 @@ class BaseModel(object):
 
         :param str path: path to the file to be analized
         """
+        raise NotImplementedError()
 
     @abc.abstractmethod
     def predict_data(self, data, **kwargs):
@@ -77,6 +78,7 @@ class BaseModel(object):
 
         :param data: raw data to be analized
         """
+        raise NotImplementedError()
 
     @abc.abstractmethod
     def predict_url(self, *args):
@@ -87,6 +89,7 @@ class BaseModel(object):
 
         :param str url: URL pointing to the data to be analized
         """
+        raise NotImplementedError()
 
     @abc.abstractmethod
     def get_metadata(self):
@@ -94,11 +97,12 @@ class BaseModel(object):
 
         :return: dictionary containing the model's metadata.
         """
+        raise NotImplementedError()
 
     @abc.abstractmethod
     def train(self, *args):
         """TBD."""
-        pass
+        raise NotImplementedError()
 
 
 class TestModel(BaseModel):
@@ -110,16 +114,16 @@ class TestModel(BaseModel):
     name = "deepaas-test"
 
     def predict_file(self, path, **kwargs):
-        raise exceptions.NotImplemented("This is just a dummy model")
+        return super(TestModel, self).predict_file(path, **kwargs)
 
     def predict_data(self, data, **kwargs):
-        raise exceptions.NotImplemented("This is just a dummy model")
+        return super(TestModel, self).predict_data(data, **kwargs)
 
     def predict_url(self, url, **kwargs):
-        raise exceptions.NotImplemented("This is just a dummy model")
+        return super(TestModel, self).predict_url(url, **kwargs)
 
     def train(self, *args):
-        raise exceptions.NotImplemented("This is just a dummy model")
+        return super(TestModel, self).train(*args)
 
     def get_metadata(self):
         d = {
@@ -133,6 +137,16 @@ class TestModel(BaseModel):
             "version": "0.0.1",
         }
         return d
+
+
+def catch_error(f):
+    def wrap(*args, **kwargs):
+        try:
+            return f(*args, **kwargs)
+        except NotImplementedError:
+            raise exceptions.NotImplemented("Model does not implement "
+                                            "this functionality")
+    return wrap
 
 
 class ModelWrapper(object):
@@ -157,8 +171,8 @@ class ModelWrapper(object):
 
     def get_metadata(self):
         try:
-            d = self._get_method("get_metadata")
-        except exceptions.NotImplemented:
+            d = self.model.get_metadata()
+        except (NotImplementedError, AttributeError):
             d = {
                 "id": "0",
                 "name": self.name,
@@ -167,14 +181,18 @@ class ModelWrapper(object):
             }
         return d
 
+    @catch_error
     def predict_file(self, *args):
         return self._get_method("predict_file")(*args)
 
+    @catch_error
     def predict_data(self, *args):
         return self._get_method("predict_data")(*args)
 
+    @catch_error
     def predict_url(self, *args):
         return self._get_method("predict_url")(*args)
 
+    @catch_error
     def train(self, *args):
-        return self._get_method("train", *args)
+        return self._get_method("train")(*args)

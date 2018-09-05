@@ -14,7 +14,6 @@
 # License for the specific language governing permissions and limitations
 # under the License.
 
-import unittest
 import uuid
 
 import flask
@@ -33,22 +32,6 @@ class TestApi(base.TestCase):
     @mock.patch('deepaas.api.APP')
     def test_get_app(self, mock_app):
         self.assertEqual(mock_app, api.get_app())
-
-    # XXX
-    @unittest.skip("not needed, remove me ")
-    @mock.patch('deepaas.loading.get_available_model_names')
-    @mock.patch('deepaas.api.app')
-    def test_loading_ok(self, mock_app, mock_loading):
-        self.assertEqual(mock_app, api.get_app())
-        mock_loading.assert_called_once()
-
-    @unittest.skip("not needed, remove me ")
-    @mock.patch('deepaas.loading.get_available_model_names')
-    @mock.patch('deepaas.api.app')
-    def test_loading_ok_with_model(self, mock_app, mock_loading):
-        mock_loading.return_value = ["foo"]
-        self.assertEqual(mock_app, api.get_app())
-        mock_loading.assert_called_once()
 
 
 class TestApiV1(base.TestCase):
