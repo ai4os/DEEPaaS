@@ -14,7 +14,10 @@
 # License for the specific language governing permissions and limitations
 # under the License.
 
+import abc
+
 from oslo_log import log
+import six
 import werkzeug.exceptions as exceptions
 
 from deepaas import loading
@@ -42,11 +45,103 @@ def register_models():
 
     if not MODELS:
         LOG.info("No models found, loading test model")
-        MODELS["deepaas-test"] = TestModel("deepaas-test")
+        MODELS["deepaas-test"] = TestModel()
     MODELS_LOADED = True
 
 
+@six.add_metaclass(abc.ABCMeta)
 class BaseModel(object):
+    """Base class for all models to be used with DEEPaaS.
+
+    Note that it is not needed for DEEPaaS to inherit from this abstract base
+    class in order to expose the model functionality, but the entrypoint that
+    is configured should expose the same API.
+    """
+
+    @abc.abstractmethod
+    def predict_file(self, path, **kwargs):
+        """Perform a prediction from a file in the local filesystem.
+
+        This method will perform a prediction based on a file stored in the
+        local filesystem.
+
+        :param str path: path to the file to be analized
+        """
+
+    @abc.abstractmethod
+    def predict_data(self, data, **kwargs):
+        """Perform a prediction from the data passed in the arguments.
+
+        This method will use the raw data that is passed in the `data` argument
+        to perfom the prediction.
+
+        :param data: raw data to be analized
+        """
+
+    @abc.abstractmethod
+    def predict_url(self, *args):
+        """Perform a predction from a remote URL.
+
+        This method will perform a prediction based on the data stored in the
+        URL passed as argument.
+
+        :param str url: URL pointing to the data to be analized
+        """
+
+    @abc.abstractmethod
+    def get_metadata(self):
+        """Return metadata from the eposed model.
+
+        :return: dictionary containing the model's metadata.
+        """
+
+    @abc.abstractmethod
+    def train(self, *args):
+        """TBD."""
+        pass
+
+
+class TestModel(BaseModel):
+    """Dummy model implementing minimal functionality.
+
+    This is a simple class that mimics the behaviour of a module, just for
+    showing how the whole DEEPaaS works and documentation purposes.
+    """
+    name = "deepaas-test"
+
+    def predict_file(self, path, **kwargs):
+        raise exceptions.NotImplemented("This is just a dummy model")
+
+    def predict_data(self, data, **kwargs):
+        raise exceptions.NotImplemented("This is just a dummy model")
+
+    def predict_url(self, url, **kwargs):
+        raise exceptions.NotImplemented("This is just a dummy model")
+
+    def train(self, *args):
+        raise exceptions.NotImplemented("This is just a dummy model")
+
+    def get_metadata(self):
+        d = {
+            "id": "0",
+            "name": "deepaas-test",
+            "description": ("This is not a model at all, just a placeholder "
+                            "for testing the API functionality. If you are "
+                            "seeing this, it is because DEEPaaS could not "
+                            "load a valid model."),
+            "author": "Alvaro Lopez Garcia",
+            "version": "0.0.1",
+        }
+        return d
+
+
+class ModelWrapper(object):
+    """Class that will wrap the loaded models before exposing them.
+
+    Whenever we load a model with stevedore, we will use this class to create a
+    wrapper object that will handle the calls to the model's methods so as to
+    handle non-existent method exceptions.
+    """
     def __init__(self, name, model):
         self.name = name
         self.model = model
@@ -83,21 +178,3 @@ class BaseModel(object):
 
     def train(self, *args):
         return self._get_method("train", *args)
-
-
-class TestModel(BaseModel):
-    def __init__(self, name):
-        super(TestModel, self).__init__(name, None)
-
-    def get_metadata(self):
-        d = {
-            "id": "0",
-            "name": "deepaas-test",
-            "description": ("This is not a model at all, just a placeholder "
-                            "for testing the API functionality. If you are "
-                            "seeing this, it is because DEEPaaS could not "
-                            "load a valid model."),
-            "author": "Alvaro Lopez Garcia",
-            "version": "0.0.1",
-        }
-        return d
