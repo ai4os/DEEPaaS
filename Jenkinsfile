@@ -61,21 +61,6 @@ commands =
             }
         }
 
-        stage('Metrics gathering') {
-            agent {
-                label 'sloc'
-            }
-            steps {
-                checkout scm
-                SLOCRun()
-            }
-            post {
-                success {
-                    SLOCPublish()
-                }
-            }
-        }
-
         stage('Security scanner') {
             steps {
                 ToxEnvRun('bandit-report')
@@ -88,6 +73,38 @@ commands =
             post {
                 always {
                     HTMLReport("/tmp/bandit", 'index.html', 'Bandit report')
+                }
+            }
+        }
+
+        stage('Dependency check') {
+            agent {
+                label 'docker-build'
+            }
+            steps {
+                checkout scm
+                OWASPDependencyCheckRun("$WORKSPACE/DEEPaaS/deepaas", project="DEEPaaS")
+            }
+            post {
+                always {
+                    OWASPDependencyCheckPublish()
+                    HTMLReport('deepaas', 'dependency-check-report.html', 'OWASP Dependency Report')
+                    deleteDir()
+                }
+            }
+        }
+
+        stage('Metrics gathering') {
+            agent {
+                label 'sloc'
+            }
+            steps {
+                checkout scm
+                SLOCRun()
+            }
+            post {
+                success {
+                    SLOCPublish()
                 }
             }
         }
