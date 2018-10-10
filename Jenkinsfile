@@ -9,6 +9,7 @@ pipeline {
     
     environment {
         dockerhub_repo = "indigodatacloud/deepaas"
+        dockerhub_image_id = ""
         tox_envs = """
 [testenv:cobertura]
 commands = py.test --cov=deepaas --cov-report=xml --cov-report=term-missing deepaas/tests
@@ -105,7 +106,7 @@ commands =
             steps {
                 checkout scm
                 script {
-                    image_id = DockerBuild(dockerhub_repo, env.BRANCH_NAME)
+                    dockerhub_image_id = DockerBuild(dockerhub_repo, env.BRANCH_NAME)
                 }
             }
             post {
@@ -118,6 +119,24 @@ commands =
                 always {
                     cleanWs()
                 }
+            }
+        }
+
+        stage('Notifications') {
+            when {
+                buildingTag()
+            }
+	    steps {
+                JiraIssueNotification(
+                    'DEEP',
+                    'DPM',
+                    '10204',
+                    "[preview-testbed] New DEEP-as-a-Service version ${env.BRANCH_NAME} available",
+                    'Check new artifacts at:\n\t- Docker image: ${dockerhub_image_id}\n',
+                    ['wp3', 'preview-testbed', "DEEPaaS-${env.BRANCH_NAME}"],
+		    'Task',
+		    'mariojmdavid'
+                )
             }
         }
     }
