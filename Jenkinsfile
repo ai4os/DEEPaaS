@@ -27,7 +27,7 @@ commands =
 
         stage('Environment setup') {
             steps {
-                PipRequirements('pytest\npytest-cov', 'test-requirements.txt')
+                PipRequirements(['pytest', 'pytest-cov'], 'test-requirements.txt')
                 ToxConfig(tox_envs)
             }
             post {
