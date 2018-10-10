@@ -10,31 +10,12 @@ pipeline {
     environment {
         dockerhub_repo = "indigodatacloud/deepaas"
         dockerhub_image_id = ""
-        tox_envs = """
-[testenv:cobertura]
-commands = py.test --cov=deepaas --cov-report=xml --cov-report=term-missing deepaas/tests
-[testenv:bandit-report]
-commands = 
-    - mkdir /tmp/bandit
-    - bandit -r deepaas -x tests -s B110,B410 -f html -o /tmp/bandit/index.html"""
     }
 
     stages {
         stage('Code fetching') {
             steps {
                 checkout scm
-            }
-        }
-
-        stage('Environment setup') {
-            steps {
-                PipRequirements(['pytest', 'pytest-cov'], 'test-requirements.txt')
-                ToxConfig(tox_envs)
-            }
-            post {
-                always {
-                    archiveArtifacts artifacts: '*requirements.txt,*tox*.ini'
-                }
             }
         }
 

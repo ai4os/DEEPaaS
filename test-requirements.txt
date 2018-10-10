@@ -17,3 +17,5 @@ testtools>=1.4.0
 
 mock>=1.2
 six
+pytest
+pytest-cov
