@@ -1,6 +1,6 @@
 FROM ubuntu:18.04
 LABEL maintainer="Alvaro Lopez Garcia <aloga@ifca.unican.es>"
-LABEL version="0.1"
+LABEL version="0.1.0"
 LABEL description="DEEP as a Service Generic Container"
 
 RUN apt-get update && \
