@@ -130,7 +130,7 @@ pipeline {
                     'DPM',
                     '10204',
                     "[preview-testbed] New DEEP-as-a-Service version ${env.BRANCH_NAME} available",
-                    "Check new artifacts at:\n\t- Docker image: ${dockerhub_image_id}:${env.BRANCH_NAME}\n",
+                    "Check new artifacts at:\n\t- Docker image: [${dockerhub_image_id}:${env.BRANCH_NAME}|https://hub.docker.com/r/${dockerhub_image_id}/tags/]\n",
                     ['wp3', 'preview-testbed', "DEEPaaS-${env.BRANCH_NAME}"],
                     'Task',
                     'mariojmdavid'
