@@ -120,6 +120,18 @@ pipeline {
             }
         }
 
+        stage('PyPI delivery') {
+            when {
+                anyOf {
+                    branch 'master'
+                    buildingTag()
+                }
+            }
+            steps {
+                PyPIDeploy('deepaas', 'indigobot')
+            }
+        }
+
         stage('Notifications') {
             when {
                 buildingTag()
