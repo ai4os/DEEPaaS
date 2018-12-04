@@ -14,6 +14,9 @@
 # License for the specific language governing permissions and limitations
 # under the License.
 
-from deepaas import version
+import pbr.version
 
-__version__ = version.version_string
+version_info = pbr.version.VersionInfo('deepaas')
+
+version_string = version_info.version_string()
+release_string = version_info.release_string()
