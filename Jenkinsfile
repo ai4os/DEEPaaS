@@ -74,6 +74,51 @@ pipeline {
             }
         }
 
+        stage('Docker build') {
+            when {
+                anyOf {
+                    branch 'master'
+                    branch 'jenkins_integration_testing'
+                    buildingTag()
+                }
+            }
+            agent {
+                label 'docker-build'
+            }
+            steps {
+                checkout scm
+                script {
+                    env.dockerhub_image_id = DockerBuild(dockerhub_repo, env.BRANCH_NAME)
+                }
+            }
+            post {
+                failure {
+                    DockerClean()
+                }
+                always {
+                    cleanWs()
+                }
+            }
+    }
+
+        stage('Functional testing') {
+            agent {
+                label 'functional-testing'
+            }
+            steps {
+                dir("integration_testing") {
+                  sh 'docker run -d --name ${docker_image_name} -p 5000:5000 ${env.dockerhub_image_id}'
+                }
+            }
+            post {
+                always {
+                  sh 'docker kill ${docker_image_name}'
+                  sh 'docker rm ${docker_image_name}'
+                }
+
+            }
+		}
+
         stage('Dependency check') {
             agent {
                 label 'docker-build'

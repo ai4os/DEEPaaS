@@ -1,4 +1,4 @@
-FROM ubuntu:18.04
+FROM bitnami/minideb
 LABEL maintainer="Alvaro Lopez Garcia <aloga@ifca.unican.es>"
 LABEL version="0.1.0"
 LABEL description="DEEP as a Service Generic Container"
@@ -20,8 +20,8 @@ ADD . /srv
 WORKDIR /srv
 
 # We can use pip or pip3, depending on the python version that we want to use
-RUN pip install .
+RUN pip3 install .
 
 EXPOSE 5000
 
-CMD deepaas-run
+CMD deepaas-run --listen-ip 0.0.0.0
