@@ -104,6 +104,11 @@ class BaseModel(object):
         """TBD."""
         raise NotImplementedError()
 
+    @abc.abstractmethod
+    def get_train_args(self, *args):
+        """TBD."""
+        raise NotImplementedError()
+
 
 class TestModel(BaseModel):
     """Dummy model implementing minimal functionality.
@@ -124,6 +129,9 @@ class TestModel(BaseModel):
 
     def train(self, *args):
         return super(TestModel, self).train(*args)
+
+    def get_train_args(self, *args):
+        return {}
 
     def get_metadata(self):
         d = {
@@ -196,3 +204,10 @@ class ModelWrapper(object):
     @catch_error
     def train(self, *args):
         return self._get_method("train")(*args)
+
+    @catch_error
+    def get_train_args(self, *args):
+        try:
+            return self._get_method("get_train_args")(*args)
+        except exceptions.NotImplemented:
+            return {}
