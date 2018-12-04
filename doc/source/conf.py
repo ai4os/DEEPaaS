@@ -34,22 +34,10 @@ sys.path.insert(0, os.path.abspath('./'))
 # extensions coming with Sphinx (named 'sphinx.ext.*') or your custom ones.
 
 extensions = ['sphinx.ext.autodoc',
-#              'sphinx.ext.todo',
-#              'openstackdocstheme',
-#              'sphinx.ext.coverage',
-#              'sphinx.ext.graphviz',
-#              'ext.support_matrix',
               'oslo_config.sphinxconfiggen',
               'oslo_config.sphinxext',
-#              'oslo_policy.sphinxpolicygen',
-#              'oslo_policy.sphinxext',
-#              'ext.versioned_notifications',
-#              'ext.feature_matrix',
-#              'sphinxcontrib.actdiag',
-#              'sphinxcontrib.seqdiag',
-#              'recommonmark'
               "reno.sphinxext",
-              ]
+]
 
 # Add any paths that contain templates here, relative to this directory.
 templates_path = ['_templates']
