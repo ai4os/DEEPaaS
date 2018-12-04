@@ -55,6 +55,7 @@ Additional Notes
 
    contributing
    code_of_conduct
+   releasenotes/index
 
 
 Indices and tables
