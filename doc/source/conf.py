@@ -48,6 +48,7 @@ extensions = ['sphinx.ext.autodoc',
 #              'sphinxcontrib.actdiag',
 #              'sphinxcontrib.seqdiag',
 #              'recommonmark'
+              "reno.sphinxext",
               ]
 
 # Add any paths that contain templates here, relative to this directory.
@@ -128,7 +129,7 @@ html_theme_options = {
     'show_powered_by': False,
     'github_user': 'indigo-dc',
     'github_repo': 'DEEPaaS',
-    'github_banner': True,
+    'github_banner': False,
     'show_related': False,
     'note_bg': '#FFF59C',
     'description': 'DEEaaS is an API for machine learning models',
