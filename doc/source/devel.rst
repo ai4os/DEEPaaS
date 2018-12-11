@@ -23,6 +23,19 @@ Once loaded, the API exposes the following functions or methods:
   single argument that will contain a list of urls to be analyzed as a
   single prediction.
 * ``train()``: Perform a training over a dataset.
+* ``get_train_args()``: Retrieve the parameters needed for training. This method must return a dict of dicts. A possible
+  example is the following:
+
+  .. code-block:: python
+
+      { 'arg1' : {'default': '1',     #value must be a string (use json.dumps to convert Python objects and json.loads to convert back)
+                  'help': '',         #can be an empty string
+                  'required': False   #bool (whether or not the user must fill the parameter, for example if there is no default)
+                 },
+        'arg2' : {...
+                 },
+        ...
+        }
 
 If the API fails to lookup any of these methods it will not silently fail, but
 return a 501 Not Implemented HTTP Error.
@@ -38,7 +51,7 @@ Suppose that you have under your my_model.api code the following code structure:
    import my_model
    import my_model.whatever
 
-   def get_metadate():
+   def get_metadata():
        return my_model.metadata
 
    def predict_data(data):
