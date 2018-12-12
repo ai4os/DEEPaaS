@@ -7,20 +7,19 @@ RUN apt-get update && \
     apt-get upgrade -y
 
 RUN apt-get install -y --no-install-recommends \
-        git \
         curl \
-        python-setuptools \
         python-pip \
-        python-wheel \
-        python3-setuptools \
+        python-dev \
+        python-setuptools \
         python3-pip \
-        python3-wheel
+        python3-dev \
+        python3-setuptools
 
-ADD . /srv
-WORKDIR /srv
-
-# We can use pip or pip3, depending on the python version that we want to use
-RUN pip install .
+RUN pip install ansible==2.4
+RUN ansible-galaxy install indigo-dc.deepaas
+RUN curl -o /tmp/test.yml \
+         -L https://github.com/indigo-dc/ansible-role-deepaas/raw/master/tests/test.yml
+RUN ansible-playbook -c local -i 'localhost,' /tmp/test.yml
 
 EXPOSE 5000
 
