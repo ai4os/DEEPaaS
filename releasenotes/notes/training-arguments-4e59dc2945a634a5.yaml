@@ -1,0 +1,7 @@
+---
+features:
+  - Allow to specify which arguments the underlying model accepts. In this
+    release users can implement a "get_train_args" function in the module entry
+    point, allowing to expose those arguments through the API.
+fixes:
+  - https://jira.deep-hybrid-datacloud.eu/browse/DPD-267
