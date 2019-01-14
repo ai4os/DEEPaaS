@@ -120,7 +120,7 @@ html_theme_options = {
     'github_banner': False,
     'show_related': False,
     'note_bg': '#FFF59C',
-    'description': 'DEEaaS is an API for machine learning models',
+    'description': 'DEEPaaS is an API for machine learning models',
 }
 # Add any paths that contain custom static files (such as style sheets) here,
 # relative to this directory. They are copied after the builtin static files,
