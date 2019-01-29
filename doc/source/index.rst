@@ -34,6 +34,7 @@ what you are looking for.
    installation
    quickstart
    configuration/index
+   openwhisk
    devel
 
 API reference

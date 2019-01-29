@@ -1,0 +1,13 @@
+---
+prelude: >
+    This release add support for running DEEPaaS inside an OpenWhisk Docker
+    action container, without modifying the code or without external
+    dependencies.
+features:
+  - |
+    We have added support for running DEEPaaS as an OpenWhisk Docker action.
+    When DEEPaaS is invoked via `deepaas-run --openwhisk-detect` it will detect
+    if it is running inside an OpenWhisk Docker container, thus it will spawn a
+    proxy service that will get the requests and invoke the corresponding model
+    function. A new command `deepaas-wsk` is also provided as a command line
+    option to force the execution of DEEPaaS in OpenWhisk mode.

@@ -1,6 +1,6 @@
 FROM ubuntu:18.04
 LABEL maintainer="Alvaro Lopez Garcia <aloga@ifca.unican.es>"
-LABEL version="0.1.0"
+LABEL version="0.2.0"
 LABEL description="DEEP as a Service Generic Container"
 
 RUN apt-get update && \
@@ -23,4 +23,4 @@ RUN ansible-playbook -c local -i 'localhost,' /tmp/test.yml
 
 EXPOSE 5000
 
-CMD deepaas-run
+CMD ["sh", "-c", "deepaas-run --openwhisk --listen-ip 0.0.0.0"]
