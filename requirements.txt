@@ -11,3 +11,5 @@ flask-restplus>=0.12.1
 Flask>=1.0.2
 Werkzeug>=0.14.1
 stevedore>=1.20.0 # Apache-2.0
+
+gevent==1.2.1
