@@ -50,7 +50,7 @@ def init():
 
     try:
         if APP is None:
-            APP = api.get_app()
+            APP = api.get_app(doc=False)
         return ('OK', 200)
     except Exception as e:
         response = flask.jsonify({'error': 'Internal error. {}'.format(e)})
