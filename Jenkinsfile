@@ -85,7 +85,10 @@ pipeline {
             post {
                 always {
                     OWASPDependencyCheckPublish()
-                    HTMLReport('DEEPaaS', 'dependency-check-report.html', 'OWASP Dependency Report')
+                    HTMLReport(
+                        "$WORKSPACE/DEEPaaS/deepaas",
+                        'dependency-check-report.html',
+                        'OWASP Dependency Report')
                     deleteDir()
                 }
             }
