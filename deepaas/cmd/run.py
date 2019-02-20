@@ -15,6 +15,7 @@
 # License for the specific language governing permissions and limitations
 # under the License.
 
+import os
 import sys
 
 from oslo_config import cfg
@@ -23,6 +24,7 @@ from oslo_log import log as logging
 import deepaas
 from deepaas import api
 from deepaas import config
+from deepaas.openwisk import proxy
 
 cli_opts = [
     cfg.StrOpt('listen-ip',
@@ -41,6 +43,22 @@ Port on which the DEEPaaS API will listen.
 The DEEPaaS API service listens on this port number for incoming
 requests.
 """),
+    cfg.BoolOpt('openwhisk-detect',
+                short='w',
+                default=False,
+                help="""
+Run as an OpenWhisk action.
+
+If this option is set to True DEEPaaS will check if the __OW_API_HOST
+environment variable is set. If it is set, it will run an OpenWhisk Docker
+action listener rather than the DEEPaaS API. If it is not set, it will run
+a DEEPaaS in normal mode.
+
+If you specify this option, the value of 'listen-ip' will be used, but the
+port will is hardcoded to 8080 (as OpenWhisk goes to port 8080). Note that
+if you are running inside a container, the most sensible option is to set
+listen-ip to 0.0.0.0
+"""),
 ]
 
 CONF = cfg.CONF
@@ -52,14 +70,20 @@ def main():
     logging.setup(CONF, "deepaas")
     log = logging.getLogger(__name__)
 
-    log.info("Starting DEEPaaS version %s", deepaas.__version__)
+    if CONF.openwhisk_detect and os.environ.get('__OW_API_HOST', None):
+        log.info("Starting DEEPaaS (OpenWhisk) version %s",
+                 deepaas.__version__)
 
-    app = api.get_app()
-    app.run(
-        host=CONF.listen_ip,
-        port=CONF.listen_port,
-        debug=CONF.debug,
-    )
+        proxy.main()
+    else:
+        log.info("Starting DEEPaaS version %s", deepaas.__version__)
+
+        app = api.get_app()
+        app.run(
+            host=CONF.listen_ip,
+            port=CONF.listen_port,
+            debug=CONF.debug,
+        )
 
 
 if __name__ == "__main__":

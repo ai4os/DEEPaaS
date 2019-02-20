@@ -27,7 +27,11 @@ LOG = logging.getLogger(__name__)
 APP = None
 
 
-def get_app():
+def get_app(doc="/"):
+    """Get the Flask-RESTPlus app.
+
+    Set doc to False if you do not want to get the Swagger documentation.
+    """
     global APP
 
     if APP:
@@ -38,11 +42,13 @@ def get_app():
     APP = flask.Flask(__name__)
     APP.config.SWAGGER_UI_DOC_EXPANSION = 'list'
 
+    print(doc)
     api = flask_restplus.Api(
         APP,
         version=deepaas.__version__,
         title='DEEP as a Service API endpoint',
         description='DEEP as a Service (DEEPaaS) API endpoint.',
+        doc=doc
     )
 
     api.add_namespace(v1.api, path="/models")
