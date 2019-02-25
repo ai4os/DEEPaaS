@@ -162,6 +162,12 @@ for model_name, model_obj in model.MODELS.items():
             m.update(meta)
             return m
 
+    # Fill the test parser with the supported arguments. Different models may
+    # have different arguments.
+    test_args = model_obj.get_test_args()
+    for k, v in test_args.items():
+        data_parser.add_argument(k, **v)
+
     @api.marshal_with(response, envelope='resource')
     @api.route('/%s/predict' % model_name)
     class ModelPredict(flask_restplus.Resource):
@@ -184,10 +190,10 @@ for model_name, model_obj in model.MODELS.items():
                 # file and [1] for more details
                 # [1] https://github.com/noirbizarre/flask-restplus/issues/491
                 # data = [f.read() for f in args["files"]]
-                data = [args["files"].read()]
-                ret = self.model_obj.predict_data(data)
+                # data = [args["files"].read()]
+                ret = self.model_obj.predict_data(args)
             elif args["urls"]:
-                ret = self.model_obj.predict_url(args["urls"])
+                ret = self.model_obj.predict_url(args)
             return ret
 
     # Fill the train parser with the supported arguments. Different models may
