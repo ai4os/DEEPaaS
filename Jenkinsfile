@@ -74,6 +74,7 @@ pipeline {
             }
         }
 
+        /*
         stage('Dependency check') {
             agent {
                 label 'docker-build'
@@ -93,6 +94,7 @@ pipeline {
                 }
             }
         }
+        */
 
         stage('DockerHub delivery') {
             when {
