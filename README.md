@@ -8,11 +8,11 @@
 
 DEEP as a Service (DEEPaaS) is a REST API that is focused on providing access
 to machine learning models. By using DEEPaaS users can easily run a REST API
-in fron of their model, thus accesing its functionality via HTTP calls.
+in front of their model, thus accessing its functionality via HTTP calls.
 
 ## Quickstart
 
-The best way to quickly try the DEEPaaS API is trough:
+The best way to quickly try the DEEPaaS API is through:
 
     make run
 
