@@ -1,6 +1,6 @@
 #!/usr/bin/groovy
 
-@Library(['github.com/indigo-dc/jenkins-pipeline-library@1.3.1']) _
+@Library(['github.com/indigo-dc/jenkins-pipeline-library@1.3.3']) _
 
 pipeline {
     agent {
@@ -134,7 +134,7 @@ pipeline {
                 }
             }
             steps {
-                PyPIDeploy('deepaas', 'indigobot')
+                PyPIDeploy('deepaas', 'indigobot-pypi')
             }
         }
 
