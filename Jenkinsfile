@@ -129,7 +129,6 @@ pipeline {
         stage('PyPI delivery') {
             when {
                 anyOf {
-                    branch 'master'
                     buildingTag()
                 }
             }
