@@ -23,6 +23,7 @@ from oslo_log import log as logging
 
 import deepaas
 from deepaas import api
+from deepaas.cmd import _shutdown
 from deepaas import config
 from deepaas.openwisk import proxy
 
@@ -66,6 +67,7 @@ CONF.register_cli_opts(cli_opts)
 
 
 def main():
+    _shutdown.handle_signals()
     config.parse_args(sys.argv)
     logging.setup(CONF, "deepaas")
     log = logging.getLogger(__name__)
