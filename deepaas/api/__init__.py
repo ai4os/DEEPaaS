@@ -42,7 +42,6 @@ def get_app(doc="/"):
     APP = flask.Flask(__name__)
     APP.config.SWAGGER_UI_DOC_EXPANSION = 'list'
 
-    print(doc)
     api = flask_restplus.Api(
         APP,
         version=deepaas.__version__,
