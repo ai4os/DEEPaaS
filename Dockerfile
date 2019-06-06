@@ -30,8 +30,8 @@ RUN apt-get clean && \
     rm -rf /tmp/*
 
 ## We can use pip or pip3, depending on the python version that we want to use
-RUN pip3 install 'deepaas>=0.3.0' && \
-    pip install 'deepaas>=0.3.0'
+RUN pip3 install 'deepaas>=0.4.0' && \
+    pip install 'deepaas>=0.4.0'
 
 EXPOSE 5000
 
