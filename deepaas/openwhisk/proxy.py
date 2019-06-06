@@ -28,7 +28,7 @@ from gevent import wsgi
 from oslo_config import cfg
 
 from deepaas import api
-from deepaas.openwisk import handle
+from deepaas.openwhisk import handle
 
 CONF = cfg.CONF
 

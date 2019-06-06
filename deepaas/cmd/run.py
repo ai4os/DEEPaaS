@@ -25,7 +25,7 @@ import deepaas
 from deepaas import api
 from deepaas.cmd import _shutdown
 from deepaas import config
-from deepaas.openwisk import proxy
+from deepaas.openwhisk import proxy
 
 cli_opts = [
     cfg.StrOpt('listen-ip',
