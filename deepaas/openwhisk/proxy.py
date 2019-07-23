@@ -24,7 +24,10 @@
 import sys
 
 import flask
-from gevent import wsgi
+try:
+    from gevent import wsgi as pywsgi  # noqa
+except ImportError:
+    from gevent import pywsgi  # noqa
 from oslo_config import cfg
 
 from deepaas import api
@@ -101,5 +104,5 @@ def complete(response):
 
 
 def main():
-    server = wsgi.WSGIServer((CONF.listen_ip, 8080), proxy, log=None)
+    server = pywsgi.WSGIServer((CONF.listen_ip, 8080), proxy, log=None)
     server.serve_forever()
