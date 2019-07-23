@@ -23,19 +23,42 @@ Once loaded, the API exposes the following functions or methods:
   single argument that will contain a list of urls to be analyzed as a
   single prediction.
 * ``train()``: Perform a training over a dataset.
-* ``get_train_args()``: Retrieve the parameters needed for training. This method must return a dict of dicts. A possible
-  example is the following:
+* ``get_train_args()``: Retrieve the parameters needed for training. This
+  method must return a dict of dicts. A possible example is the following:
 
   .. code-block:: python
 
-      { 'arg1' : {'default': '1',     #value must be a string (use json.dumps to convert Python objects and json.loads to convert back)
-                  'help': '',         #can be an empty string
-                  'required': False   #bool (whether or not the user must fill the parameter, for example if there is no default)
-                 },
-        'arg2' : {...
-                 },
-        ...
-        }
+      {
+         'arg1': {
+            'default': '1',   # value must be a string (use json.dumps to convert Python objects)
+            'help': '',       # can be an empty string
+            'required': False # boolean defining whether the value
+                              # must be filled to accept the query
+         },
+         'arg2': {
+            ...
+         },
+      ...
+      }
+
+* ``get_test_args()``: Retrieve the parameters needed for testing. This method
+  must return a dict of dicts. A possible example is the following:
+
+  .. code-block:: python
+
+      {
+         'arg1': {
+            'default': '1',   # value must be a string (use json.dumps to convert Python objects)
+            'help': '',       # can be an empty string
+            'required': False # boolean defining whether the value
+                              # must be filled to accept the query
+         },
+         'arg2': {
+            ...
+         },
+      ...
+      }
+
 
 If the API fails to lookup any of these methods it will not silently fail, but
 return a 501 Not Implemented HTTP Error.
