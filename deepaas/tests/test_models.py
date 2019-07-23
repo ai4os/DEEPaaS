@@ -38,6 +38,8 @@ class TestModel(base.TestCase):
         self.assertIn("id", meta)
         self.assertIn("name", meta)
         self.assertEqual("Alvaro Lopez Garcia", meta["author"])
+        self.assertEqual({}, m.get_train_args())
+        self.assertEqual({}, m.get_test_args())
 
     def test_dummy_model_with_wrapper(self):
         w = deepaas.model.ModelWrapper("foo", deepaas.model.TestModel())
@@ -48,6 +50,8 @@ class TestModel(base.TestCase):
         self.assertIn("description", meta)
         self.assertIn("id", meta)
         self.assertIn("name", meta)
+        self.assertEqual({}, w.get_train_args())
+        self.assertEqual({}, w.get_test_args())
 
     def test_model_with_not_implemented_attributes_and_wrapper(self):
         w = deepaas.model.ModelWrapper("foo", object())
@@ -58,6 +62,8 @@ class TestModel(base.TestCase):
         self.assertIn("description", meta)
         self.assertIn("id", meta)
         self.assertIn("name", meta)
+        self.assertEqual({}, w.get_train_args())
+        self.assertEqual({}, w.get_test_args())
 
     @mock.patch('deepaas.loading.get_available_models')
     def test_loading_ok(self, mock_loading):
