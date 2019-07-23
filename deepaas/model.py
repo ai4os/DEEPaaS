@@ -82,7 +82,7 @@ class BaseModel(object):
 
     @abc.abstractmethod
     def predict_url(self, *args):
-        """Perform a predction from a remote URL.
+        """Perform a prediction from a remote URL.
 
         This method will perform a prediction based on the data stored in the
         URL passed as argument.
@@ -93,7 +93,7 @@ class BaseModel(object):
 
     @abc.abstractmethod
     def get_metadata(self):
-        """Return metadata from the eposed model.
+        """Return metadata from the exposed model.
 
         :return: dictionary containing the model's metadata.
         """
@@ -105,13 +105,53 @@ class BaseModel(object):
         raise NotImplementedError()
 
     @abc.abstractmethod
-    def get_train_args(self, *args):
-        """TBD."""
+    def get_train_args(self):
+        """Return the arguments that are needed to train the application.
+
+        :return: Returns a dict of dicts with the following structure to feed
+                 the DEEPaaS API parser:
+
+                 {
+                    'arg1':{
+                        'default': '1',   # value must be a string (use
+                                          # json.dumps to convert Python
+                                          # objects)
+                        'help': '',       # can be an empty string
+                        'required': False # boolean defining whether the value
+                                          # must be filled to accept the query
+                    },
+                    'arg2': {
+                        ...
+                    },
+                    ...
+                }
+        :rtype: dict
+        """
         raise NotImplementedError()
 
     @abc.abstractmethod
-    def get_test_args(self, *args):
-        """TBD."""
+    def get_test_args(self):
+        """Return the arguments that are needed to test the application.
+
+        :return: Returns a dict of dicts with the following structure to feed
+                 the DEEPaaS API parser:
+
+                 {
+                    'arg1': {
+                        'default': '1',   # value must be a string (use
+                                          # json.dumps to convert Python
+                                          # objects)
+                        'help': '',       # can be an empty string
+                        'required': False # boolean defining whether the value
+                                          # must be filled to accept the query
+                    },
+                    'arg2': {
+                        ...
+                    },
+                  ...
+                }
+        :rtype: dict
+        """
         raise NotImplementedError()
 
 
