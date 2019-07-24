@@ -59,7 +59,7 @@ class BaseModel(object):
     """
 
     @abc.abstractmethod
-    def predict_file(self, path, **kwargs):
+    def predict_file(self, path):
         """Perform a prediction from a file in the local filesystem.
 
         This method will perform a prediction based on a file stored in the
@@ -70,24 +70,33 @@ class BaseModel(object):
         raise NotImplementedError()
 
     @abc.abstractmethod
-    def predict_data(self, data, **kwargs):
+    def predict_data(self, args):
         """Perform a prediction from the data passed in the arguments.
 
-        This method will use the raw data that is passed in the `data` argument
-        to perfom the prediction.
+        :param dict args: This is a Python dict containing all the necessary information to make a prediction.
+        The keys of this dict are:
 
-        :param data: raw data to be analized
+            * 'files': This is a Werkzeug `FileStorage` object containing the data to predict. You can access the bytes of
+              the data with args['files'].read() or the file extension with args['files'].content_type
+            * 'urls': This should be empty for this method
+            * other keys needed to make the prediction as defined by the function `get_test_args`
+
+        :return: The response can be a str, a dict or a file (using for example `flask.send_file`)
         """
         raise NotImplementedError()
 
     @abc.abstractmethod
-    def predict_url(self, *args):
+    def predict_url(self, args):
         """Perform a prediction from a remote URL.
 
-        This method will perform a prediction based on the data stored in the
-        URL passed as argument.
+        :param dict args: This is a Python dict containing all the necessary information to make a prediction.
+        The keys of this dict are:
 
-        :param str url: URL pointing to the data to be analized
+            * 'files': This should be empty for this method
+            * 'urls': This is a list of strs of the URLs to use for prediction
+            * other keys needed to make the prediction as defined by the function `get_test_args`
+
+        :return: The response can be a str, a dict or a file (using for example `flask.send_file`)
         """
         raise NotImplementedError()
 

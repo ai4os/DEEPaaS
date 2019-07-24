@@ -16,12 +16,24 @@ corresponding namespace in the REST endpoint.
 Once loaded, the API exposes the following functions or methods:
 
 * ``get_metadata()``: Get the model metadata.
-* ``predict_data(data)``: Perform a prediction using raw data. The API will
-  pass a single argument that will contain a list of raw data objects to be
-  analyzed as a single prediction.
-* ``precit_url(urls)``: Perform a predction using urls. The API will pass a
-  single argument that will contain a list of urls to be analyzed as a
-  single prediction.
+* ``predict_data(args)``: Perform a prediction using raw data. The API will
+  pass a Python dict containing all the necessary information to make a prediction.
+  The keys of this dict are:
+
+    * 'files': This is a Werkzeug `FileStorage` object containing the data to predict. You can access the bytes of the data with args['files'].read() or the file extension with args['files'].content_type
+    * 'urls': This should be empty for this method
+    * other keys needed to make the prediction as defined by the function `get_test_args`
+
+  The response can be a str, a dict or a file (using for example `flask.send_file`)
+* ``predict_url(args)``: Perform a prediction using URLs. The API will
+  pass a Python dict containing all the necessary information to make a prediction.
+  The keys of this dict are:
+
+    * 'files': This should be empty for this method
+    * 'urls': This is a list of strs of the URLs to use for prediction
+    * other keys needed to make the prediction as defined by the function `get_test_args`
+
+  The response can be a str, a dict or a file (using for example `flask.send_file`)
 * ``train()``: Perform a training over a dataset.
 * ``get_train_args()``: Retrieve the parameters needed for training. This
   method must return a dict of dicts. A possible example is the following:
