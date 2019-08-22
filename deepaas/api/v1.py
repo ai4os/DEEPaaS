@@ -189,8 +189,8 @@ for model_name, model_obj in model.MODELS.items():
                 # FIXME(aloga): only handling one file, see comment on top of
                 # file and [1] for more details
                 # [1] https://github.com/noirbizarre/flask-restplus/issues/491
-                # data = [f.read() for f in args["files"]]
-                # data = [args["files"].read()]
+                args["files"] = [args["files"]]
+
                 ret = self.model_obj.predict_data(args)
             elif args["urls"]:
                 ret = self.model_obj.predict_url(args)
