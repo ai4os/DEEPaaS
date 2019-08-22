@@ -30,7 +30,7 @@ Once loaded, the API exposes the following functions or methods:
   The keys of this dict are:
 
     * 'files': This should be empty for this method
-    * 'urls': This is a list of strs of the URLs to use for prediction
+    * 'urls': This is a list of strings of the URLs to use for prediction
     * other keys needed to make the prediction as defined by the function `get_test_args`
 
   The response can be a str, a dict or a file (using for example `flask.send_file`)
@@ -54,7 +54,7 @@ Once loaded, the API exposes the following functions or methods:
       }
 
 * ``get_test_args()``: Retrieve the parameters needed for testing. This method
-  must return a dict of dicts. A possible example is the following:
+  must return a dict of dicts. Forbidden parameter names are `files` and `urls`. A possible example is the following:
 
   .. code-block:: python
 
