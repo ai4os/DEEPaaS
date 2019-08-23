@@ -14,6 +14,8 @@
 # License for the specific language governing permissions and limitations
 # under the License.
 
+import copy
+
 import flask
 import flask_restplus
 from flask_restplus import fields
@@ -163,10 +165,12 @@ for model_name, model_obj in model.MODELS.items():
             return m
 
     # Fill the test parser with the supported arguments. Different models may
-    # have different arguments.
+    # have different arguments. We get here a copy of the original parser,
+    # since otherwise if we have several models the arguments will pile up.
+    test_parser = copy.deepcopy(data_parser)
     test_args = model_obj.get_test_args()
     for k, v in test_args.items():
-        data_parser.add_argument(k, **v)
+        test_parser.add_argument(k, **v)
 
     @api.marshal_with(response, envelope='resource')
     @api.route('/%s/predict' % model_name)
@@ -174,11 +178,11 @@ for model_name, model_obj in model.MODELS.items():
         model_name = model_name
         model_obj = model_obj
 
-        @api.expect(data_parser)
+        @api.expect(test_parser)
         def post(self):
             """Make a prediction given the input data."""
 
-            args = data_parser.parse_args()
+            args = test_parser.parse_args()
 
             if (not any([args["urls"], args["files"]]) or
                     all([args["urls"], args["files"]])):
