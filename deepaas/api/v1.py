@@ -57,10 +57,10 @@ data_parser.add_argument('url',
                          action="append")
 
 data_parser.add_argument('output',
-                         help="Output format: json or image (only if available in the model)",
+                         help="Output format: json or image",
                          type=str,
                          default='json',
-                         choices=['json','image'],
+                         choices=['json', 'image'],
                          dest='output',
                          required=False,
                          action="append")
