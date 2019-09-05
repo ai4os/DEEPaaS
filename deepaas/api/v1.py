@@ -56,6 +56,16 @@ data_parser.add_argument('url',
                          required=False,
                          action="append")
 
+data_parser.add_argument('output',
+                         help="Output format: json or image (only if available in the model)",
+                         type=str,
+                         default='json',
+                         choices=['json','image'],
+                         dest='output',
+                         required=False,
+                         action="append")
+
+
 model_links = api.model('Location', {
     "rel": fields.String(required=True),
     "href": fields.Url(required=True)
