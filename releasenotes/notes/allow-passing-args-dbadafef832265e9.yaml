@@ -6,6 +6,5 @@ features:
 fixes:
   - https://jira.deep-hybrid-datacloud.eu/browse/DPD-489
 issues:
-  - The 0.5.0 version stops passing down the raw data when making a prediction,
-	and passes down the file objects. This breaks backwards compatibility with
-	the 0.4.0 version.
+  - The 0.5.0 version stops passing down the raw data when making a prediction, and 
+    passes down the file objects. This breaks backwards compatibility with the 0.4.0 version.
