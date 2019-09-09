@@ -61,8 +61,7 @@ data_parser.add_argument('accept',
                          default='application/json',
                          choices=['application/json', 'image/jpeg', 'image/png'],
                          location='headers',
-                         required=False,
-                         action="append")
+                         required=False)
 
 
 model_links = api.model('Location', {
