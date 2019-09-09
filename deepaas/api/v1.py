@@ -56,7 +56,7 @@ data_parser.add_argument('url',
 
 
 data_parser.add_argument('accept',
-                         help="Output format: application/json , image/jpeg or 'image/png'",
+                         help="Output format:",
                          type=str,
                          default='application/json',
                          choices=['application/json', 'image/jpeg', 'image/png'],
