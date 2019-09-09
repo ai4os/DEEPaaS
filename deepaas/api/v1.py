@@ -55,11 +55,11 @@ data_parser.add_argument('url',
                          action="append")
 
 
-data_parser.add_argument('output',
-                         help="Output format: json or image",
+data_parser.add_argument('accept',
+                         help="Output format: application/json , image/jpeg or 'image/png'",
                          type=str,
-                         default='json',
-                         choices=['json', 'image'],
+                         default='application/json',
+                         choices=['application/json', 'image/jpeg', 'image/png'],
                          location='headers',
                          required=False,
                          action="append")
