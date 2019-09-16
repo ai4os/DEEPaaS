@@ -39,7 +39,7 @@ assets needed) can be shared, but this requires that the receptors of the model
 need to have enough knowledge to execute it.
 
 The approach of exposing a model over the network following a server oriented
-architecture is being increasingly adopted in Science [@foster2005service;
+architecture is being increasingly adopted in Science [@Foster814;
 @zorrilla2013service] as they allow to encapsulate different functionalities
 (like a machine learning model) as a service that will be exploited by other
 users. In this way, users do not need to deal with model deployment and
