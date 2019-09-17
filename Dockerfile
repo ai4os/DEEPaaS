@@ -9,12 +9,14 @@ RUN apt-get update && \
 RUN apt-get install -y --no-install-recommends \
         git \
         curl \
+        python-netifaces \
         python-setuptools \
         python-pip \
         python-wheel \
+        python3-netifaces \
         python3-setuptools \
         python3-pip \
-        python3-wheel
+        python3-wheel 
 
 WORKDIR /srv
 
