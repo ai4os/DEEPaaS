@@ -6,6 +6,8 @@
 [![Python versions](https://img.shields.io/pypi/pyversions/deepaas.svg)](https://pypi.python.org/pypi/deepaas)
 [![Build Status](https://jenkins.indigo-datacloud.eu/buildStatus/icon?job=Pipeline-as-code%2FDEEPaaS%2Fmaster)](https://jenkins.indigo-datacloud.eu/job/Pipeline-as-code/job/DEEPaaS/job/master/)
 
+<img src="https://marketplace.deep-hybrid-datacloud.eu/images/logo-deep.png" width=200 alt="DEEP-Hybrid-DataCloud logo"/>
+
 DEEP as a Service (DEEPaaS) is a REST API that is focused on providing access
 to machine learning models. By using DEEPaaS users can easily run a REST API
 in front of their model, thus accessing its functionality via HTTP calls.
