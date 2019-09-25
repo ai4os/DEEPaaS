@@ -136,7 +136,7 @@ response = api.model('ModelResponse', {
 })
 
 # It is better to create different routes for different models instead of using
-# the Flask pluggable views. Different models may require different paramters,
+# the Flask pluggable views. Different models may require different parameters,
 # therefore we need to do like this.
 #
 # Therefore, in the next lines we iterate over the loaded models and create
@@ -177,12 +177,13 @@ for model_name, model_obj in model.MODELS.items():
     class ModelPredict(flask_restplus.Resource):
         model_name = model_name
         model_obj = model_obj
+        test_parser = test_parser
 
         @api.expect(test_parser)
         def post(self):
             """Make a prediction given the input data."""
 
-            args = test_parser.parse_args()
+            args = self.test_parser.parse_args()
 
             if (not any([args["urls"], args["files"]]) or
                     all([args["urls"], args["files"]])):
@@ -211,13 +212,14 @@ for model_name, model_obj in model.MODELS.items():
     class ModelTrain(flask_restplus.Resource):
         model_name = model_name
         model_obj = model_obj
+        train_parser = train_parser
 
         @api.doc('Retrain model')
         @api.expect(train_parser)
         def put(self):
             """Retrain model with available data."""
 
-            args = train_parser.parse_args()
+            args = self.train_parser.parse_args()
             ret = self.model_obj.train(args)
             # FIXME(aloga): what are we returning here? We need to marshal the
             # response!!
