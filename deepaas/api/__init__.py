@@ -19,6 +19,7 @@ import flask
 from oslo_log import log as logging
 
 from deepaas.api import v1
+from deepaas.api import versions
 from deepaas import model
 
 LOG = logging.getLogger(__name__)
@@ -40,9 +41,11 @@ def get_app(doc="/", add_specs=True):
 
     model.register_models()
 
+    versions.register_version("v1", "v1.models_models")
+
     APP = flask.Flask(__name__)
 
-    for api in (v1, ):
+    for api in (v1, versions):
         bp = getattr(api, "get_blueprint")(doc=doc, add_specs=add_specs)
         APP.register_blueprint(bp)
 
