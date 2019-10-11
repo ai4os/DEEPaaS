@@ -18,7 +18,6 @@ import unittest
 import uuid
 
 import flask
-import flask_restplus
 import mock
 import six
 
@@ -43,10 +42,10 @@ class TestApiV1(base.TestCase):
         app.config['TESTING'] = True
         app.config['DEBUG'] = True
 
-        api = flask_restplus.Api(app, doc=False)
-        api.add_namespace(v1.api)
-
         deepaas.model.register_models()
+
+        bp = v1.get_blueprint(doc=False, add_specs=False)
+        app.register_blueprint(bp)
 
         self.app = app.test_client()
         self.assertEqual(app.debug, True)
