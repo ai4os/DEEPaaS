@@ -33,7 +33,7 @@ ns = flask_restplus.Namespace(
 
 
 def get_blueprint(doc="/", add_specs=True):
-    bp = flask.Blueprint('v1', __name__)
+    bp = flask.Blueprint('v1', __name__, url_prefix="/v1")
 
     api = flask_restplus.Api(
         bp,
