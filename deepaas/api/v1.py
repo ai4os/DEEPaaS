@@ -27,12 +27,29 @@ from deepaas import model
 # Get the models (this is a singleton, so it is safe to call it multiple times
 model.register_models()
 
-api = flask_restplus.Namespace(
+ns = flask_restplus.Namespace(
     'models',
     description='Model information, inference and training operations')
 
+
+def get_blueprint(doc="/", add_specs=True):
+    bp = flask.Blueprint('v1', __name__)
+
+    api = flask_restplus.Api(
+        bp,
+        version="1.0.0",
+        title='DEEP as a Service API V1 endpoint',
+        description='DEEP as a Service (DEEPaaS) API endpoint.',
+        doc=doc,
+        add_specs=add_specs,
+    )
+    api.add_namespace(ns)
+
+    return bp
+
+
 # This should be removed with marshmallow whenever flask-restplus is ready
-data_parser = api.parser()
+data_parser = ns.parser()
 
 # FIXME(aloga): currently we allow only to upload one file. There is a bug in
 # the Swagger UI that makes impossible to upload several files, although this
@@ -56,12 +73,12 @@ data_parser.add_argument('url',
                          required=False,
                          action="append")
 
-model_links = api.model('Location', {
+model_links = ns.model('Location', {
     "rel": fields.String(required=True),
     "href": fields.Url(required=True)
 })
 
-model_meta = api.model('ModelMetadata', {
+model_meta = ns.model('ModelMetadata', {
     'id': fields.String(required=True, description='Model identifier'),
     'name': fields.String(required=True, description='Model name'),
     'description': fields.String(required=True,
@@ -73,13 +90,13 @@ model_meta = api.model('ModelMetadata', {
     'links': fields.List(fields.Nested(model_links))
 })
 
-models = api.model('Models', {
+models = ns.model('Models', {
     'models': fields.List(fields.Nested(model_meta)),
 })
 
 
-@api.marshal_with(models, envelope='resource')
-@api.route('/')
+@ns.marshal_with(models, envelope='resource')
+@ns.route('/')
 class Models(flask_restplus.Resource):
     def get(self):
         """Return loaded models and its information.
@@ -105,7 +122,7 @@ class Models(flask_restplus.Resource):
         return {"models": models}
 
 
-prediction_links = api.model('PredictionLinks', {
+prediction_links = ns.model('PredictionLinks', {
     "link": fields.String(required=True,
                           description="Link name"),
 
@@ -113,21 +130,21 @@ prediction_links = api.model('PredictionLinks', {
                          description="Link URL"),
 })
 
-prediction_info = api.model('PredictionInfo', {
+prediction_info = ns.model('PredictionInfo', {
     "info": fields.String(required=False,
                           description="Prediction Information"),
     "links": fields.List(fields.Nested(prediction_links),
                          required=False)
 })
 
-label_prediction = api.model('LabelPrediction', {
+label_prediction = ns.model('LabelPrediction', {
     'label_id': fields.String(required=False, description='Label identifier'),
     'label': fields.String(required=True, description='Class label'),
     'probability': fields.Float(required=True),
     'info': fields.Nested(prediction_info),
 })
 
-response = api.model('ModelResponse', {
+response = ns.model('ModelResponse', {
     'status': fields.String(required=True,
                             description='Response status message'),
     'predictions': fields.List(fields.Nested(label_prediction),
@@ -143,8 +160,8 @@ response = api.model('ModelResponse', {
 # the different resources for each model. This way we can also load the
 # expected parameters if needed (as in the training method).
 for model_name, model_obj in model.MODELS.items():
-    @api.marshal_with(model_meta, envelope='resource')
-    @api.route('/%s' % model_name)
+    @ns.marshal_with(model_meta, envelope='resource')
+    @ns.route('/%s' % model_name)
     class BaseModel(flask_restplus.Resource):
         model_name = model_name
         model_obj = model_obj
@@ -172,14 +189,14 @@ for model_name, model_obj in model.MODELS.items():
     for k, v in test_args.items():
         test_parser.add_argument(k, **v)
 
-    @api.marshal_with(response, envelope='resource')
-    @api.route('/%s/predict' % model_name)
+    @ns.marshal_with(response, envelope='resource')
+    @ns.route('/%s/predict' % model_name)
     class ModelPredict(flask_restplus.Resource):
         model_name = model_name
         model_obj = model_obj
         test_parser = test_parser
 
-        @api.expect(test_parser)
+        @ns.expect(test_parser)
         def post(self):
             """Make a prediction given the input data."""
 
@@ -204,18 +221,18 @@ for model_name, model_obj in model.MODELS.items():
     # Fill the train parser with the supported arguments. Different models may
     # have different arguments.
     train_args = model_obj.get_train_args()
-    train_parser = api.parser()
+    train_parser = ns.parser()
     for k, v in train_args.items():
         train_parser.add_argument(k, **v)
 
-    @api.route('/%s/train' % model_name)
+    @ns.route('/%s/train' % model_name)
     class ModelTrain(flask_restplus.Resource):
         model_name = model_name
         model_obj = model_obj
         train_parser = train_parser
 
-        @api.doc('Retrain model')
-        @api.expect(train_parser)
+        @ns.doc('Retrain model')
+        @ns.expect(train_parser)
         def put(self):
             """Retrain model with available data."""
 

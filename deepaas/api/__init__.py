@@ -16,10 +16,8 @@
 
 
 import flask
-import flask_restplus
 from oslo_log import log as logging
 
-import deepaas
 from deepaas.api import v1
 from deepaas import model
 
@@ -28,10 +26,12 @@ LOG = logging.getLogger(__name__)
 APP = None
 
 
-def get_app(doc="/"):
+def get_app(doc="/", add_specs=True):
     """Get the Flask-RESTPlus app.
 
     Set doc to False if you do not want to get the Swagger documentation.
+    Set add_spces to False if you do not want to generate the swagger.json
+    specs file
     """
     global APP
 
@@ -41,17 +41,12 @@ def get_app(doc="/"):
     model.register_models()
 
     APP = flask.Flask(__name__)
+
+    for api in (v1, ):
+        bp = getattr(api, "get_blueprint")(doc=doc, add_specs=add_specs)
+        APP.register_blueprint(bp)
+
     APP.config.SWAGGER_UI_DOC_EXPANSION = 'list'
-
-    api = flask_restplus.Api(
-        APP,
-        version=deepaas.__version__,
-        title='DEEP as a Service API endpoint',
-        description='DEEP as a Service (DEEPaaS) API endpoint.',
-        doc=doc
-    )
-
-    api.add_namespace(v1.api, path="/models")
 
     LOG.info("Serving loaded models: %s", model.MODELS.keys())
 
