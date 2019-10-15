@@ -16,4 +16,4 @@
 
 from deepaas import version
 
-__version__ = version.version_string
+__version__ = version.release_string
