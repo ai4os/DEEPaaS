@@ -16,9 +16,9 @@
 
 
 import flask
+from oslo_config import cfg
 from oslo_log import log as logging
 
-from deepaas.api import v1
 from deepaas.api import v2
 from deepaas.api import versions
 from deepaas import model
@@ -26,6 +26,8 @@ from deepaas import model
 LOG = logging.getLogger(__name__)
 
 APP = None
+
+CONF = cfg.CONF
 
 
 def get_app(doc="/", add_specs=True):
@@ -40,19 +42,30 @@ def get_app(doc="/", add_specs=True):
     if APP:
         return APP
 
-    model.register_models()
-
-    versions.register_version("v1", "v1.models_models")
-    versions.register_version("v2", "v2.models_models")
-
     APP = flask.Flask(__name__)
 
-    for api in (v1, v2, versions):
+    model.register_v2_models()
+
+    if CONF.enable_v1:
+        from deepaas.api import v1  # noqa
+
+        model.register_v1_models()
+        versions.register_version("v1", "v1.models_models")
+        bp = v1.get_blueprint(doc=doc, add_specs=add_specs)
+        APP.register_blueprint(bp)
+        LOG.warning("Using V1 version of the API is not anymore supported "
+                    "and marked as deprecated, please switch to V2 as soon "
+                    "as possible.")
+        LOG.info("Serving loaded V1 models: %s", list(model.MODELS.keys()))
+
+    versions.register_version("v2", "v2.models_models")
+
+    for api in (v2, versions):
         bp = getattr(api, "get_blueprint")(doc=doc, add_specs=add_specs)
         APP.register_blueprint(bp)
 
     APP.config.SWAGGER_UI_DOC_EXPANSION = 'list'
 
-    LOG.info("Serving loaded models: %s", model.MODELS.keys())
+    LOG.info("Serving loaded V2 models: %s", list(model.MODELS.keys()))
 
     return APP

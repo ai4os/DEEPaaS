@@ -1,0 +1,6 @@
+---
+upgrade:
+  - Since V1 is deprecated the V1 endpoint is disabled by default. You can
+    enable it by using the `--enable-v1` CLI option.
+deprecations:
+  - V1 API is deprecated and disabled by default.

@@ -60,6 +60,14 @@ port will is hardcoded to 8080 (as OpenWhisk goes to port 8080). Note that
 if you are running inside a container, the most sensible option is to set
 listen-ip to 0.0.0.0
 """),
+    cfg.BoolOpt('enable-v1',
+                default="False",
+                help="""
+Whether to enable V1 version of the API or not.
+
+If this option is set to True, DEEPaaS API will offer a /v1/ endpoing with
+the DEPRECATED version of the API.
+"""),
 ]
 
 CONF = cfg.CONF
