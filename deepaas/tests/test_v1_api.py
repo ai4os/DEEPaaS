@@ -42,7 +42,7 @@ class TestApiV1(base.TestCase):
         app.config['TESTING'] = True
         app.config['DEBUG'] = True
 
-        deepaas.model.register_models()
+        deepaas.model.v1.register_models()
 
         bp = v1.get_blueprint(doc=False, add_specs=False)
         app.register_blueprint(bp)

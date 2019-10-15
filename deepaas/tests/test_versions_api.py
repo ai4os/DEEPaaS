@@ -19,6 +19,7 @@ import unittest
 import flask
 
 from deepaas.api import v1
+from deepaas.api import v2
 from deepaas.api import versions
 from deepaas.tests import base
 
@@ -84,6 +85,36 @@ class TestApiVersions(base.TestCase):
                 {'links': [{'href': '/v1/models/', 'rel': 'self'},
                            {'href': '/v1/', 'rel': 'help'}],
                  'version': 'v1'}
+            ]
+        }
+        self.assertDictEqual(expect, ret.json)
+
+    def test_v2_version_no_doc(self):
+        versions.register_version("v2", "v2.models_models")
+        self.app.register_blueprint(v2.get_blueprint(doc=False))
+        ret = self.cli.get("/")
+        self.assertEqual(200, ret.status_code)
+        expect = {
+            'versions': [
+                {'links': [{'href': '/v2/models/', 'rel': 'self'},
+                           {'href': '/v2/swagger.json', 'rel': 'describedby'}],
+                 'version': 'v2'}
+            ]
+        }
+        self.assertDictEqual(expect, ret.json)
+
+    @unittest.skip("Blocked by this stal pull request"
+                   "https://github.com/noirbizarre/flask-restplus/pull/553")
+    def test_v2_version_no_swagger(self):
+        versions.register_version("v2", "v2.models_models")
+        self.app.register_blueprint(v2.get_blueprint(add_specs=False))
+        ret = self.cli.get("/")
+        self.assertEqual(200, ret.status_code)
+        expect = {
+            'versions': [
+                {'links': [{'href': '/v2/models/', 'rel': 'self'},
+                           {'href': '/v2/', 'rel': 'help'}],
+                 'version': 'v2'}
             ]
         }
         self.assertDictEqual(expect, ret.json)

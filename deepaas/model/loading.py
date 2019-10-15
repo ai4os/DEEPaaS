@@ -16,27 +16,30 @@
 
 import stevedore
 
-MODEL_NAMESPACE = "deepaas.model"
+NAMESPACES = {
+    "v1": "deepaas.model",
+    "v2": "deepaas.v2.model",
+}
 
 
-def get_available_model_names():
+def get_available_model_names(version):
     """Get the names of all the models that are available on the system.
 
     :returns: A list of names.
     :rtype: frozenset
     """
-    mgr = stevedore.ExtensionManager(namespace=MODEL_NAMESPACE)
+    mgr = stevedore.ExtensionManager(namespace=NAMESPACES.get(version))
     return frozenset(mgr.names())
 
 
-def get_available_models():
+def get_available_models(version):
     """Retrieve all the models available on the system.
 
     :returns: A dict with model entrypoint name as the key and the model
               as the value.
     :rtype: dict
     """
-    mgr = stevedore.ExtensionManager(namespace=MODEL_NAMESPACE,
+    mgr = stevedore.ExtensionManager(namespace=NAMESPACES.get(version),
                                      propagate_map_exceptions=True)
 
     return dict(mgr.map(lambda ext: (ext.entry_point.name, ext.plugin)))

@@ -21,7 +21,7 @@ from flask_restplus import fields
 from deepaas import model
 
 # Get the models (this is a singleton, so it is safe to call it multiple times
-model.register_models()
+model.register_v2_models()
 
 ns = flask_restplus.Namespace(
     'models',
@@ -61,7 +61,7 @@ class Models(flask_restplus.Resource):
         """
 
         models = []
-        for name, obj in model.MODELS.items():
+        for name, obj in model.V2_MODELS.items():
             m = {
                 "id": name,
                 "name": name,
@@ -83,7 +83,7 @@ class Models(flask_restplus.Resource):
 # Therefore, in the next lines we iterate over the loaded models and create
 # the different resources for each model. This way we can also load the
 # expected parameters if needed (as in the training method).
-for model_name, model_obj in model.MODELS.items():
+for model_name, model_obj in model.V2_MODELS.items():
     @ns.marshal_with(model_meta, envelope='resource')
     @ns.route('/%s' % model_name)
     class BaseModel(flask_restplus.Resource):

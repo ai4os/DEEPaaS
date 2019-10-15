@@ -24,7 +24,7 @@ from deepaas.api.v2 import train as v2_train
 from deepaas import model
 
 # Get the models (this is a singleton, so it is safe to call it multiple times
-model.register_models()
+model.register_v2_models()
 
 ns = flask_restplus.Namespace(
     'models',

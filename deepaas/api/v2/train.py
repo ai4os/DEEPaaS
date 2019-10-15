@@ -19,7 +19,7 @@ import flask_restplus
 from deepaas import model
 
 # Get the models (this is a singleton, so it is safe to call it multiple times
-model.register_models()
+model.register_v2_models()
 
 ns = flask_restplus.Namespace(
     'models',
@@ -33,7 +33,7 @@ ns = flask_restplus.Namespace(
 # Therefore, in the next lines we iterate over the loaded models and create
 # the different resources for each model. This way we can also load the
 # expected parameters if needed (as in the training method).
-for model_name, model_obj in model.MODELS.items():
+for model_name, model_obj in model.V2_MODELS.items():
     # Fill the train parser with the supported arguments. Different models may
     # have different arguments.
     train_args = model_obj.get_train_args()
