@@ -25,7 +25,7 @@ import werkzeug.exceptions as exceptions
 from deepaas import model
 
 # Get the models (this is a singleton, so it is safe to call it multiple times
-model.register_models()
+model.register_v1_models()
 
 ns = flask_restplus.Namespace(
     'models',
@@ -107,7 +107,7 @@ class Models(flask_restplus.Resource):
         """
 
         models = []
-        for name, obj in model.MODELS.items():
+        for name, obj in model.V1_MODELS.items():
             m = {
                 "id": name,
                 "name": name,
@@ -159,7 +159,7 @@ response = ns.model('ModelResponse', {
 # Therefore, in the next lines we iterate over the loaded models and create
 # the different resources for each model. This way we can also load the
 # expected parameters if needed (as in the training method).
-for model_name, model_obj in model.MODELS.items():
+for model_name, model_obj in model.V1_MODELS.items():
     @ns.marshal_with(model_meta, envelope='resource')
     @ns.route('/%s' % model_name)
     class BaseModel(flask_restplus.Resource):

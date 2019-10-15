@@ -20,16 +20,16 @@ import mock
 import werkzeug.exceptions as exceptions
 
 import deepaas
-import deepaas.model
+import deepaas.model.v1
 from deepaas.tests import base
 
 
 class TestModel(base.TestCase):
     def test_abc(self):
-        self.assertRaises(TypeError, deepaas.model.BaseModel)
+        self.assertRaises(TypeError, deepaas.model.v1.BaseModel)
 
     def test_dummy_model(self):
-        m = deepaas.model.TestModel()
+        m = deepaas.model.v1.TestModel()
         for meth in (m.predict_file, m.predict_url, m.predict_data):
             self.assertRaises(NotImplementedError, meth, None)
         self.assertRaises(NotImplementedError, m.train)
@@ -42,7 +42,7 @@ class TestModel(base.TestCase):
         self.assertEqual({}, m.get_test_args())
 
     def test_dummy_model_with_wrapper(self):
-        w = deepaas.model.ModelWrapper("foo", deepaas.model.TestModel())
+        w = deepaas.model.v1.ModelWrapper("foo", deepaas.model.v1.TestModel())
         for meth in (w.predict_file, w.predict_url, w.predict_data):
             self.assertRaises(exceptions.NotImplemented, meth, None)
         self.assertRaises(exceptions.NotImplemented, w.train)
@@ -54,7 +54,7 @@ class TestModel(base.TestCase):
         self.assertEqual({}, w.get_test_args())
 
     def test_model_with_not_implemented_attributes_and_wrapper(self):
-        w = deepaas.model.ModelWrapper("foo", object())
+        w = deepaas.model.v1.ModelWrapper("foo", object())
         for meth in (w.predict_file, w.predict_url, w.predict_data):
             self.assertRaises(exceptions.NotImplemented, meth, None)
         self.assertRaises(exceptions.NotImplemented, w.train)
@@ -65,18 +65,18 @@ class TestModel(base.TestCase):
         self.assertEqual({}, w.get_train_args())
         self.assertEqual({}, w.get_test_args())
 
-    @mock.patch('deepaas.loading.get_available_models')
+    @mock.patch('deepaas.model.loading.get_available_models')
     def test_loading_ok(self, mock_loading):
         mock_loading.return_value = {uuid.uuid4().hex: "bar"}
-        deepaas.model.register_models()
-        for m in deepaas.model.MODELS.values():
-            self.assertIsInstance(m, deepaas.model.ModelWrapper)
+        deepaas.model.v1.register_models()
+        for m in deepaas.model.v1.MODELS.values():
+            self.assertIsInstance(m, deepaas.model.v1.ModelWrapper)
 
-    @mock.patch('deepaas.loading.get_available_models')
+    @mock.patch('deepaas.model.loading.get_available_models')
     def test_loading_error(self, mock_loading):
         mock_loading.return_value = []
-        deepaas.model.register_models()
-        self.assertIn("deepaas-test", deepaas.model.MODELS)
-        m = deepaas.model.MODELS.pop("deepaas-test")
-        self.assertIsInstance(m, deepaas.model.ModelWrapper)
-        self.assertIsInstance(m.model, deepaas.model.TestModel)
+        deepaas.model.v1.register_models()
+        self.assertIn("deepaas-test", deepaas.model.v1.MODELS)
+        m = deepaas.model.v1.MODELS.pop("deepaas-test")
+        self.assertIsInstance(m, deepaas.model.v1.ModelWrapper)
+        self.assertIsInstance(m.model, deepaas.model.v1.TestModel)

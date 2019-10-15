@@ -56,7 +56,7 @@ def get_app(doc="/", add_specs=True):
         LOG.warning("Using V1 version of the API is not anymore supported "
                     "and marked as deprecated, please switch to V2 as soon "
                     "as possible.")
-        LOG.info("Serving loaded V1 models: %s", list(model.MODELS.keys()))
+        LOG.info("Serving loaded V1 models: %s", list(model.V1_MODELS.keys()))
 
     versions.register_version("v2", "v2.models_models")
 
@@ -66,6 +66,6 @@ def get_app(doc="/", add_specs=True):
 
     APP.config.SWAGGER_UI_DOC_EXPANSION = 'list'
 
-    LOG.info("Serving loaded V2 models: %s", list(model.MODELS.keys()))
+    LOG.info("Serving loaded V2 models: %s", list(model.V2_MODELS.keys()))
 
     return APP

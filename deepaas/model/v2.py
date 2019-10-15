@@ -20,7 +20,7 @@ from oslo_log import log
 import six
 import werkzeug.exceptions as exceptions
 
-from deepaas import loading
+from deepaas.model import loading
 
 LOG = log.getLogger(__name__)
 
@@ -36,9 +36,8 @@ def register_models():
     if MODELS_LOADED:
         return
 
-    MODELS = {}
     try:
-        for name, model in loading.get_available_models().items():
+        for name, model in loading.get_available_models("v2").items():
             MODELS[name] = ModelWrapper(name, model)
     except Exception as e:
         LOG.warning("Error loading models: %s", e)
