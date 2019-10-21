@@ -28,7 +28,6 @@ warnings.simplefilter("default", DeprecationWarning)
 
 def parse_args(argv, default_config_files=None):
     log.register_options(cfg.CONF)
-
     log.set_defaults(default_log_levels=log.get_default_log_levels())
 
     cfg.CONF(argv[1:],

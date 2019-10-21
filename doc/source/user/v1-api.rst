@@ -1,10 +1,15 @@
-.. _devel:
+.. _devel-v1:
 
 
-Integrating a model into the API
-=================================
+Integrating a model into the V1 API (DEPRECATED)
+================================================
 
-DEEPaaS is based on Python's Setuptools entry points that are dinamically
+.. attention::
+   V1 version the API is deprecated and NOT supported starting on release
+   ``1.0.0``. Please refer to the :ref:`upgrade-notes` in order to get
+   information on how to adapt your model to V2 of the API.
+
+DEEPaaS V1 is based on Python's Setuptools entry points that are dinamically
 loaded to offer the model functionality through the API.
 
 When the API is spawned it will look for the deepaas.model entrypoint

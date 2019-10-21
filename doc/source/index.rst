@@ -30,25 +30,28 @@ initial API version, supported in releases under ``1.0.0``.  Starting with the
 disabled by default. Please, read carefully the :ref:`upgrade-notes` before
 upgrading to a newer version.
 
-Documentation
--------------
+Installation and upgrade documentation
+--------------------------------------
+
+.. toctree::
+   :maxdepth: 2
+
+   install/index
+
+User documentation
+-------------------
 
 If you want to try the DEEPaaS API, or if you want to integrate a machine
 learning, neural network or deep learning model with it, this documentation is
 what you are looking for.
 
 .. toctree::
-   :maxdepth: 1
+   :maxdepth: 2
 
-   installation
-   upgrade
-   quickstart
-   configuration/index
-   openwhisk
-   devel
+   user/index.rst
 
 API reference
--------------
+#############
 
 If you are looking for information on a specific function, class or
 method, this part of the documentation is for you.
@@ -64,9 +67,7 @@ Additional Notes
 .. toctree::
    :maxdepth: 2
 
-   contributing
-   code_of_conduct
-   releasenotes/index
+   contributing/index
 
 
 Indices and tables
@@ -82,6 +83,7 @@ Indices and tables
 .. toctree::
    :hidden:
 
-   configuration/config
-   configuration/sample
+   install/configuration/config
+   install/configuration/sample
    cli/deepaas-run
+   cli/deepaas-wsk

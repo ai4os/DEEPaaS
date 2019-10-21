@@ -14,7 +14,6 @@
 # License for the specific language governing permissions and limitations
 # under the License.
 
-
 import flask
 import flask_restplus
 
@@ -41,7 +40,9 @@ def get_blueprint(doc="/", add_specs=True):
         description='DEEP as a Service (DEEPaaS) API endpoint.',
         doc=doc,
         add_specs=add_specs,
+        validate=True,
     )
+
     api.add_namespace(ns)
     api.add_namespace(v2_model.ns)
     api.add_namespace(v2_predict.ns)

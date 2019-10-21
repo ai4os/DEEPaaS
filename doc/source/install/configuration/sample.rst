@@ -4,7 +4,7 @@ Sample Configuration File
 
 The following is a sample DEEPaaS configuration for adaptation and use. For a
 detailed overview of all available configuration options, refer to
-:doc:`/configuration/config`.
+:doc:`config`.
 
 The sample configuration can also be viewed in :download:`file form
 </_static/deepaas.conf.sample>`.

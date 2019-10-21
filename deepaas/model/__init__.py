@@ -22,8 +22,20 @@ V2_MODELS = v2.MODELS
 
 
 def register_v1_models():
+    """Register V1 models.
+
+    This method has to be called before the API is spawned, so that we
+    can look up the correct entry points and load the defined models.
+    """
+
     return v1.register_models()
 
 
 def register_v2_models():
+    """Register V2 models.
+
+    This method has to be called before the API is spawned, so that we
+    can look up the correct entry points and load the defined models.
+    """
+
     return v2.register_models()

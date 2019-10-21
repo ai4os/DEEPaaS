@@ -29,7 +29,7 @@ ns = flask_restplus.Namespace(
 
 model_links = ns.model('Location', {
     "rel": fields.String(required=True),
-    "href": fields.Url(required=True)
+    "href": fields.String(required=True)
 })
 
 model_meta = ns.model('ModelMetadata', {
@@ -40,18 +40,14 @@ model_meta = ns.model('ModelMetadata', {
     'license': fields.String(required=False, description='Model license'),
     'author': fields.String(required=False, description='Model author'),
     'version': fields.String(required=False, description='Model version'),
-    'url': fields.Url(required=False, description='Model url'),
+    'url': fields.String(required=False, description='Model url'),
     'links': fields.List(fields.Nested(model_links))
 })
 
-models = ns.model('Models', {
-    'models': fields.List(fields.Nested(model_meta)),
-})
 
-
-@ns.marshal_with(models, envelope='resource')
 @ns.route('/')
 class Models(flask_restplus.Resource):
+    @ns.marshal_with(model_meta, envelope='models')
     def get(self):
         """Return loaded models and its information.
 
@@ -73,7 +69,7 @@ class Models(flask_restplus.Resource):
             meta = obj.get_metadata()
             m.update(meta)
             models.append(m)
-        return {"models": models}
+        return models
 
 
 # It is better to create different routes for different models instead of using
@@ -84,14 +80,14 @@ class Models(flask_restplus.Resource):
 # the different resources for each model. This way we can also load the
 # expected parameters if needed (as in the training method).
 for model_name, model_obj in model.V2_MODELS.items():
-    @ns.marshal_with(model_meta, envelope='resource')
     @ns.route('/%s' % model_name)
     class BaseModel(flask_restplus.Resource):
         model_name = model_name
         model_obj = model_obj
 
+        @ns.response(200, "Success", model=model_meta)
         def get(self):
-            """Return model's metadata."""
+            """Return the model's metadata."""
 
             m = {
                 "id": self.model_name,
@@ -103,4 +99,5 @@ for model_name, model_obj in model.V2_MODELS.items():
             }
             meta = self.model_obj.get_metadata()
             m.update(meta)
+
             return m
