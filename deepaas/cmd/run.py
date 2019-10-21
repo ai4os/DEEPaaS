@@ -74,6 +74,23 @@ CONF = cfg.CONF
 CONF.register_cli_opts(cli_opts)
 
 
+class MultiOut(object):
+    def __init__(self, *args):
+        self.handles = args
+
+    def write(self, s):
+        for f in self.handles:
+            f.write(s)
+
+    def flush(self):
+        for f in self.handles:
+            f.flush()
+
+    def close(self):
+        for f in self.handles:
+            f.close()
+
+
 def main():
     _shutdown.handle_signals()
     config.parse_args(sys.argv)

@@ -25,7 +25,6 @@ ns = flask_restplus.Namespace(
     'models',
     description='Model information, inference and training operations')
 
-
 # It is better to create different routes for different models instead of using
 # the Flask pluggable views. Different models may require different parameters,
 # therefore we need to do like this.
@@ -34,26 +33,19 @@ ns = flask_restplus.Namespace(
 # the different resources for each model. This way we can also load the
 # expected parameters if needed (as in the training method).
 for model_name, model_obj in model.V2_MODELS.items():
-    # Fill the train parser with the supported arguments. Different models may
-    # have different arguments.
-    train_args = model_obj.get_train_args()
-    train_parser = ns.parser()
-    for k, v in train_args.items():
-        train_parser.add_argument(k, **v)
-
     @ns.route('/%s/train' % model_name)
     class ModelTrain(flask_restplus.Resource):
         model_name = model_name
         model_obj = model_obj
-        train_parser = train_parser
+        parser = model_obj.add_train_args(ns.parser())
 
         @ns.doc('Retrain model')
-        @ns.expect(train_parser)
+        @ns.expect(parser)
         def put(self):
             """Retrain model with available data."""
 
-            args = self.train_parser.parse_args()
-            ret = self.model_obj.train(args)
-            # FIXME(aloga): what are we returning here? We need to marshal the
-            # response!!
+            args = self.parser.parse_args()
+            ret = self.model_obj.train(**args)
+            # FIXME(aloga): what are we returning here? We need to take care
+            # of these responses as well.
             return ret

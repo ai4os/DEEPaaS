@@ -1,7 +1,7 @@
 DEEPaaS Release Notes
 =====================
 
-Current (un)Release Notes
+Current Release Notes
 ---------------------
 
 .. release-notes::

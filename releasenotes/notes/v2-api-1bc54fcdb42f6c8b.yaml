@@ -1,0 +1,31 @@
+---
+features:
+  - V2 version of the API.
+upgrade:
+  - The namespace has changed. Now we load models in the ``deepaas.v2.model``
+    namespace. It is still possible to use the old namespace, but this is
+    depreacated.
+  - The API that the entrypoint must provide has changed. Please refer to the
+    V2 documentation for more details.
+  - We have changed the way the arguments (both for train and predict methods)
+    are generated. Now you must define two methods ``add_train_args`` and
+    ``add_predict_args`` that will receive an argument parser like object, so
+    you will have direct control over the arguments. Using the old and now
+    deprecated ``get_*_args`` is still possible, but will be removed in the
+    future.
+  - Now ``predict_data`` and ``predict_url`` does no longer exist. Now we only
+    define a ``predict`` method. The argument holding the data to perform the
+    prediction or inference has to be defined by means of the corresponding
+    ``add_predict_args`` function.
+deprecations:
+  - The V1 version of the API is no longer active by defualt and will be
+    removed in the next major release.
+  - The ``deepaas.model`` entrypoint is now deprecated, please move your models
+    to  ``deepaas.v2.model``.
+  - The ``get_train_args`` and ``get_test_args`` are deprecated. Please use the
+    ``add_train_args``  and ``add_predict_args`` instead.
+    List deprecations notes here, or remove this section.  All of the list
+    items in this section are combined when the release notes are rendered, so
+    the text needs to be worded so that it does not depend on any information
+    only available in another section, such as the prelude. This may mean
+    repeating some details.
