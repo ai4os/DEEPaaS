@@ -20,5 +20,6 @@ pytest
 pytest-cov
 
 sphinx>=1.6.2 # BSD
+sphinx_rtd_theme
 recommonmark
 reno>=2.5.0 # Apache-2.0

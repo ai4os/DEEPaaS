@@ -19,7 +19,16 @@ fron of their model, thus accesing its functionality via HTTP calls.
 Compatibility
 -------------
 
-DEEPaaS works with Python 2.7+ and Python 3.
+The DEEPaaS API works with Python 2.7+ and Python 3.
+
+Upgrading from V1 of the API
+############################
+
+The DEEPaaS API provides two different API versions: V1 and V2. V1 was the
+initial API version, supported in releases under ``1.0.0``.  Starting with the
+``1.0.0`` release V2 is the only version supported, with the V1 of the API
+disabled by default. Please, read carefully the :ref:`upgrade-notes` before
+upgrading to a newer version.
 
 Documentation
 -------------
@@ -32,6 +41,7 @@ what you are looking for.
    :maxdepth: 1
 
    installation
+   upgrade
    quickstart
    configuration/index
    openwhisk
