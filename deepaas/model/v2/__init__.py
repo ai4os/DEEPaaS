@@ -131,6 +131,14 @@ class ModelWrapper(object):
         except NotImplementedError:
             raise exceptions.NotImplemented("Model '%s' does not implement "
                                             "this functionality" % self.name)
+        except Exception as e:
+            LOG.error("An exception has happened when calling '%s' method on "
+                      "'%s' model." % (method, self.name))
+            LOG.exception(e)
+            if isinstance(e, exceptions.HTTPException):
+                raise e
+            else:
+                raise exceptions.InternalServerError(description=e)
 
     def get_metadata(self):
         """Obtain model's metadata.
