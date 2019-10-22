@@ -16,11 +16,17 @@
 
 import flask
 import flask_restplus
+from oslo_config import cfg
+from oslo_log import log
 
+from deepaas.api.v2 import debug as v2_debug
 from deepaas.api.v2 import models as v2_model
 from deepaas.api.v2 import predict as v2_predict
 from deepaas.api.v2 import train as v2_train
 from deepaas import model
+
+CONF = cfg.CONF
+LOG = log.getLogger("deepaas.api.v2")
 
 # Get the models (this is a singleton, so it is safe to call it multiple times
 model.register_v2_models()
@@ -43,7 +49,18 @@ def get_blueprint(doc="/", add_specs=True):
         validate=True,
     )
 
+    # Add a text/plain representation so that we can return text as
+    # responses
+    @api.representation('text/plain')
+    def text_response(data, code, headers=None):
+        resp = flask.make_response(data, code)
+        resp.headers['Content-Type'] = 'text/plain'
+        return resp
+
+    v2_debug.setup_debug()
+
     api.add_namespace(ns)
+    api.add_namespace(v2_debug.ns)
     api.add_namespace(v2_model.ns)
     api.add_namespace(v2_predict.ns)
     api.add_namespace(v2_train.ns)

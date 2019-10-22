@@ -26,11 +26,19 @@ logging.captureWarnings(True)
 warnings.simplefilter("default", DeprecationWarning)
 
 
-def parse_args(argv, default_config_files=None):
+def prepare_logging():
     log.register_options(cfg.CONF)
     log.set_defaults(default_log_levels=log.get_default_log_levels())
 
+
+def parse_args(argv, default_config_files=None):
     cfg.CONF(argv[1:],
              project='deepaas',
              version=deepaas.__version__,
              default_config_files=default_config_files)
+
+
+def config_and_logging(argv, default_config_files=None):
+    prepare_logging()
+    parse_args(argv, default_config_files=default_config_files)
+    log.setup(cfg.CONF, "deepaas")

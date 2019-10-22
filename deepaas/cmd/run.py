@@ -19,7 +19,7 @@ import os
 import sys
 
 from oslo_config import cfg
-from oslo_log import log as logging
+from oslo_log import log as oslo_log
 
 import deepaas
 from deepaas import api
@@ -68,34 +68,25 @@ Whether to enable V1 version of the API or not.
 If this option is set to True, DEEPaaS API will offer a /v1/ endpoing with
 the DEPRECATED version of the API.
 """),
+    cfg.BoolOpt('debug-endpoint',
+                default="false",
+                help="""
+Enable debug endpoint. If set we will provide all the information that you
+print to the standard output and error (i.e. stdout and stderr) through the
+"/debug" endpoint. Default is to not provide this information. This will not
+provide logging information about the API itself.
+"""),
 ]
 
 CONF = cfg.CONF
 CONF.register_cli_opts(cli_opts)
 
 
-class MultiOut(object):
-    def __init__(self, *args):
-        self.handles = args
-
-    def write(self, s):
-        for f in self.handles:
-            f.write(s)
-
-    def flush(self):
-        for f in self.handles:
-            f.flush()
-
-    def close(self):
-        for f in self.handles:
-            f.close()
-
-
 def main():
     _shutdown.handle_signals()
-    config.parse_args(sys.argv)
-    logging.setup(CONF, "deepaas")
-    log = logging.getLogger(__name__)
+
+    config.config_and_logging(sys.argv)
+    log = oslo_log.getLogger("deepaas")
 
     if CONF.openwhisk_detect and os.environ.get('__OW_API_HOST', None):
         log.info("Starting DEEPaaS (OpenWhisk) version %s",

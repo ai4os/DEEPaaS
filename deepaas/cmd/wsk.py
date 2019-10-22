@@ -18,7 +18,7 @@
 import sys
 
 from oslo_config import cfg
-from oslo_log import log as logging
+from oslo_log import log as oslo_log
 
 import deepaas
 from deepaas.cmd import _shutdown
@@ -42,9 +42,9 @@ CONF.register_cli_opts(cli_opts)
 
 def main():
     _shutdown.handle_signals()
-    config.parse_args(sys.argv)
-    logging.setup(CONF, "deepaas")
-    log = logging.getLogger(__name__)
+
+    config.config_and_logging(sys.argv)
+    log = oslo_log.getLogger("deepaas")
 
     log.info("Starting DEEPaaS (OpenWhisk) version %s", deepaas.__version__)
 
