@@ -1,5 +1,5 @@
 ===========
-deepaas-run
+deepaas-wsk
 ===========
 
 Synopsis
@@ -11,26 +11,51 @@ Description
 ===========
 
 :program:`deepaas-wsk` is a server daemon that serves the models that are
-loaded through the ``deepaas.models`` entrypoint as an OpenWhisk action.
-API.
+   loaded through the ``deepaas.models`` entrypoint as an OpenWhisk action.  API.
 
 Options
 =======
 
-TBD.
+.. option:: --debug, -d
+
+   If set to true, the logging level will be set to DEBUG instead of the
+   default INFO level.
+
+.. option:: --debug-endpoint
+
+   Enable debug endpoint. If set we will provide all the information that you
+   print to the standard output and error (i.e. stdout and stderr) through the
+   ``/debug`` endpoint. Default is to not provide this information. This will
+   not provide logging information about the API itself.
+
+.. option:: --enable-v1
+
+   Whether to enable V1 version of the API or not. If this option is set to
+   ``True``, DEEPaaS API will offer a ``/v1/`` endpoint with the DEPRECATED
+   version of the API.
+
+.. option:: --listen-ip LISTEN_IP
+
+   IP address on which the DEEPaaS API will listen. The DEEPaaS API service
+   listens on this IP address for incoming requests.
+
+.. option:: --listen-port LISTEN_PORT
+
+   Port on which the DEEPaaS API will listen. The DEEPaaS API service listens
+   on this port number for incoming requests.
 
 Files
 =====
 
-TBD.
+None
 
 See Also
 ========
 
-TBD.
+Documentation: `DEEPaaS API <https://docs.deep-hybrid-datacloud.eu/projects/deepaas/>`_
 
 Reporting Bugs
 ==============
 
-Bugs are managed at `Launchpad <https://github.com/indigo-dc/deepaas>`__
+Bugs are managed at `GitHub <https://github.com/indigo-dc/deepaas>`_
 

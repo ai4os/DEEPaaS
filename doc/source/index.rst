@@ -85,5 +85,4 @@ Indices and tables
 
    install/configuration/config
    install/configuration/sample
-   cli/deepaas-run
-   cli/deepaas-wsk
+   cli/index
