@@ -35,7 +35,8 @@ class TestRun(base.TestCase):
         mock_get_app.assert_called_once()
         m.run.assert_called_with(host="127.0.0.1",
                                  port=5000,
-                                 debug=mock.ANY)
+                                 debug=mock.ANY,
+                                 use_reloader=False)
         mock_handle_signals.assert_called_once()
 
     @mock.patch("deepaas.cmd._shutdown.handle_signals")
@@ -52,7 +53,8 @@ class TestRun(base.TestCase):
         mock_get_app.assert_called_once()
         m.run.assert_called_with(host=ip,
                                  port=port,
-                                 debug=mock.ANY)
+                                 debug=mock.ANY,
+                                 use_reloader=False)
         mock_handle_signals.assert_called_once()
 
     @mock.patch("deepaas.cmd._shutdown.handle_signals")
@@ -78,7 +80,8 @@ class TestRun(base.TestCase):
         mock_get_app.assert_called_once()
         m.run.assert_called_with(host="127.0.0.1",
                                  port=5000,
-                                 debug=mock.ANY)
+                                 debug=mock.ANY,
+                                 use_reloader=False)
         mock_handle_signals.assert_called_once()
 
 

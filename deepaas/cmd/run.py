@@ -110,6 +110,7 @@ def main():
             host=CONF.listen_ip,
             port=CONF.listen_port,
             debug=CONF.debug,
+            use_reloader=False
         )
 
 
