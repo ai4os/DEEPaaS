@@ -3,12 +3,14 @@ prelude: >
     This version introduces major changes in the API. We now support versioned
     API endpoints. Please read carefully before upgrading your models. Now the
     root endpoint will provide information about versions that are enabled, so
-    the corresponding api versions will be available under "v1", "v2", etc.
+    the corresponding api versions will be available under ``/v1``, ``/v2``,
+    etc.
 features:
   - Support for multiple, versioned endpoints.
 upgrade:
   - This change introduces an change in the URL that is being used to serve the
-    v1 version of the API. Previous versions served this under "/models", the
-    documentation into "/" and the OpenAPI specification under "swagger.json".
-    Hoever, this change has moved it to "/v1" (therefore the "/v1/" and the
-    "v1/swagger.json" endpoints are the documentation and specification).
+    v1 version of the API. Previous versions served this under ``/models``, the
+    documentation into ``/`` and the OpenAPI specification under
+    ``/swagger.json``. This change has moved each API version to ``/v1`` and
+    ``v2``. The swagger documentation is in ``/doc`` and the OpenAPI spec is
+    under ``/swagger.json``.

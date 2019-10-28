@@ -14,14 +14,15 @@
 # License for the specific language governing permissions and limitations
 # under the License.
 
-import flask
-import flask_restplus
+from aiohttp import web
+import aiohttp_apispec
 from oslo_config import cfg
 from oslo_log import log
 
 from deepaas.api.v2 import debug as v2_debug
 from deepaas.api.v2 import models as v2_model
 from deepaas.api.v2 import predict as v2_predict
+from deepaas.api.v2 import responses
 from deepaas.api.v2 import train as v2_train
 from deepaas import model
 
@@ -31,38 +32,69 @@ LOG = log.getLogger("deepaas.api.v2")
 # Get the models (this is a singleton, so it is safe to call it multiple times
 model.register_v2_models()
 
-ns = flask_restplus.Namespace(
-    'models',
-    description='Model information, inference and training operations')
+APP = None
 
 
-def get_blueprint(doc="/", add_specs=True):
-    bp = flask.Blueprint('v2', __name__, url_prefix="/v2")
+def get_app():
+    global APP
 
-    api = flask_restplus.Api(
-        bp,
-        version="2.0.0",
-        title='DEEP as a Service API V2 endpoint',
-        description='DEEP as a Service (DEEPaaS) API endpoint.',
-        doc=doc,
-        add_specs=add_specs,
-        validate=True,
-    )
+    APP = web.Application()
 
-    # Add a text/plain representation so that we can return text as
-    # responses
-    @api.representation('text/plain')
-    def text_response(data, code, headers=None):
-        resp = flask.make_response(data, code)
-        resp.headers['Content-Type'] = 'text/plain'
-        return resp
+#    # Add a text/plain representation so that we can return text as
+#    # responses
+#    @api.representation('text/plain')
+#    def text_response(data, code, headers=None):
+#        resp = flask.make_response(data, code)
+#        resp.headers['Content-Type'] = 'text/plain'
+#        return resp
 
     v2_debug.setup_debug()
 
-    api.add_namespace(ns)
-    api.add_namespace(v2_debug.ns)
-    api.add_namespace(v2_model.ns)
-    api.add_namespace(v2_predict.ns)
-    api.add_namespace(v2_train.ns)
+    APP.router.add_get('/', get_version, name="v2")
+    APP.add_routes(v2_debug.routes)
+    APP.add_routes(v2_model.routes)
+    APP.add_routes(v2_train.routes)
+    APP.add_routes(v2_predict.routes)
 
-    return bp
+    return APP
+
+
+@aiohttp_apispec.docs(
+    tags=["versions"],
+    summary="Get V2 API version information",
+)
+@aiohttp_apispec.response_schema(responses.Version(), 200)
+@aiohttp_apispec.response_schema(responses.Failure(), 400)
+async def get_version(request):
+    version = {
+        "version": "stable",
+        "id": "v2",
+        "links": [
+            {
+                "rel": "self",
+                # NOTE(aloga): we use our the router table from this
+                # application (i.e. the global APP in this module) to be able
+                # to build the correct url, as it can be prefixed outside of
+                # this module (in an add_subapp() call)
+                "href": "%s" % APP.router["v2"].url_for(),
+            },
+        ]
+    }
+
+# NOTE(aloga): skip these for now, until this issue is solved:
+# https://github.com/maximdanilchenko/aiohttp-apispec/issues/65
+#                doc = "%s.doc" % v.split(".")[0]
+#            d = {"rel": "help",
+#                 "type": "text/html",
+#                 # FIXME(aloga): this -v is wrong
+#                 "href": "flask.url_for(doc)"}
+#            versions[-1]["links"].append(d)
+#
+#                specs = "%s.specs" % v.split(".")[0]
+#            d = {"rel": "describedby",
+#                 "type": "application/json",
+#                 # FIXME(aloga): this -v is wrong
+#                 "href": "flask.url_for(specs)"}
+#            versions[-1]["links"].append(d)
+
+    return web.json_response(version)

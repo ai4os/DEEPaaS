@@ -23,11 +23,7 @@
 
 import sys
 
-import flask
-try:
-    from gevent import wsgi as pywsgi  # noqa
-except ImportError:
-    from gevent import pywsgi  # noqa
+from aiohttp import web
 from oslo_config import cfg
 
 from deepaas import api
@@ -37,9 +33,8 @@ CONF = cfg.CONF
 
 LOG_SENTINEL = 'XXX_THE_END_OF_A_WHISK_ACTIVATION_XXX'
 
-proxy = flask.Flask(__name__)
-proxy.debug = False
-proxy.initialized = False
+
+routes = web.RouteTableDef()
 
 APP = None
 
@@ -47,8 +42,8 @@ APP = None
 # OpenWhisk calls the /init route when initializing the action, therefore we
 # need this route. We use it as a singleton as we do not allow to reinit the
 # action.
-@proxy.route('/init', methods=['POST'])
-def init():
+@routes.post('/init')
+async def init(request):
     global APP
 
     try:
@@ -56,15 +51,23 @@ def init():
             APP = api.get_app(doc=False)
         return ('OK', 200)
     except Exception as e:
-        response = flask.jsonify({'error': 'Internal error. {}'.format(e)})
-        response.status_code = 500
+        response = web.json_response(
+            {'error': 'Internal error. {}'.format(e)},
+            status=500
+        )
         return complete(response)
 
 
 # OpenWhisk will call the /run route when an action is invoked
-@proxy.route('/run', methods=['POST', "GET"])
-def run():
-    message = flask.request.get_json(force=True, silent=True)
+@routes.get('/run')
+@routes.post('/run')
+async def run(request):
+    req_clone = request.clone()
+    try:
+        message = await request.json()
+    except Exception:
+        return error_bad_request()
+
     if message and not isinstance(message, dict):
         return error_bad_request()
     else:
@@ -74,23 +77,26 @@ def run():
 
     if APP is not None:
         try:
-            result = handle.invoke(APP, args)
-            response = flask.jsonify(result)
-            response.status_code = 200
+            result = await handle.invoke(APP, req_clone, args)
+            response = web.json_response(result)
         except Exception as e:
-            response = flask.jsonify({'error': 'Internal error. {}'.format(e)})
-            response.status_code = 500
+            response = web.json_response(
+                {'error': 'Internal error. {}'.format(e)},
+                status=500
+            )
     else:
-        response = flask.jsonify({'error': 'The action is not intialized. '
-                                           'See logs for details.'})
-        response.status_code = 502
+        response = web.json_response(
+            {'error': 'The action is not intialized. See logs for details.'},
+            status=502
+        )
     return complete(response)
 
 
 def error_bad_request():
-    response = flask.jsonify({'error': 'The action did not receive a '
-                              'dictionary as an argument.'})
-    response.status_code = 400
+    response = web.json_response(
+        {'error': 'The action did not receive a dictionary as an argument.'},
+        status=400
+    )
     return complete(response)
 
 
@@ -104,5 +110,12 @@ def complete(response):
 
 
 def main():
-    server = pywsgi.WSGIServer((CONF.listen_ip, 8080), proxy, log=None)
-    server.serve_forever()
+    proxy = web.Application(debug=False)
+    proxy.initialized = False
+    proxy.add_routes(routes)
+
+    web.run_app(
+        proxy,
+        host=CONF.listen_ip,
+        port=8080,
+    )

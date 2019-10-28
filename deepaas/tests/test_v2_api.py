@@ -16,13 +16,14 @@
 
 import uuid
 
-import flask
-import flask_restplus.model
+from aiohttp import test_utils
+from aiohttp import web
 import six
 
 import deepaas
 from deepaas.api import v2
 from deepaas.api.v2 import predict
+from deepaas.api.v2 import responses
 import deepaas.model
 import deepaas.model.v2
 from deepaas.tests import base
@@ -33,77 +34,85 @@ class TestModelResponse(base.TestCase):
         class Fake(object):
             response_schema = None
         response = predict._get_model_response("deepaas-test", Fake)
-        self.assertIsInstance(response, flask_restplus.model.Model)
+        self.assertIs(response, responses.Prediction)
 
 
 class TestApiV2(base.TestCase):
+    async def get_application(self):
+        deepaas.model.v2.register_models()
+
+        app = web.Application(debug=True)
+        v2app = v2.get_app()
+        app.add_subapp("/v2", v2app)
+
+        return app
+
     def setUp(self):
         super(TestApiV2, self).setUp()
-
-        app = flask.Flask(__name__)
-        app.config['TESTING'] = True
-        app.config['DEBUG'] = True
 
         self.maxDiff = None
 
         self.flags(debug=True)
-        deepaas.model.v2.register_models()
-
-        bp = v2.get_blueprint()
-        app.register_blueprint(bp)
-
-        self.app = app.test_client()
-        self.assertEqual(app.debug, True)
 
     def assert_ok(self, response):
-        self.assertIn(response.status_code, [200, 201])
+        self.assertIn(response.status, [200, 201])
 
-    def test_not_found(self):
-        ret = self.app.get("/v2/models/%s" % uuid.uuid4().hex)
-        self.assertEqual(404, ret.status_code)
+    @test_utils.unittest_run_loop
+    async def test_not_found(self):
+        ret = await self.client.get("/v2/models/%s" % uuid.uuid4().hex)
+        self.assertEqual(404, ret.status)
 
-        ret = self.app.put("/v2/models/%s" % uuid.uuid4().hex)
-        self.assertEqual(404, ret.status_code)
+        ret = await self.client.put("/v2/models/%s" % uuid.uuid4().hex)
+        self.assertEqual(404, ret.status)
 
-        ret = self.app.post("/v2/models/%s" % uuid.uuid4().hex)
-        self.assertEqual(404, ret.status_code)
+        ret = await self.client.post("/v2/models/%s" % uuid.uuid4().hex)
+        self.assertEqual(404, ret.status)
 
-        ret = self.app.delete("/v2/models/%s" % uuid.uuid4().hex)
-        self.assertEqual(404, ret.status_code)
+        ret = await self.client.delete("/v2/models/%s" % uuid.uuid4().hex)
+        self.assertEqual(404, ret.status)
 
-    def test_model_not_found(self):
-        ret = self.app.put("/v2/models/%s/train" % uuid.uuid4().hex)
-        self.assertEqual(404, ret.status_code)
+    @test_utils.unittest_run_loop
+    async def test_model_not_found(self):
+        ret = await self.client.put("/v2/models/%s/train" % uuid.uuid4().hex)
+        self.assertEqual(404, ret.status)
 
-        ret = self.app.post("/v2/models/%s/predict" % uuid.uuid4().hex)
-        self.assertEqual(404, ret.status_code)
+        ret = await self.client.post("/v2/models/%s/predict" %
+                                     uuid.uuid4().hex)
+        self.assertEqual(404, ret.status)
 
-        ret = self.app.get("/v2/models/%s" % uuid.uuid4().hex)
-        self.assertEqual(404, ret.status_code)
+        ret = await self.client.get("/v2/models/%s" % uuid.uuid4().hex)
+        self.assertEqual(404, ret.status)
 
-#    def test_train_not_implemented(self):
-#        ret = self.app.put("/v2/models/not-implemented/train")
-#        self.assertEqual(501, ret.status_code)
-#
-    def test_predict_no_parameters(self):
-        ret = self.app.post("/v2/models/deepaas-test/predict")
-        self.assertIn("Input payload validation failed", ret.json["message"])
-        self.assertEqual(400, ret.status_code)
+    @test_utils.unittest_run_loop
+    async def test_predict_no_parameters(self):
+        ret = await self.client.post("/v2/models/deepaas-test/predict")
+        json = await ret.json()
+        self.assertDictEqual(
+            {
+                'parameter': ['Missing data for required field.'],
+                'data': ['Missing data for required field.']
+            },
+            json
+        )
+        self.assertEqual(422, ret.status)
 
-    def test_predict_data(self):
+    @test_utils.unittest_run_loop
+    async def test_predict_data(self):
         f = six.BytesIO(b"foo")
-        ret = self.app.post(
+        ret = await self.client.post(
             "/v2/models/deepaas-test/predict",
             data={"data": (f, "foo.txt"),
                   "parameter": 1})
-        self.assertEqual(200, ret.status_code)
+        self.assertEqual(200, ret.status)
 
-    def test_train(self):
-        ret = self.app.put("/v2/models/deepaas-test/train",
-                           data={"parameter_one": 1})
-        self.assertEqual(200, ret.status_code)
+    @test_utils.unittest_run_loop
+    async def test_train(self):
+        ret = await self.client.put("/v2/models/deepaas-test/train",
+                                    data={"parameter_one": 1})
+        self.assertEqual(200, ret.status)
 
-    def test_get_metadata(self):
+    @test_utils.unittest_run_loop
+    async def test_get_metadata(self):
         meta = {'models': [
             {'author': 'Alvaro Lopez Garcia',
              'description': ('This is not a model at all, just a '
@@ -118,15 +127,16 @@ class TestApiV2(base.TestCase):
              'version': '0.0.1'}
         ]}
 
-        ret = self.app.get("/v2/models/")
+        ret = await self.client.get("/v2/models")
         self.assert_ok(ret)
-        self.assertDictEqual(meta, ret.json)
+        self.assertDictEqual(meta, await ret.json())
 
-        ret = self.app.get("/v2/models/deepaas-test")
+        ret = await self.client.get("/v2/models/deepaas-test")
         self.assert_ok(ret)
-        self.assertDictEqual(meta["models"][0], ret.json)
+        self.assertDictEqual(meta["models"][0], await ret.json())
 
-    def test_bad_metods_metadata(self):
-        for i in (self.app.post, self.app.put, self.app.delete):
-            ret = i("/v2/models/")
-            self.assertEqual(405, ret.status_code)
+    @test_utils.unittest_run_loop
+    async def test_bad_metods_metadata(self):
+        for i in (self.client.post, self.client.put, self.client.delete):
+            ret = await i("/v2/models")
+            self.assertEqual(405, ret.status)

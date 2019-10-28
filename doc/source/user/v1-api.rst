@@ -29,7 +29,7 @@ Once loaded, the API exposes the following functions or methods:
     * 'urls': This should be empty for this method
     * other keys needed to make the prediction as defined by the function `get_test_args`
 
-  The response can be a str, a dict or a file (using for example `flask.send_file`)
+  The response must be a str or a dict
 * ``predict_url(args)``: Perform a prediction using URLs. The API will
   pass a Python dict containing all the necessary information to make a prediction.
   The keys of this dict are:
@@ -38,7 +38,7 @@ Once loaded, the API exposes the following functions or methods:
     * 'urls': This is a list of strings of the URLs to use for prediction
     * other keys needed to make the prediction as defined by the function `get_test_args`
 
-  The response can be a str, a dict or a file (using for example `flask.send_file`)
+  The response can must be a str or a dict
 * ``train()``: Perform a training over a dataset.
 * ``get_train_args()``: Retrieve the parameters needed for training. This
   method must return a dict of dicts. A possible example is the following:

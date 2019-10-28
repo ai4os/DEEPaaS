@@ -19,7 +19,8 @@ import logging
 import sys
 import warnings
 
-import flask_restplus
+from aiohttp import web
+import aiohttp_apispec
 from oslo_config import cfg
 from oslo_log import log
 import six
@@ -31,10 +32,8 @@ CONF = cfg.CONF
 # Get the models (this is a singleton, so it is safe to call it multiple times
 model.register_v2_models()
 
-ns = flask_restplus.Namespace(
-    'models',
-    description='Model information, inference and training operations')
-
+app = web.Application()
+routes = web.RouteTableDef()
 
 # Ugly global variable to provide a string stream to read the DEBUG output
 # if it is enabled
@@ -81,11 +80,15 @@ def setup_debug():
         sys.stderr = MultiOut(DEBUG_STREAM, sys.stderr)
 
 
-@ns.route('/debug')
-class DeepaasDebug(flask_restplus.Resource):
-    def get(self):
-        """Return debug information if enabled by API."""
-        print("--- DEBUG MARKER %s ---" % datetime.datetime.now())
-        if DEBUG_STREAM is not None:
-            return DEBUG_STREAM.getvalue()
-        return ""
+@aiohttp_apispec.docs(
+    tags=["debug"],
+    summary="""Return debug information if enabled by API.""",
+    description="""Return debug information if enabled by API.""",
+)
+@routes.get('/debug')
+async def get(self):
+    print("--- DEBUG MARKER %s ---" % datetime.datetime.now())
+    resp = ""
+    if DEBUG_STREAM is not None:
+        resp = DEBUG_STREAM.getvalue()
+    return web.Response(text=resp)

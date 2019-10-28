@@ -78,9 +78,9 @@ Training
 
 Regarding training there are two functions to be defined. First of all, you can
 specify the training arguments to be defined (and published through the API)
-with the ``add_train_args`` function, as follows:
+with the ``get_train_args`` function, as follows:
 
-.. autofunction:: deepaas.model.v2.base.BaseModel.add_train_args
+.. autofunction:: deepaas.model.v2.base.BaseModel.get_train_args
 
 Then, you must implement the training function (named ``train``) that will
 receive the defined arguments as keyword argumetns:
@@ -92,21 +92,27 @@ Prediction and inference
 
 For prediction, there are different functions to be implemented. First of all,
 as for the training, you can specify the prediction arguments to be defined,
-(and published through the API) with the ``add_predict_args`` as follows:
+(and published through the API) with the ``get_predict_args`` as follows:
 
-.. autofunction:: deepaas.model.v2.base.BaseModel.add_predict_args
+.. autofunction:: deepaas.model.v2.base.BaseModel.get_predict_args
 
 Do not forget to add an input argument to hold your data. If you want to upload
-files for inference to the API, you should use a ``werkzeug.FileStorate`` as
-type, for instance::
+files for inference to the API, you should use a ``webargas.fields.Field``
+field created as follows::
 
-    def add_predict_args(self, parser):
-        parser.add_argument('data',
-                            help="Data file to perform inference.",
-                            type=werkzeug.FileStorage,
-                            location="files",
-                            dest='files',
-                            required=True)
+    def get_predict_args():
+        return {
+            "data": fields.Field(
+                description="Data file to perform inference.",
+                required=True,
+                location="form",
+                type="file",
+            )
+         }
+
+.. important::
+  do not forget to add the ``location="form"`` and ``type="file"`` to the
+  argument definition, otherwise it will not work as expected.
 
 Then you should define the ``predict`` function as indicated below. You will
 receive all the arguments that have been parsed as keyword arguments:
@@ -130,58 +136,81 @@ In order to define a custom response, the ``response`` attribute is used:
 
 .. autodata:: deepaas.model.v2.base.BaseModel.response
 
-   Must contain a valid JSON schema for the model's predictions or None.
+    Must contain a valid schema for the model's predictions or None.
 
-   The format should be a JSON schema (DRAFT 4)
+    A valid schema is either a ``marshmallow.Schema`` subclass or a dictionary
+    schema that can be converted into a schema.
 
-   In order to provide a consistent API specification we use this attribute to
-   define the schema that all the prediction responses will follow.
+    In order to provide a consistent API specification we use this attribute to
+    define the schema that all the prediction responses will follow, therefore:
+    - If this attribute is set we will validate them against it.
+    - If it is not set (i.e. ``schema = None``), the model's response will
+      be converted into a string and the response will have the following
+      form::
 
-   If this attribute is set we will validate them against it.
+          {
+              "status": "OK",
+              "predictions": "<model response as string>"
+          }
 
-   If it is not set (i.e. ``response = None``), the model's response will be
-   converted into a string and the response will have the following form::
+    As previosly stated, there are two ways of defining an schema here. If our
+    response have the following form::
 
-      {
-         "status": "OK",
-         "predictions": "<model response as string>"
-      }
+        {
+            "status": "OK",
+            "predictions": [
+                {
+                    "label": "foo",
+                    "probability": 1.0,
+                },
+                {
+                    "label": "bar",
+                    "probability": 0.5,
+                },
+            ]
+        }
 
-   For example, if our model performs predictions in the following form::
+    We should define or schema as schema as follows:
 
-      {
-         "date": "2019-01-1",
-         "labels": [
-            {"label": "foo", "probability": 1.0},
-            {"label": "bar", "probability": 0.7},
-         ]
-      }
 
-   We should define the following JSON schema::
+    - Using a schema dictionary. This is the most straightforwad way. In order
+      to do so, you must use the ``marshmallow`` Python module, as follows::
 
-      response = {
-           "$schema": "http://json-schema.org/draft-04/schema#",
-           "type": "object",
-           "properties": {
-               "date": {"type": "string", "format": "date-time"},
-               "labels": {
-                   "type": "array",
-                   "items": {"$ref": "#/definitions/Label"},
-               },
-           },
-           "required": ["labels"],
-           "definitions": {
-               "Label": {
-                   "properties": {
-                       "label": {"type": "string"},
-                       "probability": {"type": "number"},
-                   },
-                   "required": ["label", "probability"],
-                   "type": "object",
-               },
-           },
-       }
+        from marshmallow import fields
 
+        schema = {
+            "status": fields.Str(
+                        description="Model predictions",
+                        required=True
+            ),
+            "predictions": fields.List(
+                fields.Nested(
+                    {
+                        "label": fields.Str(required=True),
+                        "probability": fields.Float(required=True),
+                    },
+                )
+            )
+        }
+
+    - Using a ``marshmallow.Schema`` subclass. Note that the schema *must* be
+      the class that you have created, not an object::
+
+        import marshmallow
+        from marshmallow import fields
+
+        class Prediction(marshmallow.Schema):
+            label = fields.Str(required=True)
+            probability = fields.Float(required=True)
+
+        class Response(marshmallow.Schema):
+            status = fields.Str(
+                description="Model predictions",
+                required=True
+            )
+            predictions = fields.List(fields.Nested(Prediction))
+
+        schema = Response
 
 Using classes
 -------------

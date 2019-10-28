@@ -14,10 +14,10 @@
 # License for the specific language governing permissions and limitations
 # under the License.
 
-import unittest
 import uuid
 
-import flask
+from aiohttp import test_utils
+from aiohttp import web
 import mock
 import six
 
@@ -35,115 +35,78 @@ class TestApi(base.TestCase):
 
 
 class TestApiV1(base.TestCase):
-    def setUp(self):
-        super(TestApiV1, self).setUp()
-
-        app = flask.Flask(__name__)
-        app.config['TESTING'] = True
-        app.config['DEBUG'] = True
-
+    async def get_application(self):
         deepaas.model.v1.register_models()
 
-        bp = v1.get_blueprint(doc=False, add_specs=False)
-        app.register_blueprint(bp)
+        app = web.Application(debug=True)
+        v1app = v1.get_app()
+        app.add_subapp("/v1", v1app)
 
-        self.app = app.test_client()
-        self.assertEqual(app.debug, True)
+        return app
 
     def assert_ok(self, response):
-        self.assertIn(response.status_code, [200, 201])
+        self.assertIn(response.status, [200, 201])
 
-    def test_not_found(self):
-        ret = self.app.get("/v1/models/%s" % uuid.uuid4().hex)
-        self.assertEqual(404, ret.status_code)
+    @test_utils.unittest_run_loop
+    async def test_not_found(self):
+        ret = await self.client.get("/v1/models/%s" % uuid.uuid4().hex)
+        self.assertEqual(404, ret.status)
 
-        ret = self.app.put("/v1/models/%s" % uuid.uuid4().hex)
-        self.assertEqual(404, ret.status_code)
+        ret = await self.client.put("/v1/models/%s" % uuid.uuid4().hex)
+        self.assertEqual(404, ret.status)
 
-        ret = self.app.post("/v1/models/%s" % uuid.uuid4().hex)
-        self.assertEqual(404, ret.status_code)
+        ret = await self.client.post("/v1/models/%s" % uuid.uuid4().hex)
+        self.assertEqual(404, ret.status)
 
-        ret = self.app.delete("/v1/models/%s" % uuid.uuid4().hex)
-        self.assertEqual(404, ret.status_code)
+        ret = await self.client.delete("/v1/models/%s" % uuid.uuid4().hex)
+        self.assertEqual(404, ret.status)
 
-    def test_model_not_found(self):
-        ret = self.app.put("/v1/models/%s/train" % uuid.uuid4().hex)
-        self.assertEqual(404, ret.status_code)
+    @test_utils.unittest_run_loop
+    async def test_model_not_found(self):
+        ret = await self.client.put("/v1/models/%s/train" % uuid.uuid4().hex)
+        self.assertEqual(404, ret.status)
 
-        ret = self.app.post("/v1/models/%s/predict" % uuid.uuid4().hex)
-        self.assertEqual(404, ret.status_code)
+        ret = await self.client.post("/v1/models/%s/predict" %
+                                     uuid.uuid4().hex)
+        self.assertEqual(404, ret.status)
 
-        ret = self.app.get("/v1/models/%s" % uuid.uuid4().hex)
-        self.assertEqual(404, ret.status_code)
+        ret = await self.client.get("/v1/models/%s" % uuid.uuid4().hex)
+        self.assertEqual(404, ret.status)
 
-    def test_train(self):
-        ret = self.app.put("/v1/models/deepaas-test/train")
-        self.assertEqual(501, ret.status_code)
+    @test_utils.unittest_run_loop
+    async def test_train(self):
+        ret = await self.client.put("/v1/models/deepaas-test/train")
+        self.assertEqual(501, ret.status)
 
-    def test_predict_not_data(self):
-        ret = self.app.post("/v1/models/deepaas-test/predict")
-        self.assertEqual(400, ret.status_code)
+    @test_utils.unittest_run_loop
+    async def test_predict_not_data(self):
+        ret = await self.client.post("/v1/models/deepaas-test/predict")
+        self.assertEqual(400, ret.status)
 
-    def test_predict_data_not_implemented(self):
+    @test_utils.unittest_run_loop
+    async def test_predict_data_not_implemented(self):
         f = six.BytesIO(b"foo")
-        ret = self.app.post(
+        ret = await self.client.post(
             "/v1/models/deepaas-test/predict",
             data={"data": (f, "foo.txt")})
-        self.assertEqual(501, ret.status_code)
+        self.assertEqual(501, ret.status)
 
-    def test_predict_urls_not_implemented(self):
-        ret = self.app.post(
+    @test_utils.unittest_run_loop
+    async def test_predict_urls_not_implemented(self):
+        ret = await self.client.post(
             "/v1/models/deepaas-test/predict",
             data={"url": "http://example.org/"})
-        self.assertEqual(501, ret.status_code)
+        self.assertEqual(501, ret.status)
 
-    def test_predict_various_urls_not_implemented(self):
-        ret = self.app.post(
+    @test_utils.unittest_run_loop
+    async def test_predict_various_urls_not_implemented(self):
+        ret = await self.client.post(
             "/v1/models/deepaas-test/predict",
             data={"url": ["http://example.org/", "http://example.com"]})
-        self.assertEqual(501, ret.status_code)
+        self.assertEqual(501, ret.status)
 
-    @unittest.skip("Refactor made test fail, changes in API needed")
-    def test_predict_data_with_model(self):
-        m = mock.MagicMock()
-        content = b"foo"
-        f = six.BytesIO(b"foo")
-        with mock.patch.object(deepaas.model, "MODELS", {"fake": m}):
-            m.predict_data.return_value = {}
-            ret = self.app.post(
-                "/v1/models/fake/predict",
-                data={"data": (f, "foo.txt")})
-            m.predict_data.assert_called_with([content])
-            self.assertEqual(200, ret.status_code)
-            self.assertEqual({}, ret.json)
-
-    @unittest.skip("Refactor made test fail, changes in API needed")
-    def test_predict_url_with_model(self):
-        m = mock.MagicMock()
-        url = ["http://example.com"]
-        with mock.patch.object(deepaas.model, "MODELS", {"fake": m}):
-            m.predict_url.return_value = {}
-            ret = self.app.post(
-                "/v1/models/fake/predict",
-                data={"url": url})
-            m.predict_url.assert_called_with(url)
-            self.assertEqual(200, ret.status_code)
-            self.assertEqual({}, ret.json)
-
-    @unittest.skip("Refactor made test fail, changes in API needed")
-    def test_predict_various_urls_with_model(self):
-        m = mock.MagicMock()
-        url = ["http://example.org/", "http://example.com"]
-        with mock.patch.object(deepaas.model, "MODELS", {"fake": m}):
-            m.predict_url.return_value = {}
-            ret = self.app.post(
-                "/models/fake/predict",
-                data={"url": url})
-            m.predict_url.assert_called_with(url)
-            self.assertEqual(200, ret.status_code)
-            self.assertEqual({}, ret.json)
-
-    def test_get_metadata(self):
+    @test_utils.unittest_run_loop
+    async def test_get_metadata(self):
         meta = {'models': [
             {'author': 'Alvaro Lopez Garcia',
              'description': ('This is not a model at all, just a '
@@ -156,15 +119,16 @@ class TestApiV1(base.TestCase):
              'version': '0.0.1'}
         ]}
 
-        ret = self.app.get("/v1/models/")
+        ret = await self.client.get("/v1/models")
         self.assert_ok(ret)
-        self.assertDictEqual(meta, ret.json)
+        self.assertDictEqual(meta, await ret.json())
 
-        ret = self.app.get("/v1/models/deepaas-test")
+        ret = await self.client.get("/v1/models/deepaas-test")
         self.assert_ok(ret)
-        self.assertDictEqual(meta["models"][0], ret.json)
+        self.assertDictEqual(meta["models"][0], await ret.json())
 
-    def test_bad_metods_metadata(self):
-        for i in (self.app.post, self.app.put, self.app.delete):
-            ret = i("/v1/models/")
-            self.assertEqual(405, ret.status_code)
+    @test_utils.unittest_run_loop
+    async def test_bad_metods_metadata(self):
+        for i in (self.client.post, self.client.put, self.client.delete):
+            ret = await i("/v1/models")
+            self.assertEqual(405, ret.status)

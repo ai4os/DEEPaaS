@@ -49,26 +49,60 @@ checklist in order.
 
   Previous code relied on returing arbitrary dictionaries that were used to
   generate the arguments for each of the API endpoints. This is not anymore
-  supported and you should add your options explicitly. This is done by
-  defining the ``add_predict_args`` and ``add_train_args`` functions. These
-  functions will receive a single argument containing a `argparse`_-like object
-  that you should use to define the arguments, e.g.::
+  supported and you should return a ``webargs`` field dictioary. This is still
+  done by defining the ``get_predict_args`` and ``fet_train_args`` functions.
+  These functions must receive no arguments and they should return a dictionary
+  as follows::
 
-   def add_predict_args(parser):
-      parser.add_argument("parameter",
-                          type=int,
-                          required=False,
-                          default=0,
-                          help="A parameter for the predict method")
+      from webargs import fields
 
-  .. _argparse: https://docs.python.org/3/library/argparse.html
+      (...)
+
+      def get_predict_args():
+         return {
+            "arg1": fields.Str(
+               required=False,
+               default="foo",
+               description="Argument one"
+            ),
+         }
+
 
   .. note::
-      If you do not implement these functions we will try to load the arguments
-      using the old ``get_*_args`` functions. However, this is DEPRECATED and
-      you should migrate to using the argument parser as soon as possible. If
-      both functions are defined, we will only take into account the arguments
-      added through the ``add_*_args`` functions.
+      If you do still follow the old way of returning the arguments we will try
+      to load the arguments using the old ``get_*_args`` functions. However,
+      this is DEPRECATED and you should migrate to using the argument parser as
+      soon as possible. All the arguments will be converted to Strings,
+      therefore you will loose any type checking, etc.
 
+* Explictly define your input arguments. The previous version of the API
+  defined two arguments for inference: ``data`` and ``urls``. This is not
+  anymore true, and you must define your own input arguments as follows::
 
-* Define your responses for the prediction, as defined in...
+      from webargs import fields
+
+      (...)
+
+      def get_predict_args():
+         return {
+            "data": fields.Field(
+               required=True,
+               type="file",
+               location="form",
+            ),
+         }
+
+  Then, you will get your input data in the ``data`` keyword argument in your
+  application.
+
+* Define your responses for the prediction. Now, unless you explicitly define
+  your application response schema, whatever you return will be converted into
+  a string and wrapped in the following response::
+
+      {
+         "status": "OK",
+         "predictions": "<model response as string>"
+      }
+
+* Arguments and now passed as unpacked keyword arguments, not anymore as a
+  dictionary.

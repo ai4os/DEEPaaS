@@ -5,6 +5,7 @@
 #
 # This code is a fork of https://github.com/alexmilowski/flask-openwhisk with
 # some modifications done here https://github.com/alvarolopez/flask-openwhisk
+# and additional modifications done to work with aio-http
 # Original copyright remains with the original author Alex Milowski
 #
 # Licensed under the Apache License, Version 2.0 (the "License"); you may
@@ -23,7 +24,6 @@ import base64
 import io
 import sys
 
-import flask
 from werkzeug import http
 
 
@@ -47,7 +47,7 @@ def add_headers(environ, headers):
             environ[wsgi_name] = str(headers[header])
 
 
-def invoke(app, args):
+async def invoke(app, request, args):
     headers = args.get('__ow_headers', {})
     environ = {
         'REQUEST_METHOD': args.get('__ow_method', 'GET').upper(),
@@ -57,7 +57,7 @@ def invoke(app, args):
         'SERVER_NAME': 'localhost',
         'SERVER_PORT': '5000',
         'SERVER_PROTOCOL': 'HTTP/1.1',
-        'SERVER_SOFTWARE': 'flask-openwhisk',
+        'SERVER_SOFTWARE': 'aiohttp-openwhisk',
         'REMOTE_ADDR': headers.get('x-client-ip', '127.0.0.1'),
         'wsgi.version': (1, 0),
         'wsgi.url_scheme': headers.get('x-forwarded-proto', 'http'),
@@ -68,6 +68,7 @@ def invoke(app, args):
         'wsgi.run_once': True
     }
 
+    body = None
     if environ['REQUEST_METHOD'] in ('POST', 'PUT'):
         content_type = headers.get('content-type', 'application/octet-stream')
         parsed_content_type = http.parse_options_header(content_type)
@@ -80,17 +81,23 @@ def invoke(app, args):
 
     add_headers(environ, headers)
 
-    response = flask.Response.from_app(app.wsgi_app, environ)
+    request = request.clone(
+        method=environ["REQUEST_METHOD"],
+        rel_url=args.get('__ow_path', '/'),
+        headers=headers
+    )
+    response = await (await app.router.resolve(request)).handler(request)
 
     response_type = http.parse_options_header(
         response.headers.get('Content-Type', 'application/octet-stream'))
+
     if response_type[0][0:response_type[0].find('/')] != 'octet-stream':
-        body = response.data.decode(response_type[1].get('charset', 'utf-8'))
+        body = response.body.decode(response_type[1].get('charset', 'utf-8'))
     else:
-        body = base64.b64encode(response.data)
+        body = base64.b64encode(response.text)
 
     return {
         'headers': dict(response.headers),
-        'statusCode': response.status_code,
+        'statusCode': response.status,
         'body': body
     }

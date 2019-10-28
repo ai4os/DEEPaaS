@@ -14,11 +14,14 @@
 # License for the specific language governing permissions and limitations
 # under the License.
 
+import itertools
 import uuid
 
-import flask_restplus.reqparse
+from aiohttp import web
+import marshmallow
+from marshmallow import fields as m_fields
 import mock
-import werkzeug.exceptions as exceptions
+from webargs import fields
 
 import deepaas
 from deepaas.model import v2 as v2_model
@@ -39,29 +42,83 @@ class TestV2Model(base.TestCase):
             def predict(self, **kwargs):
                 super(Model, self).predict(**kwargs)
 
-            def add_predict_args(self, parser):
-                super(Model, self).add_predict_args(parser)
+            def get_predict_args(self):
+                super(Model, self).get_predict_args()
 
             def train(self, **kwargs):
                 super(Model, self).train(**kwargs)
 
-            def add_train_args(self, parser):
-                super(Model, self).add_train_args(parser)
+            def get_train_args(self):
+                super(Model, self).get_train_args()
 
         m = Model()
         self.assertRaises(NotImplementedError, m.get_metadata)
         self.assertRaises(NotImplementedError, m.predict)
-        self.assertIsNone(m.add_predict_args(None))
+        self.assertRaises(NotImplementedError, m.get_predict_args)
         self.assertRaises(NotImplementedError, m.train)
-        self.assertIsNone(m.add_train_args(None))
+        self.assertRaises(NotImplementedError, m.get_train_args)
 
     def test_bad_schema(self):
         class Model(object):
-            response = []
+            schema = []
 
-        self.assertRaises(exceptions.InternalServerError,
-                          v2_model.ModelWrapper,
-                          "test", Model())
+        self.assertRaises(
+            web.HTTPInternalServerError,
+            v2_model.ModelWrapper,
+            "test", Model()
+        )
+
+    def test_validate_no_schema(self):
+        class Model(object):
+            schema = None
+
+        wrapper = v2_model.ModelWrapper("test", Model())
+        self.assertRaises(
+            web.HTTPInternalServerError,
+            wrapper.validate_response,
+            None
+        )
+
+    def test_invalid_schema(self):
+        class Model(object):
+            schema = object()
+
+        self.assertRaises(
+            web.HTTPInternalServerError,
+            v2_model.ModelWrapper,
+            "test", Model()
+        )
+
+    def test_marshmallow_schema(self):
+        class Schema(marshmallow.Schema):
+            foo = m_fields.Str()
+
+        class Model(object):
+            schema = Schema
+
+        wrapper = v2_model.ModelWrapper("test", Model())
+
+        self.assertTrue(wrapper.validate_response({"foo": "bar"}))
+        self.assertRaises(
+            web.HTTPInternalServerError,
+            wrapper.validate_response,
+            {"foo": 1.0}
+        )
+
+    def test_dict_schema(self):
+        class Model(object):
+            schema = {
+                "foo": m_fields.Str()
+            }
+
+        wrapper = v2_model.ModelWrapper("test", Model())
+
+        self.assertTrue(wrapper.validate_response({"foo": "bar"}))
+        self.assertRaises(
+            web.HTTPInternalServerError,
+            wrapper.validate_response,
+            {"foo": 1.0}
+        )
 
     def test_dummy_model(self):
         m = v2_test.TestModel()
@@ -76,9 +133,10 @@ class TestV2Model(base.TestCase):
         self.assertIn("id", meta)
         self.assertIn("name", meta)
         self.assertEqual("Alvaro Lopez Garcia", meta["author"])
-        parser = flask_restplus.reqparse.RequestParser()
-        self.assertEqual(parser, m.add_train_args(parser))
-        self.assertEqual(parser, m.add_predict_args(parser))
+        pargs = m.get_predict_args()
+        targs = m.get_train_args()
+        for arg, val in itertools.chain(pargs.items(), targs.items()):
+            self.assertIsInstance(val, fields.Field)
 
     def test_dummy_model_with_wrapper(self):
         w = v2_model.ModelWrapper("foo", v2_test.TestModel())
@@ -92,21 +150,23 @@ class TestV2Model(base.TestCase):
         self.assertIn("description", meta)
         self.assertIn("id", meta)
         self.assertIn("name", meta)
-        parser = flask_restplus.reqparse.RequestParser()
-        self.assertEqual(parser, w.add_train_args(parser))
-        self.assertEqual(parser, w.add_predict_args(parser))
+        pargs = w.get_predict_args()
+        targs = w.get_train_args()
+        for arg, val in itertools.chain(pargs.items(), targs.items()):
+            self.assertIsInstance(val, fields.Field)
 
     def test_model_with_not_implemented_attributes_and_wrapper(self):
         w = v2_model.ModelWrapper("foo", object())
-        self.assertRaises(exceptions.NotImplemented, w.predict)
-        self.assertRaises(exceptions.NotImplemented, w.train)
+        self.assertRaises(web.HTTPNotImplemented, w.predict)
+        self.assertRaises(web.HTTPNotImplemented, w.train)
         meta = w.get_metadata()
         self.assertIn("description", meta)
         self.assertIn("id", meta)
         self.assertIn("name", meta)
-        fake_parser = object()
-        self.assertEqual(fake_parser, w.add_train_args(fake_parser))
-        self.assertEqual(fake_parser, w.add_predict_args(fake_parser))
+        pargs = w.get_predict_args()
+        targs = w.get_train_args()
+        for arg, val in itertools.chain(pargs.items(), targs.items()):
+            self.assertIsInstance(val, fields.Field)
 
     @mock.patch('deepaas.model.loading.get_available_models')
     def test_loading_ok(self, mock_loading):

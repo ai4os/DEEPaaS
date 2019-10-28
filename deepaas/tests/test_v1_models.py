@@ -16,8 +16,8 @@
 
 import uuid
 
+from aiohttp import web
 import mock
-import werkzeug.exceptions as exceptions
 
 import deepaas
 import deepaas.model.v1
@@ -44,8 +44,8 @@ class TestModel(base.TestCase):
     def test_dummy_model_with_wrapper(self):
         w = deepaas.model.v1.ModelWrapper("foo", deepaas.model.v1.TestModel())
         for meth in (w.predict_file, w.predict_url, w.predict_data):
-            self.assertRaises(exceptions.NotImplemented, meth, None)
-        self.assertRaises(exceptions.NotImplemented, w.train)
+            self.assertRaises(web.HTTPNotImplemented, meth, None)
+        self.assertRaises(web.HTTPNotImplemented, w.train)
         meta = w.get_metadata()
         self.assertIn("description", meta)
         self.assertIn("id", meta)
@@ -56,8 +56,8 @@ class TestModel(base.TestCase):
     def test_model_with_not_implemented_attributes_and_wrapper(self):
         w = deepaas.model.v1.ModelWrapper("foo", object())
         for meth in (w.predict_file, w.predict_url, w.predict_data):
-            self.assertRaises(exceptions.NotImplemented, meth, None)
-        self.assertRaises(exceptions.NotImplemented, w.train)
+            self.assertRaises(web.HTTPNotImplemented, meth, None)
+        self.assertRaises(web.HTTPNotImplemented, w.train)
         meta = w.get_metadata()
         self.assertIn("description", meta)
         self.assertIn("id", meta)

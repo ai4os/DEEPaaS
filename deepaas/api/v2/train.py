@@ -14,38 +14,40 @@
 # License for the specific language governing permissions and limitations
 # under the License.
 
-import flask_restplus
+from aiohttp import web
+import aiohttp_apispec
+from webargs import aiohttpparser
+import webargs.core
 
 from deepaas import model
 
 # Get the models (this is a singleton, so it is safe to call it multiple times
 model.register_v2_models()
 
-ns = flask_restplus.Namespace(
-    'models',
-    description='Model information, inference and training operations')
+app = web.Application()
+routes = web.RouteTableDef()
 
-# It is better to create different routes for different models instead of using
-# the Flask pluggable views. Different models may require different parameters,
-# therefore we need to do like this.
-#
-# Therefore, in the next lines we iterate over the loaded models and create
-# the different resources for each model. This way we can also load the
-# expected parameters if needed (as in the training method).
+
+# In the next lines we iterate over the loaded models and create different
+# views for the different models. We take the corresponding arguments and
+# responses from the underlying model, adding them to the OpenAPI spec and
+# documentation.
 for model_name, model_obj in model.V2_MODELS.items():
-    @ns.route('/%s/train' % model_name)
-    class ModelTrain(flask_restplus.Resource):
+    args = webargs.core.dict2schema(model_obj.get_train_args())
+
+    @routes.view('/models/%s/train' % model_name)
+    class ModelTrain(web.View):
         model_name = model_name
         model_obj = model_obj
-        parser = model_obj.add_train_args(ns.parser())
 
-        @ns.doc('Retrain model')
-        @ns.expect(parser)
-        def put(self):
-            """Retrain model with available data."""
-
-            args = self.parser.parse_args()
+        @aiohttp_apispec.docs(
+            tags=["models"],
+            summary="Retrain model with available data"
+        )
+        @aiohttp_apispec.querystring_schema(args)
+        @aiohttpparser.parser.use_args(args)
+        async def put(self, args):
             ret = self.model_obj.train(**args)
             # FIXME(aloga): what are we returning here? We need to take care
             # of these responses as well.
-            return ret
+            return web.json_response(ret)

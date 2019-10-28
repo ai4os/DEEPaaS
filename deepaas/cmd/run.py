@@ -18,6 +18,7 @@
 import os
 import sys
 
+from aiohttp import web
 from oslo_config import cfg
 from oslo_log import log as oslo_log
 
@@ -60,22 +61,6 @@ port will is hardcoded to 8080 (as OpenWhisk goes to port 8080). Note that
 if you are running inside a container, the most sensible option is to set
 listen-ip to 0.0.0.0
 """),
-    cfg.BoolOpt('enable-v1',
-                default="False",
-                help="""
-Whether to enable V1 version of the API or not.
-
-If this option is set to True, DEEPaaS API will offer a /v1/ endpoing with
-the DEPRECATED version of the API.
-"""),
-    cfg.BoolOpt('debug-endpoint',
-                default="false",
-                help="""
-Enable debug endpoint. If set we will provide all the information that you
-print to the standard output and error (i.e. stdout and stderr) through the
-"/debug" endpoint. Default is to not provide this information. This will not
-provide logging information about the API itself.
-"""),
 ]
 
 CONF = cfg.CONF
@@ -97,11 +82,10 @@ def main():
         log.info("Starting DEEPaaS version %s", deepaas.__version__)
 
         app = api.get_app()
-        app.run(
+        web.run_app(
+            app,
             host=CONF.listen_ip,
             port=CONF.listen_port,
-            debug=CONF.debug,
-            use_reloader=False
         )
 
 
