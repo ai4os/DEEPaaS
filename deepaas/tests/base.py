@@ -16,6 +16,8 @@
 
 import os
 
+import aiohttp.test_utils
+from aiohttp import web
 import fixtures
 from oslo_config import cfg
 from oslo_config import fixture as config_fixture
@@ -29,14 +31,21 @@ logging.register_options(CONF)
 _TRUE_VALUES = ('True', 'true', '1', 'yes')
 
 
-class TestCase(testtools.TestCase):
+class TestCase(testtools.TestCase, aiohttp.test_utils.AioHTTPTestCase):
 
     """Base unit test class."""
+
+    async def get_application(self):
+        app = web.Application(debug=True)
+        return app
 
     def setUp(self):
         """Run before each test method to initialize test environment."""
 
         super(TestCase, self).setUp()
+
+        self.assertEqual(self.app.debug, True)
+
         test_timeout = os.environ.get('TESTR_TEST_TIMEOUT', 0)
         try:
             test_timeout = int(test_timeout)

@@ -14,143 +14,131 @@
 # License for the specific language governing permissions and limitations
 # under the License.
 
-import copy
+from aiohttp import web
+import aiohttp_apispec
+import marshmallow
+from marshmallow import fields
+from webargs import aiohttpparser
+import webargs.core
 
-import flask
-import flask_restplus
-from flask_restplus import fields
-import werkzeug
-import werkzeug.exceptions as exceptions
-
+from deepaas.api.v2 import responses
 from deepaas import model
 
 # Get the models (this is a singleton, so it is safe to call it multiple times
 model.register_v1_models()
 
-ns = flask_restplus.Namespace(
-    'models',
-    description='Model information, inference and training operations')
+app = web.Application()
+routes = web.RouteTableDef()
+
+APP = None
 
 
-def get_blueprint(doc="/", add_specs=True):
-    bp = flask.Blueprint('v1', __name__, url_prefix="/v1")
+def get_app():
+    global APP
 
-    api = flask_restplus.Api(
-        bp,
-        version="1.0.0",
-        title='DEEP as a Service API V1 endpoint',
-        description='DEEP as a Service (DEEPaaS) API endpoint.',
-        doc=doc,
-        add_specs=add_specs,
-    )
-    api.add_namespace(ns)
+    APP = web.Application()
+    APP.router.add_get('/', get_version, name="v1")
+    APP.add_routes(routes)
 
-    return bp
+    return APP
 
 
-# This should be removed with marshmallow whenever flask-restplus is ready
-data_parser = ns.parser()
+@aiohttp_apispec.docs(
+    tags=["v1", "versions"],
+    summary="Get V1 API version information",
+)
+@aiohttp_apispec.response_schema(responses.Version(), 200)
+@aiohttp_apispec.response_schema(responses.Failure(), 400)
+async def get_version(request):
+    version = {
+        "version": "deprecated",
+        "id": "v1",
+        "links": [
+            {
+                "rel": "self",
+                # NOTE(aloga): we use our the router table from this
+                # application (i.e. the global APP in this module) to be able
+                # to build the correct url, as it can be prefixed outside of
+                # this module (in an add_subapp() call)
+                "href": "%s" % APP.router["v1"].url_for(),
+            },
+        ]
+    }
 
-# FIXME(aloga): currently we allow only to upload one file. There is a bug in
-# the Swagger UI that makes impossible to upload several files, although this
-# works if the request is not done through swagger. Since providing a UI and an
-# API that behave differently is incoherent, only allow one file for the time
-# being.
+# NOTE(aloga): skip these for now, until this issue is solved:
+# https://github.com/maximdanilchenko/aiohttp-apispec/issues/65
+#                doc = "%s.doc" % v.split(".")[0]
+#            d = {"rel": "help",
+#                 "type": "text/html",
+#                 # FIXME(aloga): this -v is wrong
+#                 "href": "flask.url_for(doc)"}
+#            versions[-1]["links"].append(d)
 #
-# See https://github.com/noirbizarre/flask-restplus/issues/491 for more details
-# on the bug.
-data_parser.add_argument('data',
-                         help="Data file to perform inference.",
-                         type=werkzeug.FileStorage,
-                         location="files",
-                         dest='files',
-                         required=False)
+#                specs = "%s.specs" % v.split(".")[0]
+#            d = {"rel": "describedby",
+#                 "type": "application/json",
+#                 # FIXME(aloga): this -v is wrong
+#                 "href": "flask.url_for(specs)"}
+#            versions[-1]["links"].append(d)
 
-data_parser.add_argument('url',
-                         help="URL to retrieve data to perform inference.",
-                         type=str,
-                         dest='urls',
-                         required=False,
-                         action="append")
-
-model_links = ns.model('Location', {
-    "rel": fields.String(required=True),
-    "href": fields.Url(required=True)
-})
-
-model_meta = ns.model('ModelMetadata', {
-    'id': fields.String(required=True, description='Model identifier'),
-    'name': fields.String(required=True, description='Model name'),
-    'description': fields.String(required=True,
-                                 description='Model description'),
-    'license': fields.String(required=False, description='Model license'),
-    'author': fields.String(required=False, description='Model author'),
-    'version': fields.String(required=False, description='Model version'),
-    'url': fields.Url(required=False, description='Model url'),
-    'links': fields.List(fields.Nested(model_links))
-})
-
-models = ns.model('Models', {
-    'models': fields.List(fields.Nested(model_meta)),
-})
+    return web.json_response(version)
 
 
-@ns.marshal_with(models, envelope='resource')
-@ns.route('/')
-class Models(flask_restplus.Resource):
-    def get(self):
-        """Return loaded models and its information.
+@aiohttp_apispec.docs(
+    tags=["v1", "v1.models"],
+    summary="Return loaded models and its information",
+    description="DEEPaaS can load several models and server them on the same "
+                "endpoint, making a call to the root of the models namespace "
+                "will return the loaded models, as long as their basic "
+                "metadata.",
+)
+@routes.get('/models')
+@aiohttp_apispec.response_schema(responses.ModelMeta(), 200)
+async def get(request):
+    models = []
+    for name, obj in model.V1_MODELS.items():
+        m = {
+            "id": name,
+            "name": name,
+            "links": [{
+                "rel": "self",
+                "href": "%s/%s" % (request.path, name),
 
-        DEEPaaS can load several models and server them on the same endpoint,
-        making a call to the root of the models namespace will return the
-        loaded models, as long as their basic metadata.
-        """
-
-        models = []
-        for name, obj in model.V1_MODELS.items():
-            m = {
-                "id": name,
-                "name": name,
-                "links": [{
-                    "rel": "self",
-                    "href": "%s%s" % (flask.request.path, name),
-                }]
-            }
-            meta = obj.get_metadata()
-            m.update(meta)
-            models.append(m)
-        return {"models": models}
+            }]
+        }
+        meta = obj.get_metadata()
+        m.update(meta)
+        models.append(m)
+    return web.json_response({"models": models})
 
 
-prediction_links = ns.model('PredictionLinks', {
-    "link": fields.String(required=True,
-                          description="Link name"),
+class PredictionLinks(marshmallow.Schema):
+    link = fields.Str(required=True,
+                      description="Link name")
 
-    "url": fields.String(required=True,
-                         description="Link URL"),
-})
+    url = fields.Str(required=True,
+                     description="Link URL")
 
-prediction_info = ns.model('PredictionInfo', {
-    "info": fields.String(required=False,
-                          description="Prediction Information"),
-    "links": fields.List(fields.Nested(prediction_links),
-                         required=False)
-})
 
-label_prediction = ns.model('LabelPrediction', {
-    'label_id': fields.String(required=False, description='Label identifier'),
-    'label': fields.String(required=True, description='Class label'),
-    'probability': fields.Float(required=True),
-    'info': fields.Nested(prediction_info),
-})
+class PredictionInfo(marshmallow.Schema):
+    links = fields.Nested(PredictionLinks)
+    info = fields.Str(required=False,
+                      description="Prediction Information")
 
-response = ns.model('ModelResponse', {
-    'status': fields.String(required=True,
-                            description='Response status message'),
-    'predictions': fields.List(fields.Nested(label_prediction),
-                               description='Predicted labels and '
-                                           'probabilities')
-})
+
+class LabelPrediction(marshmallow.Schema):
+    label_id = fields.Str(required=False, description='Label identifier')
+    label = fields.Str(required=True, description='Class label')
+    probability = fields.Float(required=True)
+    info = fields.Nested(PredictionInfo)
+
+
+class ModelResponse(marshmallow.Schema):
+    status = fields.Str(required=True,
+                        description='Response status message')
+    predictions = fields.List(fields.Nested(LabelPrediction),
+                              description='Predicted labels and probabilities')
+
 
 # It is better to create different routes for different models instead of using
 # the Flask pluggable views. Different models may require different parameters,
@@ -160,13 +148,17 @@ response = ns.model('ModelResponse', {
 # the different resources for each model. This way we can also load the
 # expected parameters if needed (as in the training method).
 for model_name, model_obj in model.V1_MODELS.items():
-    @ns.marshal_with(model_meta, envelope='resource')
-    @ns.route('/%s' % model_name)
-    class BaseModel(flask_restplus.Resource):
+    @routes.view('/models/%s' % model_name)
+    class BaseModel(web.View):
         model_name = model_name
         model_obj = model_obj
 
-        def get(self):
+        @aiohttp_apispec.docs(
+            tags=["v1", "v1.models"],
+            summary="Return '%s' model metadata" % model_name,
+        )
+        @aiohttp_apispec.response_schema(responses.ModelMeta(), 200)
+        async def get(self):
             """Return model's metadata."""
 
             m = {
@@ -174,70 +166,96 @@ for model_name, model_obj in model.V1_MODELS.items():
                 "name": self.model_name,
                 "links": [{
                     "rel": "self",
-                    "href": "%s" % flask.request.path,
+                    "href": "%s" % self.request.path,
                 }]
             }
             meta = self.model_obj.get_metadata()
             m.update(meta)
-            return m
+            return web.json_response(m)
 
     # Fill the test parser with the supported arguments. Different models may
     # have different arguments. We get here a copy of the original parser,
     # since otherwise if we have several models the arguments will pile up.
-    test_parser = copy.deepcopy(data_parser)
     test_args = model_obj.get_test_args()
+    args = {
+        "url": fields.Str(),
+        "data": fields.Field()
+    }
     for k, v in test_args.items():
-        test_parser.add_argument(k, **v)
+        args[k] = fields.Str(
+            description=v.get("help"),
+            required=v.get("required"),
+            default=v.get("default")
+        )
+    args = webargs.core.dict2schema(args)
 
-    @ns.marshal_with(response, envelope='resource')
-    @ns.route('/%s/predict' % model_name)
-    class ModelPredict(flask_restplus.Resource):
+    @routes.view('/models/%s/predict' % model_name)
+    class ModelPredict(web.View):
         model_name = model_name
         model_obj = model_obj
-        test_parser = test_parser
 
-        @ns.expect(test_parser)
-        def post(self):
+        @aiohttp_apispec.docs(
+            tags=["v1", "v1.models"],
+            summary="Make a prediction given the input data",
+            responses={
+                501: {"description": "Functionality not implemented"},
+            }
+        )
+        @aiohttp_apispec.querystring_schema(args)
+        @aiohttp_apispec.response_schema(ModelResponse(), 200)
+        @aiohttp_apispec.response_schema(responses.Failure(), 400)
+        @aiohttpparser.parser.use_args(args)
+        async def post(self, args):
             """Make a prediction given the input data."""
 
-            args = self.test_parser.parse_args()
+            urls = args.get("url")
+            files = args.get("data")
+            args["files"] = files
+            if (not any([urls, files]) or all([urls, files])):
+                raise web.HTTPBadRequest(
+                    reason="You must provide either 'url' or "
+                    "'data' in the payload"
+                )
 
-            if (not any([args["urls"], args["files"]]) or
-                    all([args["urls"], args["files"]])):
-                raise exceptions.BadRequest("You must provide either 'url' or "
-                                            "'data' in the payload")
-
-            if args["files"]:
+            if files:
                 # FIXME(aloga): only handling one file, see comment on top of
                 # file and [1] for more details
                 # [1] https://github.com/noirbizarre/flask-restplus/issues/491
-                args["files"] = [args["files"]]
+                files = [files]
 
                 ret = self.model_obj.predict_data(args)
-            elif args["urls"]:
+            elif urls:
                 ret = self.model_obj.predict_url(args)
-            return ret
+            return web.json_response(ret)
 
     # Fill the train parser with the supported arguments. Different models may
     # have different arguments.
     train_args = model_obj.get_train_args()
-    train_parser = ns.parser()
+    args = {}
     for k, v in train_args.items():
-        train_parser.add_argument(k, **v)
+        args[k] = fields.Str(
+            description=v.get("help"),
+            required=v.get("required"),
+            default=v.get("default")
+        )
+    args = webargs.core.dict2schema(args)
 
-    @ns.route('/%s/train' % model_name)
-    class ModelTrain(flask_restplus.Resource):
+    @routes.view('/models/%s/train' % model_name)
+    class ModelTrain(web.View):
         model_name = model_name
         model_obj = model_obj
-        train_parser = train_parser
 
-        @ns.doc('Retrain model')
-        @ns.expect(train_parser)
-        def put(self):
-            """Retrain model with available data."""
-
-            args = self.train_parser.parse_args()
+        @aiohttp_apispec.docs(
+            tags=["v1", "v1.models"],
+            summary="Retrain model with available data",
+            responses={
+                501: {"description": "Functionality not implemented"},
+            }
+        )
+        @aiohttp_apispec.querystring_schema(args)
+        @aiohttpparser.parser.use_args(args)
+        async def put(self, args):
             ret = self.model_obj.train(args)
             # FIXME(aloga): what are we returning here? We need to marshal the
             # response!!
-            return ret
+            return web.json_response(ret)

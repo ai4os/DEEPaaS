@@ -16,9 +16,9 @@
 
 import abc
 
+from aiohttp import web
 from oslo_log import log
 import six
-import werkzeug.exceptions as exceptions
 
 from deepaas.model import loading
 
@@ -83,8 +83,7 @@ class BaseModel(object):
             * other keys needed to make the prediction as defined by the
             function `get_test_args`
 
-        :return: The response can be a str, a dict or a file (using for example
-        `flask.send_file`)
+        :return: The response must be a str or a dict
         """
         raise NotImplementedError()
 
@@ -100,8 +99,7 @@ class BaseModel(object):
             * other keys needed to make the prediction as defined by the
             function `get_test_args`
 
-        :return: The response can be a str, a dict or a file (using for example
-        `flask.send_file`)
+        :return: The response must be a str or a dict
         """
         raise NotImplementedError()
 
@@ -214,8 +212,8 @@ def catch_error(f):
         try:
             return f(*args, **kwargs)
         except NotImplementedError:
-            raise exceptions.NotImplemented("Model does not implement "
-                                            "this functionality")
+            raise web.HTTPNotImplemented(
+                reason="Model does not implement this functionality")
     return wrap
 
 
@@ -234,8 +232,9 @@ class ModelWrapper(object):
         try:
             meth = getattr(self.model, method)
         except AttributeError:
-            raise exceptions.NotImplemented(
-                "Not implemented by underlying model (loaded '%s')" % self.name
+            raise web.HTTPNotImplemented(
+                reason="Not implemented by underlying model (loaded '%s')" %
+                self.name
             )
         return meth
 
@@ -271,12 +270,12 @@ class ModelWrapper(object):
     def get_train_args(self, *args):
         try:
             return self._get_method("get_train_args")(*args)
-        except exceptions.NotImplemented:
+        except web.HTTPNotImplemented:
             return {}
 
     @catch_error
     def get_test_args(self, *args):
         try:
             return self._get_method("get_test_args")(*args)
-        except exceptions.NotImplemented:
+        except web.HTTPNotImplemented:
             return {}

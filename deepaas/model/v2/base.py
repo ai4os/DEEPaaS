@@ -28,23 +28,83 @@ class BaseModel(object):
     is configured should expose the same API.
     """
 
-    response = None
-    """Must contain a valid JSON schema for the model's predictions or None.
+    # FIXME(aloga): document this
+    schema = None
+    """Must contain a valid schema for the model's predictions or None.
 
-    The format should be a JSON schema (DRAFT 4)
+    A valid schema is either a ``marshmallow.Schema`` subclass or a dictionary
+    schema that can be converted into a schema.
 
     In order to provide a consistent API specification we use this attribute to
-    define the schema that all the prediction responses will follow.
+    define the schema that all the prediction responses will follow, therefore:
+    - If this attribute is set we will validate them against it.
+    - If it is not set (i.e. ``schema = None``), the model's response will
+      be converted into a string and the response will have the following
+      form::
 
-    If this attribute is set we will validate them against it.
+          {
+              "status": "OK",
+              "predictions": "<model response as string>"
+          }
 
-    If it is not set (i.e. ``response = None``), the model's response will be
-    converted into a string and the response will have the following form::
+    As previosly stated, there are two ways of defining an schema here. If our
+    response have the following form::
 
         {
             "status": "OK",
-            "predictions": "<model response as string>"
+            "predictions": [
+                {
+                    "label": "foo",
+                    "probability": 1.0,
+                },
+                {
+                    "label": "bar",
+                    "probability": 0.5,
+                },
+            ]
         }
+
+    We should define or schema as schema as follows:
+
+
+    - Using a schema dictionary. This is the most straightforwad way. In order
+      to do so, you must use the ``marshmallow`` Python module, as follows::
+
+        from marshmallow import fields
+
+        schema = {
+            "status": fields.Str(
+                        description="Model predictions",
+                        required=True
+            ),
+            "predictions": fields.List(
+                fields.Nested(
+                    {
+                        "label": fields.Str(required=True),
+                        "probability": fields.Float(required=True),
+                    },
+                )
+            )
+        }
+
+    - Using a ``marshmallow.Schema`` subclass. Note that the schema *must* be
+      the class that you have created, not an object::
+
+        import marshmallow
+        from marshmallow import fields
+
+        class Prediction(marshmallow.Schema):
+            label = fields.Str(required=True)
+            probability = fields.Float(required=True)
+
+        class Response(marshmallow.Schema):
+            status = fields.Str(
+                description="Model predictions",
+                required=True
+            )
+            predictions = fields.List(fields.Nested(Prediction))
+
+        schema = Response
     """
 
     @abc.abstractmethod
@@ -65,36 +125,31 @@ class BaseModel(object):
 
         The only fields that are mandatory are 'description' and 'name'.
 
-        The JSON schema that we are following is the following::
+        The schema that we are following is the following::
 
             {
-                'properties': {
-                    'author': {
-                        'description': 'Model author',
-                        'type': 'string'
-                    },
-                    'description': {
-                        'description': 'Model description',
-                        'type': 'string'
-                    },
-                    'license': {'
-                        description': 'Model license',
-                        'type': 'string'
-                    },
-                    'name': {
-                        'description': 'Model name',
-                        'type': 'string'
-                    },
-                    'url': {
-                        'description': 'Model url',
-                        'type': 'string'
-                    },
-                    'version': {
-                        'description': 'Model version',
-                        'type': 'string'}
-                    },
-                'required': ['description', 'name'],
-                'type': 'object'
+                "id": =  fields.Str(required=True,
+                                    description='Model identifier'),
+                "name": fields.Str(required=True,
+                                   description='Model name'),
+                "description": fields.Str(required=True,
+                                          description='Model description'),
+                "license": fields.Str(required=False,
+                                      description='Model license'),
+                "author": fields.Str(required=False,
+                                     description='Model author'),
+                "version": fields.Str(required=False,
+                                      description='Model version'),
+                "url": fields.Str(required=False,
+                                  description='Model url'),
+                "links": fields.List(
+                    fields.Nested(
+                        {
+                            "rel": fields.Str(required=True),
+                            "href": fields.Url(required=True),
+                        }
+                    )
+                )
             }
 
         :return: dictionary containing the model's metadata.
@@ -106,33 +161,44 @@ class BaseModel(object):
         """Prediction from incoming keyword arguments.
 
         :param kwargs: The keyword arguments that the predict method accepts
-            must be defined by the ``add_predict_args()`` method so the API is
-            able to pass them down.
+            must be defined by the ``get_predict_args()`` method so the API
+            is able to pass them down.
 
-        :return: The response can be a str, a dict or a file (using for example
-            ``flask.send_file``)
+        :return: The response must be a str or a dict.
         """
         raise NotImplementedError()
 
     @abc.abstractmethod
-    def add_predict_args(self, parser):
-        """Populate the arguments that are needed to test the application.
+    def get_predict_args(self):
+        """Return the arguments that are needed to perform a prediction.
 
-        This method should return the parser that is passed as argument.
+        This function should return a dictionary of ``webargs`` fields. For
+        example::
 
-        :param parser: An argument parser like object, that can be used to
-            pupulate the prediction arguments.
+            from webargs import fields
 
-        :return: A parser containing the prediction arguments.
+            (...)
+
+            def get_predict_args():
+                return {
+                    "arg1": fields.Str(
+                        required=False,
+                        default="foo",
+                        description="Argument one"
+                    ),
+                }
+
+        :return dict: A dictionary of ``webargs`` fields containing the
+            applicationr required arguments.
         """
-        return parser
+        raise NotImplementedError()
 
     @abc.abstractmethod
     def train(self, **kwargs):
         """Perform a training.
 
         :param kwargs: The keyword arguments that the predict method accepts
-            must be defined by the ``add_train_args()`` method so the API is
+            must be defined by the ``get_train_args()`` method so the API is
             able to pass them down. Usually you would populate these with all
             the training hyper-parameters
 
@@ -141,14 +207,26 @@ class BaseModel(object):
         raise NotImplementedError()
 
     @abc.abstractmethod
-    def add_train_args(self, parser):
-        """Populate the arguments that are needed to train the application.
+    def get_train_args(self):
+        """Return the arguments that are needed to train the application.
 
-        This method should return the parser that is passed as argument.
+        This function should return a dictionary of ``webargs`` fields. For
+        example::
 
-        :param parser: An argument parser like object, that can be used to
-            pupulate the training arguments.
+            from webargs import fields
 
-        :return: A parser containing the training arguments.
+            (...)
+
+            def get_train_args():
+                return {
+                    "arg1": fields.Str(
+                        required=False,
+                        default="foo",
+                        description="Argument one"
+                    ),
+                }
+
+        :return dict: A dictionary of ``webargs`` fields containing the
+            application required arguments.
         """
-        return parser
+        raise NotImplementedError()

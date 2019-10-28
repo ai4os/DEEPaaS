@@ -14,10 +14,9 @@
 # License for the specific language governing permissions and limitations
 # under the License.
 
-import jsonschema
-import jsonschema.exceptions
+from aiohttp import web
+import marshmallow
 from oslo_log import log
-import werkzeug.exceptions as exceptions
 
 from deepaas.model import loading
 from deepaas.model.v2 import test
@@ -73,28 +72,38 @@ class ModelWrapper(object):
 
     :param name: Model name
     :param model: Model object
-    :raises exceptions.InternalServerError: in case that a model has defined
+    :raises HTTPInternalServerError: in case that a model has defined
         a reponse schema that is nod JSON schema valid (DRAFT 4)
     """
     def __init__(self, name, model):
         self.name = name
         self.model = model
 
-        schema = getattr(self.model, "response", None)
+        schema = getattr(self.model, "schema", None)
 
-        if schema is not None:
+        if isinstance(schema, dict):
             try:
-                jsonschema.Draft4Validator.check_schema(schema)
-            except jsonschema.exceptions.SchemaError as e:
-                LOG.exception(e)
-                raise exceptions.InternalServerError(
-                    description="Model defined schema is invalid, "
-                                "check server logs."
+                schema = marshmallow.Schema.from_dict(
+                    schema,
+                    name="ModelPredictionResponse"
                 )
-            self.response_validator = jsonschema.Draft4Validator(schema)
-            self.has_schema = True
+                self.has_schema = True
+            except Exception as e:
+                LOG.exception(e)
+                raise web.HTTPInternalServerError(
+                    reason=("Model defined schema is invalid, "
+                            "check server logs.")
+                )
+        elif schema is not None:
+            try:
+                if issubclass(schema, marshmallow.Schema):
+                    self.has_schema = True
+            except TypeError:
+                raise web.HTTPInternalServerError(
+                    reason=("Model defined schema is invalid, "
+                            "check server logs.")
+                )
         else:
-            self.response_validator = None
             self.has_schema = False
 
         self.response_schema = schema
@@ -110,35 +119,48 @@ class ModelWrapper(object):
             validated.
         """
         if self.has_schema is not True:
-            raise exceptions.InternalServerError(
-                "Trying to validate against a schema, but I do not have one"
-                "defined")
+            raise web.HTTPInternalServerError(
+                reason=("Trying to validate against a schema, but I do not "
+                        "have one defined")
+            )
 
         try:
-            self.response_validator.validate(response)
-        except jsonschema.exceptions.ValidationError as e:
+            self.response_schema().load(response)
+        except marshmallow.ValidationError as e:
             LOG.exception(e)
-            raise exceptions.InternalServerError(
-                description="ERROR marshaling response, check server logs.")
+            raise web.HTTPInternalServerError(
+                reason="ERROR validating model response, check server logs."
+            )
+        except Exception as e:
+            LOG.exception(e)
+            raise web.HTTPInternalServerError(
+                reason="Unknown ERROR validating response, check server logs."
+            )
+
+        return True
 
     def _call_method(self, method, *args, **kwargs):
         try:
             meth = getattr(self.model, method)
             return meth(*args, **kwargs)
         except AttributeError:
-            raise exceptions.NotImplemented("Not implemented by underlying "
-                                            "model (loaded '%s')" % self.name)
+            raise web.HTTPNotImplemented(
+                reason=("Not implemented by underlying model (loaded '%s')" %
+                        self.name)
+            )
         except NotImplementedError:
-            raise exceptions.NotImplemented("Model '%s' does not implement "
-                                            "this functionality" % self.name)
+            raise web.HTTPNotImplemented(
+                reason=("Model '%s' does not implement this functionality" %
+                        self.name)
+            )
         except Exception as e:
             LOG.error("An exception has happened when calling '%s' method on "
                       "'%s' model." % (method, self.name))
             LOG.exception(e)
-            if isinstance(e, exceptions.HTTPException):
+            if isinstance(e, web.HTTPException):
                 raise e
             else:
-                raise exceptions.InternalServerError(description=e)
+                raise web.HTTPInternalServerError(reason=e)
 
     def get_metadata(self):
         """Obtain model's metadata.
@@ -171,30 +193,28 @@ class ModelWrapper(object):
     def predict(self, **kwargs):
         """Perform a prediction on wrapped model's ``predict`` method.
 
-        :raises werkzeug.exceptions.NotImplemented: If the method is not
+        :raises HTTPNotImplemented: If the method is not
             implemented in the wrapper model.
-        :raises werkzeug.exceptions.InternalServerError: If the call produces
+        :raises HTTPInternalServerError: If the call produces
             an error
-        :raises werkzeug.exceptions.HTTPException: If the call produces an
-            error, already wrapped as a werkzeug.exceptions.HTTPException
-            method
+        :raises HTTPException: If the call produces an
+            error, already wrapped as a HTTPException
         """
         return self._call_method("predict", **kwargs)
 
     def train(self, *args, **kwargs):
         """Perform a training on wrapped model's ``train`` method.
 
-        :raises werkzeug.exceptions.NotImplemented: If the method is not
+        :raises HTTPNotImplemented: If the method is not
             implemented in the wrapper model.
-        :raises werkzeug.exceptions.InternalServerError: If the call produces
+        :raises HTTPInternalServerError: If the call produces
             an error
-        :raises werkzeug.exceptions.HTTPException: If the call produces an
-            error, already wrapped as a werkzeug.exceptions.HTTPException
-            method
+        :raises HTTPException: If the call produces an
+            error, already wrapped as a HTTPException
         """
         return self._call_method("train", *args, **kwargs)
 
-    def add_train_args(self, parser):
+    def get_train_args(self):
         """Add training arguments into the training parser.
 
         :param parser: an argparse like object
@@ -204,23 +224,11 @@ class ModelWrapper(object):
         ``get_train_args`` we will try to load the arguments from there.
         """
         try:
-            return self._call_method("add_train_args", parser)
-        except exceptions.NotImplemented:
-            try:
-                args = self._call_method("get_train_args")
-                LOG.warning("Loading training arguments using the old and "
-                            "DEPRECATED 'get_train_args' function. You should "
-                            "move to the 'add_train_args' function as soon as"
-                            "possible. This is only supported for backwards "
-                            "compatibility and may lead to unexpected "
-                            "behaviour.")
-                for k, v in args.items():
-                    parser.add_argument(k, **v)
-                return parser
-            except exceptions.NotImplemented:
-                return parser
+            return self._call_method("get_train_args")
+        except web.HTTPNotImplemented:
+            return {}
 
-    def add_predict_args(self, parser):
+    def get_predict_args(self):
         """Add predict arguments into the predict parser.
 
         :param parser: an argparse like object
@@ -230,18 +238,6 @@ class ModelWrapper(object):
         ``get_predict_args`` we will try to load the arguments from there.
         """
         try:
-            return self._call_method("add_predict_args", parser)
-        except exceptions.NotImplemented:
-            try:
-                args = self._call_method("get_test_args")
-                LOG.warning("Loading predict arguments using the old and "
-                            "DEPRECATED 'get_test_args' function. You should "
-                            "move to the 'add_predict_args' function as soon "
-                            "as possible. This is only supported for "
-                            "backwards compatibility and may lead to "
-                            "unexpected behaviour.")
-                for k, v in args.items():
-                    parser.add_argument(k, **v)
-                return parser
-            except exceptions.NotImplemented:
-                return parser
+            return self._call_method("get_predict_args")
+        except web.HTTPNotImplemented:
+            return {}

@@ -14,10 +14,17 @@
 # License for the specific language governing permissions and limitations
 # under the License.
 
+import itertools
+
 import deepaas.cmd.run
+import deepaas.config
 
 
 def list_opts():
     return [
-        ('DEFAULT', deepaas.cmd.run.cli_opts),
+        (
+            'DEFAULT',
+            itertools.chain(deepaas.cmd.run.cli_opts,
+                            deepaas.config.opts)
+        ),
     ]

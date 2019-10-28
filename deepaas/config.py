@@ -25,6 +25,28 @@ import deepaas
 logging.captureWarnings(True)
 warnings.simplefilter("default", DeprecationWarning)
 
+opts = [
+    cfg.BoolOpt('enable-v1',
+                default="False",
+                help="""
+Whether to enable V1 version of the API or not.
+
+If this option is set to True, DEEPaaS API will offer a /v1/ endpoing with
+the DEPRECATED version of the API.
+"""),
+    cfg.BoolOpt('debug-endpoint',
+                default="false",
+                help="""
+Enable debug endpoint. If set we will provide all the information that you
+print to the standard output and error (i.e. stdout and stderr) through the
+"/debug" endpoint. Default is to not provide this information. This will not
+provide logging information about the API itself.
+"""),
+]
+
+CONF = cfg.CONF
+CONF.register_cli_opts(opts)
+
 
 def prepare_logging():
     log.register_options(cfg.CONF)

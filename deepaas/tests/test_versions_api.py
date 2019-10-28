@@ -14,9 +14,9 @@
 # License for the specific language governing permissions and limitations
 # under the License.
 
-import unittest
 
-import flask
+from aiohttp import test_utils
+from aiohttp import web
 
 from deepaas.api import v1
 from deepaas.api import v2
@@ -25,96 +25,52 @@ from deepaas.tests import base
 
 
 class TestApiVersions(base.TestCase):
-    def setUp(self):
-        super(TestApiVersions, self).setUp()
+    async def get_application(self):
+        app = web.Application(debug=True)
+        app.add_routes(versions.routes)
 
-        app = flask.Flask(__name__)
-        app.config['TESTING'] = True
-        app.config['DEBUG'] = True
+        return app
 
-        bp = versions.get_blueprint(doc=False, add_specs=False)
-        app.register_blueprint(bp)
+    @test_utils.unittest_run_loop
+    async def test_get_no_versions(self):
+        ret = await self.client.get("/")
+        self.assertEqual(200, ret.status)
+        self.assertEqual({'versions': []}, await ret.json())
 
-        self.app = app
-        self.cli = app.test_client()
-        self.assertEqual(app.debug, True)
-
-    def test_get_no_versions(self):
-        ret = self.cli.get("/")
-        self.assertEqual(200, ret.status_code)
-        self.assertEqual({'versions': []}, ret.json)
-
-    def test_v1_version(self):
-        versions.register_version("v1", "v1.models_models")
-        self.app.register_blueprint(v1.get_blueprint())
-        ret = self.cli.get("/")
-        self.assertEqual(200, ret.status_code)
+    @test_utils.unittest_run_loop
+    async def test_v1_version(self):
+        v1.get_app()
+        versions.register_version("v1", v1.get_version)
+        ret = await self.client.get("/")
+        self.assertEqual(200, ret.status)
         expect = {
             'versions': [
-                {'links': [{'href': '/v1/models/', 'rel': 'self'},
-                           {'href': '/v1/', 'rel': 'help'},
-                           {'href': '/v1/swagger.json', 'rel': 'describedby'}],
-                 'version': 'v1'}
+                {'links': [{'href': '/', 'rel': 'self'}],
+                 'version': 'deprecated',
+                 'id': 'v1'}
             ]
         }
-        self.assertDictEqual(expect, ret.json)
+# NOTE(aloga): skip these for now, until this issue is solved:
+# https://github.com/maximdanilchenko/aiohttp-apispec/issues/65
+#                           {'href': '/doc', 'rel': 'help'},
+#                           {'href': '/swagger.json', 'rel': 'describedby'}],
+        self.assertDictEqual(expect, await ret.json())
 
-    def test_v1_version_no_doc(self):
-        versions.register_version("v1", "v1.models_models")
-        self.app.register_blueprint(v1.get_blueprint(doc=False))
-        ret = self.cli.get("/")
-        self.assertEqual(200, ret.status_code)
+    @test_utils.unittest_run_loop
+    async def test_v2_version(self):
+        v2.get_app()
+        versions.register_version("v2", v2.get_version)
+        ret = await self.client.get("/")
+        self.assertEqual(200, ret.status)
         expect = {
             'versions': [
-                {'links': [{'href': '/v1/models/', 'rel': 'self'},
-                           {'href': '/v1/swagger.json', 'rel': 'describedby'}],
-                 'version': 'v1'}
+                {'links': [{'href': '/', 'rel': 'self'}],
+                 'version': 'stable',
+                 'id': 'v2'}
             ]
         }
-        self.assertDictEqual(expect, ret.json)
-
-    @unittest.skip("Blocked by this stal pull request"
-                   "https://github.com/noirbizarre/flask-restplus/pull/553")
-    def test_v1_version_no_swagger(self):
-        versions.register_version("v1", "v1.models_models")
-        self.app.register_blueprint(v1.get_blueprint(add_specs=False))
-        ret = self.cli.get("/")
-        self.assertEqual(200, ret.status_code)
-        expect = {
-            'versions': [
-                {'links': [{'href': '/v1/models/', 'rel': 'self'},
-                           {'href': '/v1/', 'rel': 'help'}],
-                 'version': 'v1'}
-            ]
-        }
-        self.assertDictEqual(expect, ret.json)
-
-    def test_v2_version_no_doc(self):
-        versions.register_version("v2", "v2.models_models")
-        self.app.register_blueprint(v2.get_blueprint(doc=False))
-        ret = self.cli.get("/")
-        self.assertEqual(200, ret.status_code)
-        expect = {
-            'versions': [
-                {'links': [{'href': '/v2/models/', 'rel': 'self'},
-                           {'href': '/v2/swagger.json', 'rel': 'describedby'}],
-                 'version': 'v2'}
-            ]
-        }
-        self.assertDictEqual(expect, ret.json)
-
-    @unittest.skip("Blocked by this stal pull request"
-                   "https://github.com/noirbizarre/flask-restplus/pull/553")
-    def test_v2_version_no_swagger(self):
-        versions.register_version("v2", "v2.models_models")
-        self.app.register_blueprint(v2.get_blueprint(add_specs=False))
-        ret = self.cli.get("/")
-        self.assertEqual(200, ret.status_code)
-        expect = {
-            'versions': [
-                {'links': [{'href': '/v2/models/', 'rel': 'self'},
-                           {'href': '/v2/', 'rel': 'help'}],
-                 'version': 'v2'}
-            ]
-        }
-        self.assertDictEqual(expect, ret.json)
+# NOTE(aloga): skip these for now, until this issue is solved:
+# https://github.com/maximdanilchenko/aiohttp-apispec/issues/65
+#                           {'href': '/doc', 'rel': 'help'},
+#                           {'href': '/swagger.json', 'rel': 'describedby'}],
+        self.assertDictEqual(expect, await ret.json())

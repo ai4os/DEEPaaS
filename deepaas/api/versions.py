@@ -14,96 +14,39 @@
 # License for the specific language governing permissions and limitations
 # under the License.
 
-import flask
-import flask_restplus
-from flask_restplus import fields
-import werkzeug.routing
+import json
 
-import deepaas
+from aiohttp import web
+import aiohttp_apispec
 
-ns = flask_restplus.Namespace(
-    '',
-    description='API Version information.')
+from deepaas.api.v2 import responses
 
-
-def get_blueprint(doc="/", add_specs=True):
-    bp = flask.Blueprint('versions', __name__)
-
-    api = flask_restplus.Api(
-        bp,
-        title='DEEP as a Service API version information',
-        version=deepaas.__version__,
-        description='DEEP as a Service (API) version information endpoint',
-        doc=doc,
-        add_specs=add_specs,
-    )
-    api.add_namespace(ns)
-
-    return bp
+app = web.Application()
+routes = web.RouteTableDef()
 
 
-version_link = ns.model('Location', {
-    "rel": fields.String(required=True),
-    "href": fields.Url(required=True)
-})
-
-api_version = ns.model('Version', {
-    "version": fields.String(required="True"),
-    "link": fields.Nested(version_link)
-})
-
-versions = ns.model('Versions', {
-    'versions': fields.List(fields.Nested(api_version)),
-})
-
-
-@ns.marshal_with(versions, envelope='versions')
-@ns.route('/')
-class Versions(flask_restplus.Resource, object):
+@routes.view('/')
+class Versions(web.View):
 
     versions = {}
 
-    @classmethod
-    def register_version(cls, version, url):
-        cls.versions[version] = url
-
-    def get(self):
-        """Return available API versions."""
+    @aiohttp_apispec.docs(
+        tags=["versions"],
+        summary="Get available API versions",
+    )
+    @aiohttp_apispec.response_schema(responses.Versions(), 200)
+    @aiohttp_apispec.response_schema(responses.Failure(), 400)
+    async def get(self):
         versions = []
-        for k, v in self.versions.items():
-            versions.append({
-                "version": k,
-                "links": [
-                    {
-                        "rel": "self",
-                        "href": flask.url_for(v),
-                    },
-                ]
-            })
+        for ver, info in self.versions.items():
+            resp = await info(self.request)
+            versions.append(json.loads(resp.body))
 
-            try:
-                doc = "%s.doc" % v.split(".")[0]
-                d = {"rel": "help",
-                     "href": flask.url_for(doc)}
-            except werkzeug.routing.BuildError:
-                pass
-            else:
-                versions[-1]["links"].append(d)
-
-            try:
-                specs = "%s.specs" % v.split(".")[0]
-                d = {"rel": "describedby",
-                     "href": flask.url_for(specs)}
-            except werkzeug.routing.BuildError:
-                pass
-            else:
-                versions[-1]["links"].append(d)
-
-        return {"versions": versions}
+        return web.json_response({"versions": versions})
 
 
-def register_version(version, url):
+def register_version(version, func):
     # NOTE(aloga): we could use a @classmethod on Versions, but it fails
     # with a TypeError: 'classmethod' object is not callable since the function
     # is decorated.
-    Versions.versions[version] = url
+    Versions.versions[version] = func

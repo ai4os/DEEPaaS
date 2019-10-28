@@ -15,7 +15,7 @@
 # under the License.
 
 from oslo_log import log
-import werkzeug
+from webargs import fields
 
 from deepaas.model.v2 import base
 
@@ -31,27 +31,17 @@ class TestModel(base.BaseModel):
 
     name = "deepaas-test"
 
-    response = {
-        "$schema": "http://json-schema.org/draft-04/schema#",
-        "type": "object",
-        "properties": {
-            "date": {"type": "string", "format": "date-time"},
-            "labels": {
-                "type": "array",
-                "items": {"$ref": "#/definitions/Label"},
-            },
-        },
-        "required": ["labels"],
-        "definitions": {
-            "Label": {
-                "properties": {
-                    "label": {"type": "string"},
-                    "probability": {"type": "number"},
+    # FIXME(aloga): document this
+    schema = {
+        "date": fields.Date(),
+        "labels": fields.List(
+            fields.Nested(
+                {
+                    "label": fields.Str(),
+                    "probability": fields.Float(),
                 },
-                "required": ["label", "probability"],
-                "type": "object",
-            },
-        },
+            )
+        ),
     }
 
     def predict(self, **kwargs):
@@ -65,37 +55,31 @@ class TestModel(base.BaseModel):
         LOG.debug("Got the following arguments: %s", args)
         LOG.debug("Got the following kw arguments: %s", kwargs)
 
-    def add_predict_args(self, parser):
-        # FIXME(aloga): currently we allow only to upload one file. There is a
-        # bug in the Swagger UI that makes impossible to upload several files,
-        # although this works if the request is not done through swagger. Since
-        # providing a UI and an API that behave differently is incoherent, only
-        # allow one file for the time being.
-        #
-        # See https://github.com/noirbizarre/flask-restplus/issues/491 for more
-        # details on the bug.
-        parser.add_argument('data',
-                            help="Data file to perform inference.",
-                            type=werkzeug.FileStorage,
-                            location="files",
-                            dest='files',
-                            required=True)
-        parser.add_argument("parameter",
-                            type=int,
-                            required=True,
-                            help="This is a parameter for prediction.")
-        return parser
+    def get_predict_args(self):
+        return {
+            "data": fields.Field(
+                description="Data file to perform inference.",
+                required=True,
+                location="form",
+                type="file",
+            ),
+            "parameter": fields.Int(
+                description="This is a parameter for prediction",
+                required=True
+            ),
+        }
 
-    def add_train_args(self, parser):
-        parser.add_argument('parameter_one',
-                            type=int,
-                            required=True,
-                            help='This is a integer parameter, and it is '
-                                 'a required one.')
-        parser.add_argument('parameter_two',
-                            type=str,
-                            help='This is a string parameter.')
-        return parser
+    def get_train_args(self):
+        return {
+            "parameter_one": fields.Int(
+                required=True,
+                descripton='This is a integer parameter, and it is '
+                           'a required one.'
+            ),
+            "parameter_two": fields.Str(
+                description='This is a string parameter.'
+            ),
+        }
 
     def get_metadata(self):
         d = {
