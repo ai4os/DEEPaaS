@@ -1,0 +1,11 @@
+---
+prelude: >
+    Note that starting on this version we will not support anymore Python 2.
+    Continue reading for more information.
+critical: 
+  - Support for Python 2.7 has been dropped. Take into account that Python 2
+    will be not anymore supported started in January 2020. This means that even
+    if security issues are found in the language, there will be no fixes for
+    them. In order to allow our users with a reasonable timeframe for the
+    update, we have decied to drop support for Python 2 in this release. For
+    more information check https://www.python.org/doc/sunset-python-2/
