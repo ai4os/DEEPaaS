@@ -16,6 +16,7 @@
 
 from oslo_log import log
 from webargs import fields
+from webargs import validate
 
 from deepaas.model.v2 import base
 
@@ -67,6 +68,12 @@ class TestModel(base.BaseModel):
                 description="This is a parameter for prediction",
                 required=True
             ),
+            "parameter_three": fields.Str(
+                description=("This is a parameter that forces its value to "
+                             "be one of the choices declared in 'enum'"),
+                enum=["foo", "bar"],
+                validate=validate.OneOf(["foo", "bar"]),
+            )
         }
 
     def get_train_args(self):
