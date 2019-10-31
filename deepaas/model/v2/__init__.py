@@ -63,6 +63,34 @@ def register_models():
     MODELS_LOADED = True
 
 
+def catch_error(f):
+    """Decorator to catch errors when executing the underlying methods."""
+
+    def wrap(*args, **kwargs):
+        name = args[0].name
+        try:
+            return f(*args, **kwargs)
+        except AttributeError:
+            raise web.HTTPNotImplemented(
+                reason=("Not implemented by underlying model (loaded '%s')" %
+                        name)
+            )
+        except NotImplementedError:
+            raise web.HTTPNotImplemented(
+                reason=("Model '%s' does not implement this functionality" %
+                        name)
+            )
+        except Exception as e:
+            LOG.error("An exception has happened when calling '%s' method on "
+                      "'%s' model." % (f, name))
+            LOG.exception(e)
+            if isinstance(e, web.HTTPException):
+                raise e
+            else:
+                raise web.HTTPInternalServerError(reason=e)
+    return wrap
+
+
 class ModelWrapper(object):
     """Class that will wrap the loaded models before exposing them.
 
@@ -75,11 +103,11 @@ class ModelWrapper(object):
     :raises HTTPInternalServerError: in case that a model has defined
         a reponse schema that is nod JSON schema valid (DRAFT 4)
     """
-    def __init__(self, name, model):
+    def __init__(self, name, model_obj):
         self.name = name
-        self.model = model
+        self.model_obj = model_obj
 
-        schema = getattr(self.model, "schema", None)
+        schema = getattr(self.model_obj, "schema", None)
 
         if isinstance(schema, dict):
             try:
@@ -139,29 +167,6 @@ class ModelWrapper(object):
 
         return True
 
-    def _call_method(self, method, *args, **kwargs):
-        try:
-            meth = getattr(self.model, method)
-            return meth(*args, **kwargs)
-        except AttributeError:
-            raise web.HTTPNotImplemented(
-                reason=("Not implemented by underlying model (loaded '%s')" %
-                        self.name)
-            )
-        except NotImplementedError:
-            raise web.HTTPNotImplemented(
-                reason=("Model '%s' does not implement this functionality" %
-                        self.name)
-            )
-        except Exception as e:
-            LOG.error("An exception has happened when calling '%s' method on "
-                      "'%s' model." % (method, self.name))
-            LOG.exception(e)
-            if isinstance(e, web.HTTPException):
-                raise e
-            else:
-                raise web.HTTPInternalServerError(reason=e)
-
     def get_metadata(self):
         """Obtain model's metadata.
 
@@ -172,7 +177,7 @@ class ModelWrapper(object):
         :returns dict: dictionary containing model's metadata
         """
         try:
-            d = self.model.get_metadata()
+            d = self.model_obj.get_metadata()
         except (NotImplementedError, AttributeError):
             d = {
                 "id": "0",
@@ -182,14 +187,7 @@ class ModelWrapper(object):
             }
         return d
 
-    @property
-    def response(self):
-        """Wrapped model's response schema.
-
-        Check :py:attr:`deepaas.v2.base.BaseModel.response` for more details.
-        """
-        return getattr(self.model, "response", None)
-
+    @catch_error
     def predict(self, **kwargs):
         """Perform a prediction on wrapped model's ``predict`` method.
 
@@ -200,8 +198,9 @@ class ModelWrapper(object):
         :raises HTTPException: If the call produces an
             error, already wrapped as a HTTPException
         """
-        return self._call_method("predict", **kwargs)
+        return self.model_obj.predict(**kwargs)
 
+    @catch_error
     def train(self, *args, **kwargs):
         """Perform a training on wrapped model's ``train`` method.
 
@@ -212,8 +211,9 @@ class ModelWrapper(object):
         :raises HTTPException: If the call produces an
             error, already wrapped as a HTTPException
         """
-        return self._call_method("train", *args, **kwargs)
+        return self.model_obj.train(*args, **kwargs)
 
+    @catch_error
     def get_train_args(self):
         """Add training arguments into the training parser.
 
@@ -224,10 +224,11 @@ class ModelWrapper(object):
         ``get_train_args`` we will try to load the arguments from there.
         """
         try:
-            return self._call_method("get_train_args")
-        except web.HTTPNotImplemented:
+            return self.model_obj.get_train_args()
+        except (NotImplementedError, AttributeError):
             return {}
 
+    @catch_error
     def get_predict_args(self):
         """Add predict arguments into the predict parser.
 
@@ -238,6 +239,6 @@ class ModelWrapper(object):
         ``get_predict_args`` we will try to load the arguments from there.
         """
         try:
-            return self._call_method("get_predict_args")
-        except web.HTTPNotImplemented:
+            return self.model_obj.get_predict_args()
+        except (NotImplementedError, AttributeError):
             return {}

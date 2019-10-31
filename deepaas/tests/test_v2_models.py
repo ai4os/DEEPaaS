@@ -182,4 +182,4 @@ class TestV2Model(base.TestCase):
         self.assertIn("deepaas-test", deepaas.model.v2.MODELS)
         m = deepaas.model.v2.MODELS.pop("deepaas-test")
         self.assertIsInstance(m, v2_model.ModelWrapper)
-        self.assertIsInstance(m.model, v2_test.TestModel)
+        self.assertIsInstance(m.model_obj, v2_test.TestModel)
