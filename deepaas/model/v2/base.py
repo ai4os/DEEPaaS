@@ -47,7 +47,7 @@ class BaseModel(object):
               "predictions": "<model response as string>"
           }
 
-    As previosly stated, there are two ways of defining an schema here. If our
+    As previously stated, there are two ways of defining an schema here. If our
     response have the following form::
 
         {
@@ -67,7 +67,7 @@ class BaseModel(object):
     We should define or schema as schema as follows:
 
 
-    - Using a schema dictionary. This is the most straightforwad way. In order
+    - Using a schema dictionary. This is the most straightforward way. In order
       to do so, you must use the ``marshmallow`` Python module, as follows::
 
         from marshmallow import fields
@@ -113,14 +113,14 @@ class BaseModel(object):
 
         The metadata that is expected should follow the schema that is shown
         below. This basically means that you should return a dictionary with
-        the folling aspect::
+        the following aspect::
 
             {
-                'author': 'Author name',
-                'description': 'Model description',
-                'license': 'Model's license',
-                'url': 'URL for the model (e.g. GitHub repository)',
-                'version': 'Model version',
+                "author": "Author name",
+                "description": "Model description",
+                "license": "Model's license",
+                "url": "URL for the model (e.g. GitHub repository)",
+                "version": "Model version",
             }
 
         The only fields that are mandatory are 'description' and 'name'.
@@ -172,8 +172,9 @@ class BaseModel(object):
     def get_predict_args(self):
         """Return the arguments that are needed to perform a prediction.
 
-        This function should return a dictionary of ``webargs`` fields. For
-        example::
+        This function should return a dictionary of ``webargs`` fields (check
+        `here <https://marshmallow.readthedocs.io/en/latest/api_reference.html#module-marshmallow.fields>`_
+        for a full reference of the available options). For example::
 
             from webargs import fields
 
@@ -182,14 +183,15 @@ class BaseModel(object):
             def get_predict_args():
                 return {
                     "arg1": fields.Str(
-                        required=False,
-                        default="foo",
-                        description="Argument one"
+                        required=False,  # force the user to define the value
+                        missing="foo",  # default value to use
+                        enum=["choice1", "choice2"],  # list of choices
+                        description="Argument one"  # help string
                     ),
                 }
 
         :return dict: A dictionary of ``webargs`` fields containing the
-            applicationr required arguments.
+            application required arguments.
         """
         raise NotImplementedError()
 
@@ -210,8 +212,9 @@ class BaseModel(object):
     def get_train_args(self):
         """Return the arguments that are needed to train the application.
 
-        This function should return a dictionary of ``webargs`` fields. For
-        example::
+        This function should return a dictionary of ``webargs`` fields (check
+        `here <https://marshmallow.readthedocs.io/en/latest/api_reference.html#module-marshmallow.fields>`_
+        for a full reference of the available options). For example::
 
             from webargs import fields
 
@@ -220,9 +223,10 @@ class BaseModel(object):
             def get_train_args():
                 return {
                     "arg1": fields.Str(
-                        required=False,
-                        default="foo",
-                        description="Argument one"
+                        required=False,  # force the user to define the value
+                        missing="foo",  # default value to use
+                        enum=["choice1", "choice2"],  # list of choices
+                        description="Argument one"  # help string
                     ),
                 }
 

@@ -5,8 +5,8 @@ Integrating a model into the V2 API (CURRENT)
 
 
 .. important::
-   V2 of the API (starting on release ``1.0.0`` is the default, supported
-   version. It is backwards incomptabile the V1 version.
+   V2 of the API (starting on release ``1.0.0``) is the default, supported
+   version. It is backwards incompatible with the V1 version.
 
 .. note::
    The current version of the DEEPaaS API is V2. The first release supporting this
@@ -16,7 +16,7 @@ Integrating a model into the V2 API (CURRENT)
 Defining what to load
 ---------------------
 
-The DEEPaaS API uses Python's `Setuptools`_ entry points that are dinamycally
+The DEEPaaS API uses Python's `Setuptools`_ entry points that are dynamically
 loaded to offer the model functionality through the API. This allows you to
 offer several models using a single DEEPaaS instance, by defining different
 entry points for the different models.
@@ -25,10 +25,10 @@ entry points for the different models.
 
 When the DEEPaaS API is spawned it will look for the ``deepaas.v2.model``
 entrypoint namespace, loading and adding the names found into the API
-namespace. In order to define your entry points, your modulle should leverage
+namespace. In order to define your entry points, your module should leverage
 setuptools and be ready to be installed in the system. Then, in order to define
 your entry points, you should add the following to your ``setup.cfg``
-configuraton file:
+configuration file:
 
 .. code-block:: ini
 
@@ -65,7 +65,7 @@ Entry point (model) API
 Regardless on the way you implement your entry point (i.e. as a module or as an
 object), you should expose the following functions or methods:
 
-Defining model medatata
+Defining model metadata
 #######################
 
 Your model entry point must implement a ``get_medatata`` function that will
@@ -83,7 +83,7 @@ with the ``get_train_args`` function, as follows:
 .. autofunction:: deepaas.model.v2.base.BaseModel.get_train_args
 
 Then, you must implement the training function (named ``train``) that will
-receive the defined arguments as keyword argumetns:
+receive the defined arguments as keyword arguments:
 
 .. autofunction:: deepaas.model.v2.base.BaseModel.train
 
@@ -97,17 +97,27 @@ as for the training, you can specify the prediction arguments to be defined,
 .. autofunction:: deepaas.model.v2.base.BaseModel.get_predict_args
 
 Do not forget to add an input argument to hold your data. If you want to upload
-files for inference to the API, you should use a ``webargas.fields.Field``
+files for inference to the API, you should use a ``webargs.fields.Field``
 field created as follows::
 
     def get_predict_args():
         return {
             "data": fields.Field(
-                description="Data file to perform inference.",
+                description="Data file to perform inference on.",
                 required=True,
-                location="form",
+                missing=None,
                 type="file",
-            )
+                location="form")
+         }
+
+You can also predict data stored in an URL by using::
+
+    def get_predict_args():
+        return {
+            "url": fields.Url(
+                description="Url of data to perform inference on.",
+                required=False,
+                missing=None)
          }
 
 .. important::
@@ -153,7 +163,7 @@ In order to define a custom response, the ``response`` attribute is used:
               "predictions": "<model response as string>"
           }
 
-    As previosly stated, there are two ways of defining an schema here. If our
+    As previously stated, there are two ways of defining an schema here. If our
     response have the following form::
 
         {
@@ -173,7 +183,7 @@ In order to define a custom response, the ``response`` attribute is used:
     We should define or schema as schema as follows:
 
 
-    - Using a schema dictionary. This is the most straightforwad way. In order
+    - Using a schema dictionary. This is the most straightforward way. In order
       to do so, you must use the ``marshmallow`` Python module, as follows::
 
         from marshmallow import fields
