@@ -230,3 +230,15 @@ class BaseModel(object):
             application required arguments.
         """
         raise NotImplementedError()
+
+    @abc.abstractmethod
+    def warm(self):
+        """Warm (initialize, load) the model.
+
+        This is called when the model is loaded, before the API is spawned.
+
+        If implemented, it should prepare the model for execution. This is
+        useful for loading it into memory, perform any kind of preliminary
+        checks, etc.
+        """
+        raise NotImplementedError()

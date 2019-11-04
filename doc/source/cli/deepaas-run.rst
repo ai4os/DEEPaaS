@@ -55,6 +55,12 @@ Options
    you are running inside a container, the most sensible option is to set
    ``listen-ip`` to ``0.0.0.0``.
 
+.. option:: --model-workers MODEL_WORKERS, -n MODEL_WORKERS
+
+   Specify the number of workers *per model* that we will initialize. If using
+   a CPU you probably want to increase this number, if using a GPU probably you
+   want to leave it to 1. (defaults to 1)
+
 
 Files
 =====

@@ -18,20 +18,12 @@ import uuid
 
 from aiohttp import test_utils
 from aiohttp import web
-import mock
 import six
 
 import deepaas
-from deepaas import api
 from deepaas.api import v1
 import deepaas.model
 from deepaas.tests import base
-
-
-class TestApi(base.TestCase):
-    @mock.patch('deepaas.api.APP')
-    def test_get_app(self, mock_app):
-        self.assertEqual(mock_app, api.get_app())
 
 
 class TestApiV1(base.TestCase):

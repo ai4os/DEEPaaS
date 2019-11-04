@@ -107,8 +107,8 @@ class TestApiV2(base.TestCase):
 
     @test_utils.unittest_run_loop
     async def test_train(self):
-        ret = await self.client.put("/v2/models/deepaas-test/train",
-                                    data={"parameter_one": 1})
+        ret = await self.client.post("/v2/models/deepaas-test/train",
+                                     data={"parameter_one": 1})
         self.assertEqual(200, ret.status)
 
     @test_utils.unittest_run_loop

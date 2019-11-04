@@ -21,33 +21,33 @@ import webargs.core
 
 from deepaas import model
 
-# Get the models (this is a singleton, so it is safe to call it multiple times
-model.register_v2_models()
 
-app = web.Application()
-routes = web.RouteTableDef()
+def setup_routes(app):
+    # In the next lines we iterate over the loaded models and create the
+    # different resources for each model. This way we can also load the
+    # expected parameters if needed (as in the training method).
+    for model_name, model_obj in model.V2_MODELS.items():
+        args = webargs.core.dict2schema(model_obj.get_train_args())
 
+        class Handler(object):
+            model_name = None
+            model_obj = None
 
-# In the next lines we iterate over the loaded models and create different
-# views for the different models. We take the corresponding arguments and
-# responses from the underlying model, adding them to the OpenAPI spec and
-# documentation.
-for model_name, model_obj in model.V2_MODELS.items():
-    args = webargs.core.dict2schema(model_obj.get_train_args())
+            def __init__(self, model_name, model_obj):
+                self.model_name = model_name
+                self.model_obj = model_obj
 
-    @routes.view('/models/%s/train' % model_name)
-    class ModelTrain(web.View):
-        model_name = model_name
-        model_obj = model_obj
+            @aiohttp_apispec.docs(
+                tags=["models"],
+                summary="Retrain model with available data"
+            )
+            @aiohttp_apispec.querystring_schema(args)
+            @aiohttpparser.parser.use_args(args)
+            async def post(self, request, args):
+                ret = await self.model_obj.train(**args)
+                # FIXME(aloga): what are we returning here? We need to take
+                # care of these responses as well.
+                return web.json_response(ret)
 
-        @aiohttp_apispec.docs(
-            tags=["models"],
-            summary="Retrain model with available data"
-        )
-        @aiohttp_apispec.querystring_schema(args)
-        @aiohttpparser.parser.use_args(args)
-        async def put(self, args):
-            ret = self.model_obj.train(**args)
-            # FIXME(aloga): what are we returning here? We need to take care
-            # of these responses as well.
-            return web.json_response(ret)
+        hdlr = Handler(model_name, model_obj)
+        app.router.add_post("/models/%s/train" % model_name, hdlr.post)

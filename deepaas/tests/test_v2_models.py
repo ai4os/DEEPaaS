@@ -17,6 +17,7 @@
 import itertools
 import uuid
 
+from aiohttp import test_utils
 from aiohttp import web
 import marshmallow
 from marshmallow import fields as m_fields
@@ -24,9 +25,9 @@ import mock
 from webargs import fields
 
 import deepaas
-from deepaas.model import v2 as v2_model
 from deepaas.model.v2 import base as v2_base
 from deepaas.model.v2 import test as v2_test
+from deepaas.model.v2 import wrapper as v2_wrapper
 from deepaas.tests import base
 
 
@@ -48,6 +49,9 @@ class TestV2Model(base.TestCase):
             def train(self, **kwargs):
                 super(Model, self).train(**kwargs)
 
+            def warm(self, **kwargs):
+                super(Model, self).train(**kwargs)
+
             def get_train_args(self):
                 super(Model, self).get_train_args()
 
@@ -64,7 +68,7 @@ class TestV2Model(base.TestCase):
 
         self.assertRaises(
             web.HTTPInternalServerError,
-            v2_model.ModelWrapper,
+            v2_wrapper.ModelWrapper,
             "test", Model()
         )
 
@@ -72,7 +76,7 @@ class TestV2Model(base.TestCase):
         class Model(object):
             schema = None
 
-        wrapper = v2_model.ModelWrapper("test", Model())
+        wrapper = v2_wrapper.ModelWrapper("test", Model())
         self.assertRaises(
             web.HTTPInternalServerError,
             wrapper.validate_response,
@@ -85,7 +89,7 @@ class TestV2Model(base.TestCase):
 
         self.assertRaises(
             web.HTTPInternalServerError,
-            v2_model.ModelWrapper,
+            v2_wrapper.ModelWrapper,
             "test", Model()
         )
 
@@ -96,7 +100,7 @@ class TestV2Model(base.TestCase):
         class Model(object):
             schema = Schema
 
-        wrapper = v2_model.ModelWrapper("test", Model())
+        wrapper = v2_wrapper.ModelWrapper("test", Model())
 
         self.assertTrue(wrapper.validate_response({"foo": "bar"}))
         self.assertRaises(
@@ -111,7 +115,7 @@ class TestV2Model(base.TestCase):
                 "foo": m_fields.Str()
             }
 
-        wrapper = v2_model.ModelWrapper("test", Model())
+        wrapper = v2_wrapper.ModelWrapper("test", Model())
 
         self.assertTrue(wrapper.validate_response({"foo": "bar"}))
         self.assertRaises(
@@ -138,14 +142,15 @@ class TestV2Model(base.TestCase):
         for arg, val in itertools.chain(pargs.items(), targs.items()):
             self.assertIsInstance(val, fields.Field)
 
-    def test_dummy_model_with_wrapper(self):
-        w = v2_model.ModelWrapper("foo", v2_test.TestModel())
+    @test_utils.unittest_run_loop
+    async def test_dummy_model_with_wrapper(self):
+        w = v2_wrapper.ModelWrapper("foo", v2_test.TestModel())
         self.assertDictEqual(
             {'date': '2019-01-1',
              'labels': [{'label': 'foo', 'probability': 1.0}]},
-            w.predict()
+            await w.predict()
         )
-        self.assertIsNone(w.train())
+        self.assertIsNone(await w.train())
         meta = w.get_metadata()
         self.assertIn("description", meta)
         self.assertIn("id", meta)
@@ -155,10 +160,25 @@ class TestV2Model(base.TestCase):
         for arg, val in itertools.chain(pargs.items(), targs.items()):
             self.assertIsInstance(val, fields.Field)
 
-    def test_model_with_not_implemented_attributes_and_wrapper(self):
-        w = v2_model.ModelWrapper("foo", object())
-        self.assertRaises(web.HTTPNotImplemented, w.predict)
-        self.assertRaises(web.HTTPNotImplemented, w.train)
+    @test_utils.unittest_run_loop
+    async def test_model_with_not_implemented_attributes_and_wrapper(self):
+        w = v2_wrapper.ModelWrapper("foo", object())
+
+        # NOTE(aloga): Cannot use assertRaises here directly, as testtools
+        # overrides this method, and their implementation makes impossible to
+        # use it a s context manager. Then, since we need to do async calls to
+        # the methods (they are coroutines) we cannot use assertRaises
+        # directly.
+        try:
+            await w.predict()
+        except Exception as e:
+            self.assertIsInstance(e, web.HTTPNotImplemented)
+
+        try:
+            await w.train()
+        except Exception as e:
+            self.assertIsInstance(e, web.HTTPNotImplemented)
+
         meta = w.get_metadata()
         self.assertIn("description", meta)
         self.assertIn("id", meta)
@@ -173,7 +193,7 @@ class TestV2Model(base.TestCase):
         mock_loading.return_value = {uuid.uuid4().hex: "bar"}
         deepaas.model.v2.register_models()
         for m in deepaas.model.v2.MODELS.values():
-            self.assertIsInstance(m, v2_model.ModelWrapper)
+            self.assertIsInstance(m, v2_wrapper.ModelWrapper)
 
     @mock.patch('deepaas.model.loading.get_available_models')
     def test_loading_error(self, mock_loading):
@@ -181,5 +201,5 @@ class TestV2Model(base.TestCase):
         deepaas.model.v2.register_models()
         self.assertIn("deepaas-test", deepaas.model.v2.MODELS)
         m = deepaas.model.v2.MODELS.pop("deepaas-test")
-        self.assertIsInstance(m, v2_model.ModelWrapper)
+        self.assertIsInstance(m, v2_wrapper.ModelWrapper)
         self.assertIsInstance(m.model_obj, v2_test.TestModel)

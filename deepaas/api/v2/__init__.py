@@ -24,13 +24,9 @@ from deepaas.api.v2 import models as v2_model
 from deepaas.api.v2 import predict as v2_predict
 from deepaas.api.v2 import responses
 from deepaas.api.v2 import train as v2_train
-from deepaas import model
 
 CONF = cfg.CONF
 LOG = log.getLogger("deepaas.api.v2")
-
-# Get the models (this is a singleton, so it is safe to call it multiple times
-model.register_v2_models()
 
 APP = None
 
@@ -51,10 +47,10 @@ def get_app():
     v2_debug.setup_debug()
 
     APP.router.add_get('/', get_version, name="v2")
-    APP.add_routes(v2_debug.routes)
-    APP.add_routes(v2_model.routes)
-    APP.add_routes(v2_train.routes)
-    APP.add_routes(v2_predict.routes)
+    v2_debug.setup_routes(APP)
+    v2_model.setup_routes(APP)
+    v2_train.setup_routes(APP)
+    v2_predict.setup_routes(APP)
 
     return APP
 

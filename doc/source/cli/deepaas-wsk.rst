@@ -44,6 +44,12 @@ Options
    Port on which the DEEPaaS API will listen. The DEEPaaS API service listens
    on this port number for incoming requests.
 
+.. option:: --model-workers MODEL_WORKERS, -n MODEL_WORKERS
+
+   Specify the number of workers *per model* that we will initialize. If using
+   a CPU you probably want to increase this number, if using a GPU probably you
+   want to leave it to 1. (defaults to 1)
+
 Files
 =====
 

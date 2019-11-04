@@ -20,12 +20,6 @@ import aiohttp_apispec
 from deepaas.api.v2 import responses
 from deepaas import model
 
-# Get the models (this is a singleton, so it is safe to call it multiple times
-model.register_v2_models()
-
-app = web.Application()
-routes = web.RouteTableDef()
-
 
 @aiohttp_apispec.docs(
     tags=["models"],
@@ -35,9 +29,8 @@ routes = web.RouteTableDef()
                 "will return the loaded models, as long as their basic "
                 "metadata.",
 )
-@routes.get('/models')
 @aiohttp_apispec.response_schema(responses.ModelMeta(), 200)
-async def get(request):
+async def index(request):
     """Return loaded models and its information.
 
     DEEPaaS can load several models and server them on the same endpoint,
@@ -61,30 +54,40 @@ async def get(request):
     return web.json_response({"models": models})
 
 
-# In the next lines we iterate over the loaded models and create the different
-# resources for each model. This way we can also load the expected parameters
-# if needed (as in the training method).
-for model_name, model_obj in model.V2_MODELS.items():
-    @routes.view('/models/%s' % model_name)
-    class BaseModel(web.View):
-        model_name = model_name
-        model_obj = model_obj
+class Handler(object):
+    model_name = None
+    model_obj = None
 
-        @aiohttp_apispec.docs(
-            tags=["models"],
-            summary="Return '%s' model metadata" % model_name,
-        )
-        @aiohttp_apispec.response_schema(responses.ModelMeta(), 200)
-        async def get(self):
-            m = {
-                "id": self.model_name,
-                "name": self.model_name,
-                "links": [{
-                    "rel": "self",
-                    "href": "%s" % self.request.path,
-                }]
-            }
-            meta = self.model_obj.get_metadata()
-            m.update(meta)
+    def __init__(self, model_name, model_obj):
+        self.model_name = model_name
+        self.model_obj = model_obj
 
-            return web.json_response(m)
+    @aiohttp_apispec.docs(
+        tags=["models"],
+        summary="Return model's metadata",
+    )
+    @aiohttp_apispec.response_schema(responses.ModelMeta(), 200)
+    async def get(self, request):
+        m = {
+            "id": self.model_name,
+            "name": self.model_name,
+            "links": [{
+                "rel": "self",
+                "href": "%s" % request.path,
+            }]
+        }
+        meta = self.model_obj.get_metadata()
+        m.update(meta)
+
+        return web.json_response(m)
+
+
+def setup_routes(app):
+    app.router.add_get("/models", index)
+
+    # In the next lines we iterate over the loaded models and create the
+    # different resources for each model. This way we can also load the
+    # expected parameters if needed (as in the training method).
+    for model_name, model_obj in model.V2_MODELS.items():
+        hdlr = Handler(model_name, model_obj)
+        app.router.add_get("/models/%s" % model_name, hdlr.get)

@@ -73,6 +73,19 @@ return some basic metadata information about your model, as follows:
 
 .. autofunction:: deepaas.model.v2.base.BaseModel.get_metadata
 
+Warming a model
+###############
+
+You can initialize your model before any prediction or train is done by
+defining a ``warm`` function. This function receives no arguments and returns
+no result, but it will be call before the API is spawned.
+
+You can use it to implement any loading or initialization that your model may
+use. This way, your model will be ready whenever a first prediction is done,
+reducint the waiting time.
+
+.. autofunction:: deepaas.model.v2.base.BaseModel.warm
+
 Training
 ########
 
