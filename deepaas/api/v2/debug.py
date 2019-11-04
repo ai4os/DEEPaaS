@@ -25,12 +25,7 @@ from oslo_config import cfg
 from oslo_log import log
 import six
 
-from deepaas import model
-
 CONF = cfg.CONF
-
-# Get the models (this is a singleton, so it is safe to call it multiple times
-model.register_v2_models()
 
 app = web.Application()
 routes = web.RouteTableDef()
@@ -85,10 +80,13 @@ def setup_debug():
     summary="""Return debug information if enabled by API.""",
     description="""Return debug information if enabled by API.""",
 )
-@routes.get('/debug')
-async def get(self):
+async def get(request):
     print("--- DEBUG MARKER %s ---" % datetime.datetime.now())
     resp = ""
     if DEBUG_STREAM is not None:
         resp = DEBUG_STREAM.getvalue()
     return web.Response(text=resp)
+
+
+def setup_routes(app):
+    app.router.add_get("/debug", get)

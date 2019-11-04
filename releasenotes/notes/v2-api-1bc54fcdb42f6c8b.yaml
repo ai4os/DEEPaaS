@@ -5,6 +5,9 @@ features:
     support async requests. Please read these notes carefully so that you can
     upgrade your model along with this new version.
   - Moved from the OpenAPI Specification version 3 and Swagger UI 3.X.
+  - Added new ``--model-workers`` option, allowing to specify the number of
+    workers that will be used for model operations (train, predict).
+  - New warm method allow to initialize the model before the API is spawned.
 upgrade:
   - The namespace has changed. Now we load models in the ``deepaas.v2.model``
     namespace. It is still possible to use the old namespace, but this is

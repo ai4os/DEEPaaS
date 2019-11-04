@@ -22,12 +22,6 @@ import webargs.core
 from deepaas.api.v2 import responses
 from deepaas import model
 
-# Get the models (this is a singleton, so it is safe to call it multiple times
-model.register_v2_models()
-
-app = web.Application()
-routes = web.RouteTableDef()
-
 
 def _get_model_response(model_name, model_obj):
     response_schema = model_obj.response_schema
@@ -38,33 +32,38 @@ def _get_model_response(model_name, model_obj):
     return responses.Prediction
 
 
-# In the next lines we iterate over the loaded models and create different
-# views for the different models. We take the corresponding arguments and
-# responses from the underlying model, adding them to the OpenAPI spec and
-# documentation.
-for model_name, model_obj in model.V2_MODELS.items():
+def setup_routes(app):
+    # In the next lines we iterate over the loaded models and create the
+    # different resources for each model. This way we can also load the
+    # expected parameters if needed (as in the training method).
+    for model_name, model_obj in model.V2_MODELS.items():
+        args = webargs.core.dict2schema(model_obj.get_predict_args())
+        response = _get_model_response(model_name, model_obj)
 
-    args = webargs.core.dict2schema(model_obj.get_predict_args())
-    response = _get_model_response(model_name, model_obj)
+        class Handler(object):
+            model_name = None
+            model_obj = None
 
-    @routes.view('/models/%s/predict' % model_name)
-    class ModelPredict(web.View):
-        model_name = model_name
-        model_obj = model_obj
+            def __init__(self, model_name, model_obj):
+                self.model_name = model_name
+                self.model_obj = model_obj
 
-        @aiohttp_apispec.docs(
-            tags=["models"],
-            summary="Make a prediction given the input data"
-        )
-        @aiohttp_apispec.querystring_schema(args)
-        @aiohttp_apispec.response_schema(response(), 200)
-        @aiohttp_apispec.response_schema(responses.Failure(), 400)
-        @aiohttpparser.parser.use_args(args)
-        async def post(self, args):
-            ret = self.model_obj.predict(**args)
+            @aiohttp_apispec.docs(
+                tags=["models"],
+                summary="Make a prediction given the input data"
+            )
+            @aiohttp_apispec.querystring_schema(args)
+            @aiohttp_apispec.response_schema(response(), 200)
+            @aiohttp_apispec.response_schema(responses.Failure(), 400)
+            @aiohttpparser.parser.use_args(args)
+            async def post(self, request, args):
+                ret = await self.model_obj.predict(**args)
 
-            if self.model_obj.has_schema:
-                self.model_obj.validate_response(ret)
-                return web.json_response(ret)
+                if self.model_obj.has_schema:
+                    self.model_obj.validate_response(ret)
+                    return web.json_response(ret)
 
-            return web.json_response({"status": "OK", "predictions": ret})
+                return web.json_response({"status": "OK", "predictions": ret})
+
+        hdlr = Handler(model_name, model_obj)
+        app.router.add_post("/models/%s/predict" % model_name, hdlr.post)

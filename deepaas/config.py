@@ -42,6 +42,14 @@ print to the standard output and error (i.e. stdout and stderr) through the
 "/debug" endpoint. Default is to not provide this information. This will not
 provide logging information about the API itself.
 """),
+    cfg.IntOpt('model-workers',
+               short='n',
+               default=1,
+               help="""
+Specify the number of workers *per model* that we will initialize. If using a
+CPU you probably want to increase this number, if using a GPU probably you want
+to leave it to 1. (defaults to 1)
+"""),
 ]
 
 CONF = cfg.CONF

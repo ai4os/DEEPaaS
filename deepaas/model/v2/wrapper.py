@@ -14,40 +14,20 @@
 # License for the specific language governing permissions and limitations
 # under the License.
 
+import asyncio
+import concurrent.futures
+import contextlib
+import functools
+
 from aiohttp import web
 import marshmallow
 
+from oslo_config import cfg
 from oslo_log import log
 
 LOG = log.getLogger(__name__)
 
-
-def catch_error(f):
-    """Decorator to catch errors when executing the underlying methods."""
-
-    def wrap(*args, **kwargs):
-        name = args[0].name
-        try:
-            return f(*args, **kwargs)
-        except AttributeError:
-            raise web.HTTPNotImplemented(
-                reason=("Not implemented by underlying model (loaded '%s')" %
-                        name)
-            )
-        except NotImplementedError:
-            raise web.HTTPNotImplemented(
-                reason=("Model '%s' does not implement this functionality" %
-                        name)
-            )
-        except Exception as e:
-            LOG.error("An exception has happened when calling '%s' method on "
-                      "'%s' model." % (f, name))
-            LOG.exception(e)
-            if isinstance(e, web.HTTPException):
-                raise e
-            else:
-                raise web.HTTPInternalServerError(reason=e)
-    return wrap
+CONF = cfg.CONF
 
 
 class ModelWrapper(object):
@@ -65,6 +45,10 @@ class ModelWrapper(object):
     def __init__(self, name, model_obj):
         self.name = name
         self.model_obj = model_obj
+
+        self._loop = asyncio.get_event_loop()
+        self._workers = CONF.model_workers
+        self._executor = self._init_executor()
 
         schema = getattr(self.model_obj, "schema", None)
 
@@ -94,6 +78,49 @@ class ModelWrapper(object):
             self.has_schema = False
 
         self.response_schema = schema
+
+    def _init_executor(self):
+        n = self._workers
+        executor = concurrent.futures.ThreadPoolExecutor(max_workers=n)
+
+#        run = sconcurrent.futures.elf.loop.run_in_executor
+
+#        fs = [run(executor, self.warm, path) for i in range(0, n)]
+#        await asyncio.gather(*fs)
+#
+#        async def close_executor():
+#            fs = [run(executor, self.clean) for i in range(0, n)]
+#            await asyncio.shield(asyncio.gather(*fs))
+#            executor.shutdown(wait=True)
+
+#        app.on_cleanup.append(close_executor)
+#        app['executor'] = executor
+
+        return executor
+
+    @contextlib.contextmanager
+    def _catch_error(self):
+        name = self.name
+        try:
+            yield
+        except AttributeError:
+            raise web.HTTPNotImplemented(
+                reason=("Not implemented by underlying model (loaded '%s')" %
+                        name)
+            )
+        except NotImplementedError:
+            raise web.HTTPNotImplemented(
+                reason=("Model '%s' does not implement this functionality" %
+                        name)
+            )
+        except Exception as e:
+            LOG.error("An exception has happened when calling method on "
+                      "'%s' model." % name)
+            LOG.exception(e)
+            if isinstance(e, web.HTTPException):
+                raise e
+            else:
+                raise web.HTTPInternalServerError(reason=e)
 
     def validate_response(self, response):
         """Validate a response against the model's response schema, if set.
@@ -146,8 +173,46 @@ class ModelWrapper(object):
             }
         return d
 
-    @catch_error
-    def predict(self, **kwargs):
+    async def _async_run(self, func, *args, **kwargs):
+        run = self._loop.run_in_executor
+        ret = await run(
+            self._executor,
+            functools.partial(
+                func,
+                *args,
+                **kwargs
+            )
+        )
+        return ret
+
+    async def warm(self):
+        """Warm (i.e. load, initialize) the underlying model.
+
+        This method is called automatically when the model is loaded. You
+        should use this method to initialize the model so that it is ready for
+        the first prediction.
+
+        The model receives no arguments.
+        """
+        try:
+            func = self.model_obj.warm
+        except AttributeError:
+            LOG.debug("Cannot warm (initialize) model '%s'" % self.name)
+            return
+
+        run = self._loop.run_in_executor
+        executor = self._executor
+        n = self._workers
+        try:
+            LOG.debug("Warming '%s' model with %s workers" % (self.name, n))
+            fs = [run(executor, func) for i in range(0, n)]
+            await asyncio.gather(*fs)
+            LOG.debug("Model '%s' has been warmed" % self.name)
+        except NotImplementedError:
+            LOG.debug("Cannot warm (initialize) model '%s'" % self.name)
+            return
+
+    async def predict(self, *args, **kwargs):
         """Perform a prediction on wrapped model's ``predict`` method.
 
         :raises HTTPNotImplemented: If the method is not
@@ -157,10 +222,15 @@ class ModelWrapper(object):
         :raises HTTPException: If the call produces an
             error, already wrapped as a HTTPException
         """
-        return self.model_obj.predict(**kwargs)
+        with self._catch_error():
+            ret = await self._async_run(
+                self.model_obj.predict,
+                *args,
+                **kwargs
+            )
+        return ret
 
-    @catch_error
-    def train(self, *args, **kwargs):
+    async def train(self, *args, **kwargs):
         """Perform a training on wrapped model's ``train`` method.
 
         :raises HTTPNotImplemented: If the method is not
@@ -170,9 +240,14 @@ class ModelWrapper(object):
         :raises HTTPException: If the call produces an
             error, already wrapped as a HTTPException
         """
-        return self.model_obj.train(*args, **kwargs)
+        with self._catch_error():
+            ret = await self._async_run(
+                self.model_obj.train,
+                *args,
+                **kwargs
+            )
+        return ret
 
-    @catch_error
     def get_train_args(self):
         """Add training arguments into the training parser.
 
@@ -187,7 +262,6 @@ class ModelWrapper(object):
         except (NotImplementedError, AttributeError):
             return {}
 
-    @catch_error
     def get_predict_args(self):
         """Add predict arguments into the predict parser.
 

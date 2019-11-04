@@ -32,7 +32,7 @@ APP = None
 CONF = cfg.CONF
 
 
-def get_app(doc="/docs"):
+async def get_app(doc="/docs"):
     """Get the main app."""
     global APP
 
@@ -65,6 +65,10 @@ def get_app(doc="/docs"):
     APP.add_routes(versions.routes)
 
     LOG.info("Serving loaded V2 models: %s", list(model.V2_MODELS.keys()))
+
+    for _, m in model.V2_MODELS.items():
+        LOG.debug("Warming models...")
+        await m.warm()
 
     if doc:
         # init docs with all parameters, usual for ApiSpec

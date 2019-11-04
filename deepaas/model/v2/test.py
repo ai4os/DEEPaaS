@@ -45,6 +45,9 @@ class TestModel(base.BaseModel):
         ),
     }
 
+    def warm(self):
+        LOG.debug("Test model is warming...")
+
     def predict(self, **kwargs):
         LOG.debug("Got the following kw arguments: %s", kwargs)
         return {
