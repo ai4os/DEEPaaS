@@ -55,11 +55,16 @@ Options
    you are running inside a container, the most sensible option is to set
    ``listen-ip`` to ``0.0.0.0``.
 
-.. option:: --model-workers MODEL_WORKERS, -n MODEL_WORKERS
+.. option:: --predict-workers PREDICT_WORKERS, -p PREDICT_WORKERS
 
-   Specify the number of workers *per model* that we will initialize. If using
-   a CPU you probably want to increase this number, if using a GPU probably you
-   want to leave it to 1. (defaults to 1)
+   Specify the number of workers to spawn for prediction tasks. If using a CPU
+   you probably want to increase this number, if using a GPU probably you want
+   to leave it to 1. (defaults to 1)
+
+.. option:: --train-workers TRAIN_WORKERS
+
+   Specify the number of workers to spawn for training tasks. Unless you know
+   what you are doing you should leave this number to 1. (defaults to 1)
 
 
 Files

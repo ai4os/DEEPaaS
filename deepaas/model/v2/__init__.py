@@ -27,7 +27,7 @@ MODELS = {}
 MODELS_LOADED = False
 
 
-def register_models():
+def register_models(app):
     global MODELS
     global MODELS_LOADED
 
@@ -36,7 +36,7 @@ def register_models():
 
     try:
         for name, model in loading.get_available_models("v2").items():
-            MODELS[name] = wrapper.ModelWrapper(name, model)
+            MODELS[name] = wrapper.ModelWrapper(name, model, app)
     except Exception as e:
         LOG.warning("Error loading models: %s", e)
 
@@ -52,7 +52,7 @@ def register_models():
 
     try:
         for name, model in loading.get_available_models("v1").items():
-            MODELS[name] = wrapper.ModelWrapper(name, model)
+            MODELS[name] = wrapper.ModelWrapper(name, model, app)
     except Exception as e:
         LOG.warning("Error loading models: %s", e)
 
@@ -60,6 +60,7 @@ def register_models():
         LOG.info("No models found with V2 or V1 namespace, loading test model")
         MODELS["deepaas-test"] = wrapper.ModelWrapper(
             "deepaas-test",
-            test.TestModel()
+            test.TestModel(),
+            app
         )
     MODELS_LOADED = True

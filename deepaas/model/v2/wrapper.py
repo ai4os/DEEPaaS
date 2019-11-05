@@ -15,9 +15,14 @@
 # under the License.
 
 import asyncio
+import collections
 import concurrent.futures
 import contextlib
 import functools
+import multiprocessing
+import multiprocessing.pool
+import os
+import tempfile
 
 from aiohttp import web
 import marshmallow
@@ -28,6 +33,12 @@ from oslo_log import log
 LOG = log.getLogger(__name__)
 
 CONF = cfg.CONF
+
+
+UploadedField = collections.namedtuple("UploadedField", ("name",
+                                                         "filename",
+                                                         "file",
+                                                         "content_type"))
 
 
 class ModelWrapper(object):
@@ -42,13 +53,18 @@ class ModelWrapper(object):
     :raises HTTPInternalServerError: in case that a model has defined
         a reponse schema that is nod JSON schema valid (DRAFT 4)
     """
-    def __init__(self, name, model_obj):
+    def __init__(self, name, model_obj, app):
         self.name = name
         self.model_obj = model_obj
+        self._app = app
 
         self._loop = asyncio.get_event_loop()
-        self._workers = CONF.model_workers
-        self._executor = self._init_executor()
+
+        self._predict_workers = CONF.predict_workers
+        self._predict_executor = self._init_predict_executor()
+
+        self._train_workers = CONF.train_workers
+        self._train_executor = self._init_train_executor()
 
         schema = getattr(self.model_obj, "schema", None)
 
@@ -79,24 +95,31 @@ class ModelWrapper(object):
 
         self.response_schema = schema
 
-    def _init_executor(self):
-        n = self._workers
+    def _init_predict_executor(self):
+        n = self._predict_workers
         executor = concurrent.futures.ThreadPoolExecutor(max_workers=n)
+        return executor
+
+    def _init_train_executor(self):
+        n = self._train_workers
+        executor = CancellablePool(max_workers=n)
+        return executor
 
 #        run = sconcurrent.futures.elf.loop.run_in_executor
 
 #        fs = [run(executor, self.warm, path) for i in range(0, n)]
 #        await asyncio.gather(*fs)
 #
+        async def close_executor():
+            self._executor.shutdown()
+
 #        async def close_executor():
 #            fs = [run(executor, self.clean) for i in range(0, n)]
 #            await asyncio.shield(asyncio.gather(*fs))
 #            executor.shutdown(wait=True)
 
-#        app.on_cleanup.append(close_executor)
+        self._app.on_cleanup.append(close_executor)
 #        app['executor'] = executor
-
-        return executor
 
     @contextlib.contextmanager
     def _catch_error(self):
@@ -173,15 +196,18 @@ class ModelWrapper(object):
             }
         return d
 
-    async def _async_run(self, func, *args, **kwargs):
-        run = self._loop.run_in_executor
-        ret = await run(
-            self._executor,
-            functools.partial(
-                func,
-                *args,
-                **kwargs
-            )
+    def _run_in_predict_pool(self, func, *args, **kwargs):
+        async def task(fn):
+            return await self._loop.run_in_executor(self._predict_executor, fn)
+
+        return self._loop.create_task(
+            task(functools.partial(func, *args, **kwargs))
+        )
+
+    def _run_in_train_pool(self, func, *args, **kwargs):
+        fn = functools.partial(func, *args, **kwargs)
+        ret = self._loop.create_task(
+            self._train_executor.apply(fn)
         )
         return ret
 
@@ -201,8 +227,8 @@ class ModelWrapper(object):
             return
 
         run = self._loop.run_in_executor
-        executor = self._executor
-        n = self._workers
+        executor = self._predict_executor
+        n = self._predict_workers
         try:
             LOG.debug("Warming '%s' model with %s workers" % (self.name, n))
             fs = [run(executor, func) for i in range(0, n)]
@@ -212,7 +238,7 @@ class ModelWrapper(object):
             LOG.debug("Cannot warm (initialize) model '%s'" % self.name)
             return
 
-    async def predict(self, *args, **kwargs):
+    def predict(self, *args, **kwargs):
         """Perform a prediction on wrapped model's ``predict`` method.
 
         :raises HTTPNotImplemented: If the method is not
@@ -222,15 +248,27 @@ class ModelWrapper(object):
         :raises HTTPException: If the call produces an
             error, already wrapped as a HTTPException
         """
-        with self._catch_error():
-            ret = await self._async_run(
-                self.model_obj.predict,
-                *args,
-                **kwargs
-            )
-        return ret
+        for key, val in kwargs.items():
+            if isinstance(val, web.FileField):
+                fd, name = tempfile.mkstemp()
+                fd = os.fdopen(fd, "w+b")
+                fd.write(val.file.read())
+                fd.close()
+                aux = UploadedField(
+                    name=val.name,
+                    filename=val.filename,
+                    file=name,
+                    content_type=val.content_type,
+                )
+                kwargs[key] = aux
+                # FIXME(aloga); cleanup of tmpfile here
 
-    async def train(self, *args, **kwargs):
+        with self._catch_error():
+            return self._run_in_predict_pool(
+                self.model_obj.predict, *args, **kwargs
+            )
+
+    def train(self, *args, **kwargs):
         """Perform a training on wrapped model's ``train`` method.
 
         :raises HTTPNotImplemented: If the method is not
@@ -240,13 +278,11 @@ class ModelWrapper(object):
         :raises HTTPException: If the call produces an
             error, already wrapped as a HTTPException
         """
+
         with self._catch_error():
-            ret = await self._async_run(
-                self.model_obj.train,
-                *args,
-                **kwargs
+            return self._run_in_train_pool(
+                self.model_obj.train, *args, **kwargs
             )
-        return ret
 
     def get_train_args(self):
         """Add training arguments into the training parser.
@@ -275,3 +311,66 @@ class ModelWrapper(object):
             return self.model_obj.get_predict_args()
         except (NotImplementedError, AttributeError):
             return {}
+
+
+class NoDaemonProcess(multiprocessing.Process):
+    # make 'daemon' attribute always return False
+    def _get_daemon(self):
+        return False
+
+    def _set_daemon(self, value):
+        pass
+
+    daemon = property(_get_daemon, _set_daemon)
+
+
+class Pool(multiprocessing.pool.Pool):
+    Process = NoDaemonProcess
+
+
+class CancellablePool(object):
+    def __init__(self, max_workers=None):
+        self._free = {self._new_pool() for _ in range(max_workers)}
+        self._working = set()
+        self._change = asyncio.Event()
+
+    def _new_pool(self):
+        return Pool(1)
+
+    async def apply(self, fn, *args):
+        """
+        Like multiprocessing.Pool.apply_async, but:
+         * is an asyncio coroutine
+         * terminates the process if cancelled
+        """
+        while not self._free:
+            await self._change.wait()
+            self._change.clear()
+        pool = usable_pool = self._free.pop()
+        self._working.add(pool)
+
+        loop = asyncio.get_event_loop()
+        fut = loop.create_future()
+
+        def _on_done(obj):
+            loop.call_soon_threadsafe(fut.set_result, obj)
+
+        def _on_err(err):
+            loop.call_soon_threadsafe(fut.set_exception, err)
+
+        pool.apply_async(fn, args, callback=_on_done, error_callback=_on_err)
+
+        try:
+            return await fut
+        except asyncio.CancelledError:
+            pool.terminate()
+            usable_pool = self._new_pool()
+        finally:
+            self._working.remove(pool)
+            self._free.add(usable_pool)
+            self._change.set()
+
+    def shutdown(self):
+        for p in self._working | self._free:
+            p.terminate()
+        self._free.clear()

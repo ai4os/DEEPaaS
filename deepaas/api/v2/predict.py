@@ -57,7 +57,10 @@ def setup_routes(app):
             @aiohttp_apispec.response_schema(responses.Failure(), 400)
             @aiohttpparser.parser.use_args(args)
             async def post(self, request, args):
-                ret = await self.model_obj.predict(**args)
+                task = self.model_obj.predict(**args)
+                await task
+
+                ret = task.result()
 
                 if self.model_obj.has_schema:
                     self.model_obj.validate_response(ret)

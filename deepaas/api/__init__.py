@@ -56,7 +56,7 @@ async def get_app(doc="/docs"):
 
         LOG.info("Serving loaded V1 models: %s", list(model.V1_MODELS.keys()))
 
-    model.register_v2_models()
+    model.register_v2_models(APP)
 
     v2app = v2.get_app()
     APP.add_subapp("/v2", v2app)
