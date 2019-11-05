@@ -69,14 +69,15 @@ class TestV2Model(base.TestCase):
         self.assertRaises(
             web.HTTPInternalServerError,
             v2_wrapper.ModelWrapper,
-            "test", Model()
+            "test", Model(),
+            self.app
         )
 
     def test_validate_no_schema(self):
         class Model(object):
             schema = None
 
-        wrapper = v2_wrapper.ModelWrapper("test", Model())
+        wrapper = v2_wrapper.ModelWrapper("test", Model(), self.app)
         self.assertRaises(
             web.HTTPInternalServerError,
             wrapper.validate_response,
@@ -90,7 +91,8 @@ class TestV2Model(base.TestCase):
         self.assertRaises(
             web.HTTPInternalServerError,
             v2_wrapper.ModelWrapper,
-            "test", Model()
+            "test", Model(),
+            self.app
         )
 
     def test_marshmallow_schema(self):
@@ -100,7 +102,7 @@ class TestV2Model(base.TestCase):
         class Model(object):
             schema = Schema
 
-        wrapper = v2_wrapper.ModelWrapper("test", Model())
+        wrapper = v2_wrapper.ModelWrapper("test", Model(), self.app)
 
         self.assertTrue(wrapper.validate_response({"foo": "bar"}))
         self.assertRaises(
@@ -115,7 +117,7 @@ class TestV2Model(base.TestCase):
                 "foo": m_fields.Str()
             }
 
-        wrapper = v2_wrapper.ModelWrapper("test", Model())
+        wrapper = v2_wrapper.ModelWrapper("test", Model(), self.app)
 
         self.assertTrue(wrapper.validate_response({"foo": "bar"}))
         self.assertRaises(
@@ -144,13 +146,19 @@ class TestV2Model(base.TestCase):
 
     @test_utils.unittest_run_loop
     async def test_dummy_model_with_wrapper(self):
-        w = v2_wrapper.ModelWrapper("foo", v2_test.TestModel())
+        w = v2_wrapper.ModelWrapper("foo", v2_test.TestModel(), self.app)
+        task = w.predict()
+        await task
+        ret = task.result()
         self.assertDictEqual(
             {'date': '2019-01-1',
              'labels': [{'label': 'foo', 'probability': 1.0}]},
-            await w.predict()
+            ret
         )
-        self.assertIsNone(await w.train())
+        task = w.train(sleep=0)
+        await task
+        ret = task.result()
+        self.assertIsNone(ret)
         meta = w.get_metadata()
         self.assertIn("description", meta)
         self.assertIn("id", meta)
@@ -162,7 +170,7 @@ class TestV2Model(base.TestCase):
 
     @test_utils.unittest_run_loop
     async def test_model_with_not_implemented_attributes_and_wrapper(self):
-        w = v2_wrapper.ModelWrapper("foo", object())
+        w = v2_wrapper.ModelWrapper("foo", object(), self.app)
 
         # NOTE(aloga): Cannot use assertRaises here directly, as testtools
         # overrides this method, and their implementation makes impossible to
@@ -191,14 +199,14 @@ class TestV2Model(base.TestCase):
     @mock.patch('deepaas.model.loading.get_available_models')
     def test_loading_ok(self, mock_loading):
         mock_loading.return_value = {uuid.uuid4().hex: "bar"}
-        deepaas.model.v2.register_models()
+        deepaas.model.v2.register_models(self.app)
         for m in deepaas.model.v2.MODELS.values():
             self.assertIsInstance(m, v2_wrapper.ModelWrapper)
 
     @mock.patch('deepaas.model.loading.get_available_models')
     def test_loading_error(self, mock_loading):
         mock_loading.return_value = []
-        deepaas.model.v2.register_models()
+        deepaas.model.v2.register_models(self.app)
         self.assertIn("deepaas-test", deepaas.model.v2.MODELS)
         m = deepaas.model.v2.MODELS.pop("deepaas-test")
         self.assertIsInstance(m, v2_wrapper.ModelWrapper)

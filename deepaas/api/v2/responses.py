@@ -16,6 +16,7 @@
 
 import marshmallow
 from marshmallow import fields
+from marshmallow import validate
 
 
 class Location(marshmallow.Schema):
@@ -56,3 +57,19 @@ class ModelMeta(marshmallow.Schema):
     version = fields.Str(required=False, description='Model version')
     url = fields.Str(required=False, description='Model url')
     links = fields.List(fields.Nested(Location))
+
+
+class Training(marshmallow.Schema):
+    uuid = fields.UUID(required=True, description='Training identifier')
+    date = fields.DateTime(required=True, description='Training start time')
+    status = fields.Str(
+        required=True,
+        description='Training status',
+        enum=["running", "error", "completed", "cancelled"],
+        validate=validate.OneOf(["running", "error", "completed", "cancelled"])
+    )
+    message = fields.Str(description="Optional message explaining status")
+
+
+class TrainingList(marshmallow.Schema):
+    trainings = fields.List(fields.Nested(Training))

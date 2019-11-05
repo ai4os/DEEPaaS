@@ -14,6 +14,8 @@
 # License for the specific language governing permissions and limitations
 # under the License.
 
+import time
+
 from oslo_log import log
 from webargs import fields
 from webargs import validate
@@ -56,8 +58,11 @@ class TestModel(base.BaseModel):
         }
 
     def train(self, *args, **kwargs):
+        sleep = kwargs.get("sleep", 1)
         LOG.debug("Got the following arguments: %s", args)
         LOG.debug("Got the following kw arguments: %s", kwargs)
+        LOG.debug("Starting training, ending in %is" % sleep)
+        time.sleep(sleep)
 
     def get_predict_args(self):
         return {
@@ -81,7 +86,7 @@ class TestModel(base.BaseModel):
 
     def get_train_args(self):
         return {
-            "parameter_one": fields.Int(
+            "sleep": fields.Int(
                 required=True,
                 descripton='This is a integer parameter, and it is '
                            'a required one.'

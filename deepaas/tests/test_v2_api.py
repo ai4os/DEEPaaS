@@ -39,9 +39,11 @@ class TestModelResponse(base.TestCase):
 
 class TestApiV2(base.TestCase):
     async def get_application(self):
-        deepaas.model.v2.register_models()
 
         app = web.Application(debug=True)
+
+        deepaas.model.v2.register_models(app)
+
         v2app = v2.get_app()
         app.add_subapp("/v2", v2app)
 
@@ -108,7 +110,7 @@ class TestApiV2(base.TestCase):
     @test_utils.unittest_run_loop
     async def test_train(self):
         ret = await self.client.post("/v2/models/deepaas-test/train",
-                                     data={"parameter_one": 1})
+                                     data={"sleep": 1})
         self.assertEqual(200, ret.status)
 
     @test_utils.unittest_run_loop
