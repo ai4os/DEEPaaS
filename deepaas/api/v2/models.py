@@ -54,32 +54,35 @@ async def index(request):
     return web.json_response({"models": models})
 
 
-class Handler(object):
-    model_name = None
-    model_obj = None
+def _get_handler(model_name, model_obj):
+    class Handler(object):
+        model_name = None
+        model_obj = None
 
-    def __init__(self, model_name, model_obj):
-        self.model_name = model_name
-        self.model_obj = model_obj
+        def __init__(self, model_name, model_obj):
+            self.model_name = model_name
+            self.model_obj = model_obj
 
-    @aiohttp_apispec.docs(
-        tags=["models"],
-        summary="Return model's metadata",
-    )
-    @aiohttp_apispec.response_schema(responses.ModelMeta(), 200)
-    async def get(self, request):
-        m = {
-            "id": self.model_name,
-            "name": self.model_name,
-            "links": [{
-                "rel": "self",
-                "href": "%s" % request.path,
-            }]
-        }
-        meta = self.model_obj.get_metadata()
-        m.update(meta)
+        @aiohttp_apispec.docs(
+            tags=["models"],
+            summary="Return model's metadata",
+        )
+        @aiohttp_apispec.response_schema(responses.ModelMeta(), 200)
+        async def get(self, request):
+            m = {
+                "id": self.model_name,
+                "name": self.model_name,
+                "links": [{
+                    "rel": "self",
+                    "href": "%s" % request.path,
+                }]
+            }
+            meta = self.model_obj.get_metadata()
+            m.update(meta)
 
-        return web.json_response(m)
+            return web.json_response(m)
+
+    return Handler(model_name, model_obj)
 
 
 def setup_routes(app):
@@ -89,5 +92,5 @@ def setup_routes(app):
     # different resources for each model. This way we can also load the
     # expected parameters if needed (as in the training method).
     for model_name, model_obj in model.V2_MODELS.items():
-        hdlr = Handler(model_name, model_obj)
+        hdlr = _get_handler(model_name, model_obj)
         app.router.add_get("/models/%s" % model_name, hdlr.get)
