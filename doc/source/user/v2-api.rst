@@ -127,6 +127,12 @@ field created as follows::
   do not forget to add the ``location="form"`` and ``type="file"`` to the
   argument definition, otherwise it will not work as expected.
 
+Once defined, you will receive an object of the class described below for each
+of the file arguments you declare. You can open and read the file stored in the
+``filename`` attribute.
+
+.. autoclass:: deepaas.model.v2.wrapper.UploadedFile
+
 Then you should define the ``predict`` function as indicated below. You will
 receive all the arguments that have been parsed as keyword arguments:
 

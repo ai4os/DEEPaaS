@@ -35,10 +35,23 @@ LOG = log.getLogger(__name__)
 CONF = cfg.CONF
 
 
-UploadedField = collections.namedtuple("UploadedField", ("name",
-                                                         "filename",
-                                                         "file",
-                                                         "content_type"))
+UploadedFile = collections.namedtuple("UploadedFile", ("name",
+                                                       "filename",
+                                                       "content_type"))
+"""Class to hold uploaded field metadata when passed to model's methods
+
+.. py:attribute:: name
+
+   Name of the argument where this file is being sent.
+
+.. py:attribute:: filename
+
+   Complete file path to the temporary file in the filesyste,
+
+.. py:attribute:: content_type
+
+   Content-type of the uploaded file.
+"""
 
 
 class ModelWrapper(object):
@@ -249,15 +262,14 @@ class ModelWrapper(object):
             error, already wrapped as a HTTPException
         """
         for key, val in kwargs.items():
-            if isinstance(val, web.FileField):
+            if isinstance(val, web.FileFile):
                 fd, name = tempfile.mkstemp()
                 fd = os.fdopen(fd, "w+b")
                 fd.write(val.file.read())
                 fd.close()
-                aux = UploadedField(
+                aux = UploadedFile(
                     name=val.name,
-                    filename=val.filename,
-                    file=name,
+                    filename=name,
                     content_type=val.content_type,
                 )
                 kwargs[key] = aux
