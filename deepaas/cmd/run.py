@@ -66,6 +66,28 @@ listen-ip to 0.0.0.0
 CONF = cfg.CONF
 CONF.register_cli_opts(cli_opts)
 
+INTRO = """
+         ##         ###
+         ##       ######  ##
+     .#####   #####   #######.  .#####.
+    ##   ## ## //   ##  //  ##  ##   ##
+    ##. .##  ###  ###   // ###  ##   ##
+      ## ##    ####     ####    #####.
+              Hybrid-DataCloud  ##
+"""
+
+BANNER = """
+Welcome to the DEEPaaS API API endpoint. You can directly browse to the
+API documentation endpoint to check the API using the builtint Swagger UI
+or you can use any of our endpoints.
+
+    API documentation: {}
+    API specification: {}
+          V2 endpoint: {}
+
+-------------------------------------------------------------------------
+"""
+
 
 def main():
     _shutdown.handle_signals()
@@ -79,9 +101,17 @@ def main():
 
         proxy.main()
     else:
+        base = "http://{}:{}".format(CONF.listen_ip, CONF.listen_port)
+        spec = "{}/swagger.json".format(base)
+        docs = "{}/docs".format(base)
+        v2 = "{}/v2".format(base)
+
+        print(INTRO)
+        print(BANNER.format(docs, spec, v2))
+
         log.info("Starting DEEPaaS version %s", deepaas.__version__)
 
-        app = api.get_app()
+        app = api.get_app(doc="/docs")
         web.run_app(
             app,
             host=CONF.listen_ip,
