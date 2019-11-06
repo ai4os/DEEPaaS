@@ -42,15 +42,14 @@ def _get_handler(model_name, model_obj):  # noqa
             self.model_obj = model_obj
             self._trainings = {}
 
-        def build_train_response(self, uuid_):
-            training = self._trainings.get(uuid_, None)
-
+        @staticmethod
+        def build_train_response(uuid, training):
             if not training:
                 return
 
             ret = {}
             ret["date"] = training["date"]
-            ret["uuid"] = uuid_
+            ret["uuid"] = uuid
 
             if training["task"].cancelled():
                 ret["status"] = "cancelled"
@@ -78,7 +77,7 @@ def _get_handler(model_name, model_obj):  # noqa
                 "date": str(datetime.datetime.now()),
                 "task": train_task,
             }
-            ret = self.build_train_response(uuid_)
+            ret = self.build_train_response(uuid_, self._trainings[uuid_])
             return web.json_response(ret)
 
         @aiohttp_apispec.docs(
@@ -87,7 +86,7 @@ def _get_handler(model_name, model_obj):  # noqa
         )
         async def delete(self, request):
             uuid_ = request.match_info["uuid"]
-            training = self._trainings.get(uuid_, None)
+            training = self._trainings.pop(uuid_, None)
             if not training:
                 raise web.HTTPNotFound()
             training["task"].cancel()
@@ -96,7 +95,7 @@ def _get_handler(model_name, model_obj):  # noqa
             except asyncio.TimeoutError:
                 pass
             LOG.info("Training %s has been cancelled" % uuid_)
-            ret = self.build_train_response(uuid_)
+            ret = self.build_train_response(uuid_, training)
             return web.json_response(ret)
 
         @aiohttp_apispec.docs(
@@ -107,7 +106,8 @@ def _get_handler(model_name, model_obj):  # noqa
         async def index(self, request):
             ret = []
             for uuid_, training in self._trainings.items():
-                aux = self.build_train_response(uuid_)
+                training = self._trainings.get(uuid_, None)
+                aux = self.build_train_response(uuid_, training)
                 ret.append(aux)
 
             return web.json_response(ret)
@@ -119,7 +119,8 @@ def _get_handler(model_name, model_obj):  # noqa
         @aiohttp_apispec.response_schema(responses.Training(), 200)
         async def get(self, request):
             uuid_ = request.match_info["uuid"]
-            ret = self.build_train_response(uuid_)
+            training = self._trainings.get(uuid_, None)
+            ret = self.build_train_response(uuid_, training)
             if ret:
                 return web.json_response(ret)
             raise web.HTTPNotFound()
