@@ -325,19 +325,24 @@ class ModelWrapper(object):
             return {}
 
 
-class NoDaemonProcess(multiprocessing.Process):
-    # make 'daemon' attribute always return False
-    def _get_daemon(self):
-        return False
+class NonDaemonPool(multiprocessing.pool.Pool):
+    def Process(self, *args, **kwds):
+        proc = super(NonDaemonPool, self).Process(*args, **kwds)
 
-    def _set_daemon(self, value):
-        pass
+        class NonDaemonProcess(proc.__class__):
+            """Monkey-patch process to ensure it is never daemonized"""
 
-    daemon = property(_get_daemon, _set_daemon)
+            @property
+            def daemon(self):
+                return False
 
+            @daemon.setter
+            def daemon(self, val):
+                pass
 
-class Pool(multiprocessing.pool.Pool):
-    Process = NoDaemonProcess
+        proc.__class__ = NonDaemonProcess
+
+        return proc
 
 
 class CancellablePool(object):
@@ -347,7 +352,7 @@ class CancellablePool(object):
         self._change = asyncio.Event()
 
     def _new_pool(self):
-        return Pool(1)
+        return NonDaemonPool(1)
 
     async def apply(self, fn, *args):
         """
