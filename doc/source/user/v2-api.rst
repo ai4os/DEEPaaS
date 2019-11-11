@@ -117,7 +117,7 @@ field created as follows::
         return {
             "data": fields.Field(
                 description="Data file to perform inference on.",
-                required=True,
+                required=False,
                 missing=None,
                 type="file",
                 location="form")
