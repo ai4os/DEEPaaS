@@ -79,6 +79,7 @@ def setup_debug():
     tags=["debug"],
     summary="""Return debug information if enabled by API.""",
     description="""Return debug information if enabled by API.""",
+    produces=["text/plain"],
 )
 async def get(request):
     print("--- DEBUG MARKER %s ---" % datetime.datetime.now())
