@@ -31,6 +31,26 @@ APP = None
 
 CONF = cfg.CONF
 
+LINKS = """
+- [Project website](https://deep-hybrid.datacloud.eu).
+- [Project documentation](https://docs.deep-hybrid.datacloud.eu).
+- [Model marketplace](https://marketplace.deep-hybrid.datacloud.eu).
+"""
+
+API_DESCRIPTION = (
+    "<img"
+    " src='https://marketplace.deep-hybrid-datacloud.eu/images/logo-deep.png'"
+    " width=200 alt='' />"
+    "\n\nThis is a REST API that is focused on providing access "
+    "to machine learning models. By using the DEEPaaS API "
+    "users can easily run a REST API in front of their model, "
+    "thus accessing its functionality via HTTP calls. "
+    "\n\nCurrently you are browsing the "
+    "[Swagger UI](https://swagger.io/tools/swagger-ui/) "
+    "for this API, a tool that allows you to visualize and interact with the "
+    "API and the underlying model."
+) +  LINKS
+
 
 async def get_app(doc="/docs"):
     """Get the main app."""
@@ -75,10 +95,29 @@ async def get_app(doc="/docs"):
         aiohttp_apispec.setup_aiohttp_apispec(
             app=APP,
             title="DEEP as a Service API endpoint",
-            description="DEEP as a Service (DEEPaaS) API endpoint.",
+            info={
+                "description": API_DESCRIPTION,
+                "license": {
+                    "name": "Apache 2.0",
+                    "url": "http://www.apache.org/licenses/LICENSE-2.0.html",
+                },
+                "contact": {
+                    "email": "deep-po@listas.csic.es"
+                },
+            },
+            externalDocs = {
+                "description": "API documentation",
+                    "url": "https://deepaas.readthedocs.org/",
+            },
             version=deepaas.__version__,
             url="/swagger.json",
             swagger_path=doc,
         )
+
+        async def swagger_view(_):
+            tmp=""
+            return web.Response(text=tmp, content_type="text/html")
+
+        APP.router.add_route("GET", "/static/swagger/foo.png", swagger_view)
 
     return APP
