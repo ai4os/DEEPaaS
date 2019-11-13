@@ -50,11 +50,10 @@ checklist in order.
   Previous code relied on returning arbitrary dictionaries that were used to
   generate the arguments for each of the API endpoints. This is not anymore
   supported and you should return a ``webargs`` field dictionary (check
-  `here <https://marshmallow.readthedocs.io/en/latest/api_reference.html#module-marshmallow.fields>`_
-  for a full reference of the available options). This is still
-  done by defining the ``get_predict_args`` and ``get_train_args`` functions.
-  These functions must receive no arguments and they should return a dictionary
-  as follows::
+  here <https://webargs.readthedocs.io/en/latest/quickstart.html>`_
+  for more information. This is still done by defining the ``get_predict_args``
+  and ``get_train_args`` functions.  These functions must receive no arguments
+  and they should return a dictionary as follows::
 
         from webargs import fields
 

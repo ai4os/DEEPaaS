@@ -172,8 +172,8 @@ class BaseModel(object):
         """Return the arguments that are needed to perform a prediction.
 
         This function should return a dictionary of ``webargs`` fields (check
-        `here <https://marshmallow.readthedocs.io/en/latest/api_reference.html#module-marshmallow.fields>`_
-        for a full reference of the available options). For example::
+        `here <https://webargs.readthedocs.io/en/latest/quickstart.html>`_
+        for more information). For example::
 
             from webargs import fields
 
@@ -212,8 +212,8 @@ class BaseModel(object):
         """Return the arguments that are needed to train the application.
 
         This function should return a dictionary of ``webargs`` fields (check
-        `here <https://marshmallow.readthedocs.io/en/latest/api_reference.html#module-marshmallow.fields>`_
-        for a full reference of the available options). For example::
+        `here <https://webargs.readthedocs.io/en/latest/quickstart.html>`_
+        for more information). For example::
 
             from webargs import fields
 
