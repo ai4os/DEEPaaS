@@ -12,6 +12,13 @@ series. Before upgrading your code and deploying into production, read the
 following, as changes are needed in your model. Please go through the following
 checklist in order.
 
+
+* **Python version**
+  
+  The new version of DEEPaaS uses ``aiohttp`` which requires `at least 
+  <https://aiohttp.readthedocs.io/en/stable/faq.html#why-is-python-3-5-3-the-lowest-supported-version>`_
+  Python 3.5.3. So please update you module accordingly if needed. 
+
 * **Migrate new namespace entry point.**
 
   Previous code relied on a top-level entry point named ``deepaas.model``,
@@ -50,7 +57,7 @@ checklist in order.
   Previous code relied on returning arbitrary dictionaries that were used to
   generate the arguments for each of the API endpoints. This is not anymore
   supported and you should return a ``webargs`` field dictionary (check
-  here <https://webargs.readthedocs.io/en/latest/quickstart.html>`_
+  `here <https://webargs.readthedocs.io/en/latest/quickstart.html>`_
   for more information. This is still done by defining the ``get_predict_args``
   and ``get_train_args`` functions.  These functions must receive no arguments
   and they should return a dictionary as follows::
