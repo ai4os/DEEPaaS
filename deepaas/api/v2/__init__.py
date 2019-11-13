@@ -36,14 +36,6 @@ def get_app():
 
     APP = web.Application()
 
-#    # Add a text/plain representation so that we can return text as
-#    # responses
-#    @api.representation('text/plain')
-#    def text_response(data, code, headers=None):
-#        resp = flask.make_response(data, code)
-#        resp.headers['Content-Type'] = 'text/plain'
-#        return resp
-
     v2_debug.setup_debug()
 
     APP.router.add_get('/', get_version, name="v2")
