@@ -80,13 +80,17 @@ def setup_debug():
     summary="""Return debug information if enabled by API.""",
     description="""Return debug information if enabled by API.""",
     produces=["text/plain"],
+    responses={
+        200: {"description": "Debug information if debug endpoint is enabled"},
+        204: {"description": "Debug endpoint not enabled"},
+    },
 )
 async def get(request):
     print("--- DEBUG MARKER %s ---" % datetime.datetime.now())
-    resp = ""
     if DEBUG_STREAM is not None:
         resp = DEBUG_STREAM.getvalue()
-    return web.Response(text=resp)
+        return web.Response(text=resp)
+    return web.HTTPNoContent()
 
 
 def setup_routes(app):
