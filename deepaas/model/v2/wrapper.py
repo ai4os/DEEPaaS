@@ -263,7 +263,7 @@ class ModelWrapper(object):
             error, already wrapped as a HTTPException
         """
         for key, val in kwargs.items():
-            if isinstance(val, web.FileFile):
+            if isinstance(val, web.FileField):
                 fd, name = tempfile.mkstemp()
                 fd = os.fdopen(fd, "w+b")
                 fd.write(val.file.read())

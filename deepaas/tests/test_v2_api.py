@@ -105,12 +105,14 @@ class TestApiV2(base.TestCase):
             "/v2/models/deepaas-test/predict",
             data={"data": (f, "foo.txt"),
                   "parameter": 1})
+        await ret.json()
         self.assertEqual(200, ret.status)
 
     @test_utils.unittest_run_loop
     async def test_train(self):
         ret = await self.client.post("/v2/models/deepaas-test/train",
                                      data={"sleep": 1})
+        await ret.json()
         self.assertEqual(200, ret.status)
 
     @test_utils.unittest_run_loop
