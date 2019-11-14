@@ -49,7 +49,7 @@ API_DESCRIPTION = (
     "[Swagger UI](https://swagger.io/tools/swagger-ui/) "
     "for this API, a tool that allows you to visualize and interact with the "
     "API and the underlying model."
-) +  LINKS
+) + LINKS
 
 
 async def get_app(doc="/docs"):
@@ -105,19 +105,13 @@ async def get_app(doc="/docs"):
                     "email": "deep-support@listas.csic.es"
                 },
             },
-            externalDocs = {
+            externalDocs={
                 "description": "API documentation",
-                    "url": "https://deepaas.readthedocs.org/",
+                "url": "https://deepaas.readthedocs.org/",
             },
             version=deepaas.__version__,
             url="/swagger.json",
             swagger_path=doc,
         )
-
-        async def swagger_view(_):
-            tmp=""
-            return web.Response(text=tmp, content_type="text/html")
-
-        APP.router.add_route("GET", "/static/swagger/foo.png", swagger_view)
 
     return APP
