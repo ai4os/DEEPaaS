@@ -63,5 +63,4 @@ You can also use the following BibTeX entry:
         date = {2019-10-25},
         year = {2019},
         month = {10},
-        day = {25},
-    }
+        day = {25},}
