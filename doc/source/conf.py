@@ -113,15 +113,11 @@ html_theme = 'sphinx_rtd_theme'
 # further.  For a list of options available for each theme, see the
 # documentation.
 html_theme_options = {
-    'logo': 'logo.png',
-    'show_powered_by': False,
-    'github_user': 'indigo-dc',
-    'github_repo': 'DEEPaaS',
-    'github_banner': False,
-    'show_related': False,
-    'note_bg': '#FFF59C',
-    'description': 'DEEPaaS is an API for machine learning models',
+    'logo_only': False,
+    'collapse_navigation': False,
 }
+
+html_logo = "_static/logo-deep-solid-white.png"
 # Add any paths that contain custom static files (such as style sheets) here,
 # relative to this directory. They are copied after the builtin static files,
 # so a file named "default.css" will overwrite the builtin "default.css".
