@@ -5,6 +5,7 @@
 [![PyPI](https://img.shields.io/pypi/v/deepaas.svg)](https://pypi.python.org/pypi/deepaas)
 [![Python versions](https://img.shields.io/pypi/pyversions/deepaas.svg)](https://pypi.python.org/pypi/deepaas)
 [![Build Status](https://jenkins.indigo-datacloud.eu/buildStatus/icon?job=Pipeline-as-code%2FDEEPaaS%2Fmaster)](https://jenkins.indigo-datacloud.eu/job/Pipeline-as-code/job/DEEPaaS/job/master/)
+[![DOI](https://joss.theoj.org/papers/10.21105/joss.01517/status.svg)](https://doi.org/10.21105/joss.01517)
 
 <img src="https://marketplace.deep-hybrid-datacloud.eu/images/logo-deep.png" width=200 alt="DEEP-Hybrid-DataCloud logo"/>
 
@@ -33,3 +34,34 @@ issue the following command before:
 # Documentation
 
 The DEEPaaS documentation is hosted on [Read the Docs](https://deepaas.readthedocs.io/).
+
+
+# Citing
+
+[![DOI](https://joss.theoj.org/papers/10.21105/joss.01517/status.svg)](https://doi.org/10.21105/joss.01517)
+
+If you are using this software and want to cite it in any work, please use the
+following:
+
+> López García, A. "DEEPaaS API: a REST API for Machine Learning and
+> Deep Learning models". In: _Journal of Open Source Software_ 4(42) (2019),
+> pp. 1517. ISSN: 2475-9066. DOI: [10.21105/joss.01517](https://doi.org/10.21105/joss.01517)
+
+You can also use the following BibTeX entry:
+
+    @article{Lopez2019DEEPaaS,
+        journal = {Journal of Open Source Software},
+        doi = {10.21105/joss.01517},
+        issn = {2475-9066},
+        number = {42},
+        publisher = {The Open Journal},
+        title = {DEEPaaS API: a REST API for Machine Learning and Deep Learning models},
+        url = {http://dx.doi.org/10.21105/joss.01517},
+        volume = {4},
+        author = {L{\'o}pez Garc{\'i}a, {\'A}lvaro},
+        pages = {1517},
+        date = {2019-10-25},
+        year = {2019},
+        month = {10},
+        day = {25},
+    }
