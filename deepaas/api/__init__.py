@@ -102,7 +102,7 @@ async def get_app(doc="/docs"):
                     "url": "http://www.apache.org/licenses/LICENSE-2.0.html",
                 },
                 "contact": {
-                    "email": "deep-po@listas.csic.es"
+                    "email": "deep-support@listas.csic.es"
                 },
             },
             externalDocs = {
