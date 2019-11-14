@@ -20,6 +20,7 @@ import marshmallow
 from marshmallow import fields
 from webargs import aiohttpparser
 import webargs.core
+import werkzeug.datastructures
 
 from deepaas.api.v2 import responses
 from deepaas import model
@@ -178,8 +179,12 @@ for model_name, model_obj in model.V1_MODELS.items():
     # since otherwise if we have several models the arguments will pile up.
     test_args = model_obj.get_test_args()
     args = {
-        "url": fields.Str(),
-        "data": fields.Field()
+        "url": fields.List(fields.Str()),
+        "data": fields.Field(
+            description="Data file to perform inference.",
+            location="form",
+            type="file",
+        ),
     }
     for k, v in test_args.items():
         args[k] = fields.Str(
@@ -210,18 +215,23 @@ for model_name, model_obj in model.V1_MODELS.items():
 
             urls = args.get("url")
             files = args.get("data")
-            args["files"] = files
             if (not any([urls, files]) or all([urls, files])):
                 raise web.HTTPBadRequest(
                     reason="You must provide either 'url' or "
                     "'data' in the payload"
                 )
 
+            args["urls"] = urls
+
             if files:
                 # FIXME(aloga): only handling one file, see comment on top of
                 # file and [1] for more details
                 # [1] https://github.com/noirbizarre/flask-restplus/issues/491
-                files = [files]
+                tmp = werkzeug.datastructures.FileStorage(
+                    stream=files.file,
+                    filename=files.filename
+                )
+                args["files"] = [tmp]
 
                 ret = self.model_obj.predict_data(args)
             elif urls:

@@ -18,8 +18,6 @@ import uuid
 
 from aiohttp import test_utils
 from aiohttp import web
-import six
-
 import deepaas
 from deepaas.api import v1
 import deepaas.model
@@ -74,14 +72,6 @@ class TestApiV1(base.TestCase):
     async def test_predict_not_data(self):
         ret = await self.client.post("/v1/models/deepaas-test/predict")
         self.assertEqual(400, ret.status)
-
-    @test_utils.unittest_run_loop
-    async def test_predict_data_not_implemented(self):
-        f = six.BytesIO(b"foo")
-        ret = await self.client.post(
-            "/v1/models/deepaas-test/predict",
-            data={"data": (f, "foo.txt")})
-        self.assertEqual(501, ret.status)
 
     @test_utils.unittest_run_loop
     async def test_predict_urls_not_implemented(self):
