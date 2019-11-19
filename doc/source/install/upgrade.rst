@@ -149,12 +149,13 @@ checklist in order.
 
 * **Changes in the data response**
 
-  The return object in ``args['files']`` is no longer a ``werkzeug.FileStorage`` but an
-  ``aiohttp.web_request.FileField``.
+  The returned object in ``args['files']`` is no longer a ``werkzeug.FileStorage`` but a
+  ``deepaas.model.v2.wrapper.UploadedFile`` which has attributes like ``name`` (name of the 
+  argument where this file is being sent), ``filename`` (complete file path to the temporary
+  file in the filesystem) and ``content_type`` (content-type of the uploaded file).
 
-  The main difference is that now you should read the bytes using ``f.file.read()``
-  instead of ``f.read()``. Additional changes might be needed if you were also
-  using file information like content-type.
+  The main difference is that now you should read the bytes using ``open(f.filename, 'rb')``
+  instead of ``f.read()``.
 
 * **Catch error function**
 
