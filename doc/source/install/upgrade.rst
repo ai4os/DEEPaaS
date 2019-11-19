@@ -154,7 +154,7 @@ checklist in order.
   argument where this file is being sent), ``filename`` (complete file path to the temporary
   file in the filesystem) and ``content_type`` (content-type of the uploaded file).
 
-  The main difference is that now you should read the bytes using ``open(f.filename, 'rb')``
+  The main difference is that now you should read the bytes using ``open(f.filename, 'rb').read()``
   instead of ``f.read()``.
 
 * **Catch error function**
