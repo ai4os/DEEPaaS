@@ -59,7 +59,9 @@ async def get_app(doc="/docs"):
     if APP:
         return APP
 
-    APP = web.Application(debug=CONF.debug)
+    APP = web.Application(debug=CONF.debug,
+                          client_max_size=0  # no size limit for uploaded files
+                          )
 
     if CONF.enable_v1:
         LOG.warning("Using V1 version of the API is not anymore supported "
