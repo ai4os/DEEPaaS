@@ -60,7 +60,7 @@ async def get_app(doc="/docs"):
         return APP
 
     APP = web.Application(debug=CONF.debug,
-                          client_max_size=0  # no size limit for uploaded files
+                          client_max_size=CONF.client_max_size
                           )
 
     if CONF.enable_v1:
