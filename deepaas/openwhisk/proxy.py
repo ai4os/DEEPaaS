@@ -48,7 +48,7 @@ async def init(request):
 
     try:
         if APP is None:
-            APP = api.get_app(doc=False)
+            APP = await api.get_app(doc=False)
         return ('OK', 200)
     except Exception as e:
         response = web.json_response(
