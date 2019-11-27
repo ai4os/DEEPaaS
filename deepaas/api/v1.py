@@ -193,6 +193,7 @@ for model_name, model_obj in model.V1_MODELS.items():
             default=v.get("default")
         )
     args = webargs.core.dict2schema(args)
+    args.opts.ordered = True
 
     @routes.view('/models/%s/predict' % model_name)
     class ModelPredict(web.View):
@@ -249,6 +250,7 @@ for model_name, model_obj in model.V1_MODELS.items():
             default=v.get("default")
         )
     args = webargs.core.dict2schema(args)
+    args.opts.ordered = True
 
     @routes.view('/models/%s/train' % model_name)
     class ModelTrain(web.View):

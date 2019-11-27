@@ -34,6 +34,7 @@ def _get_model_response(model_name, model_obj):
 
 def _get_handler(model_name, model_obj):
     args = webargs.core.dict2schema(model_obj.get_predict_args())
+    args.opts.ordered = True
     response = _get_model_response(model_name, model_obj)
 
     class Handler(object):
