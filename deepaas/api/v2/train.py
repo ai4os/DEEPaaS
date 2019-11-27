@@ -32,6 +32,7 @@ LOG = log.getLogger("deepaas.api.v2.train")
 
 def _get_handler(model_name, model_obj):  # noqa
     args = webargs.core.dict2schema(model_obj.get_train_args())
+    args.opts.ordered = True
 
     class Handler(object):
         model_name = None
