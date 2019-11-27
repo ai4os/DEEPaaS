@@ -88,9 +88,10 @@ async def get_app(doc="/docs"):
 
     LOG.info("Serving loaded V2 models: %s", list(model.V2_MODELS.keys()))
 
-    for _, m in model.V2_MODELS.items():
-        LOG.debug("Warming models...")
-        await m.warm()
+    if CONF.warm:
+        for _, m in model.V2_MODELS.items():
+            LOG.debug("Warming models...")
+            await m.warm()
 
     if doc:
         # init docs with all parameters, usual for ApiSpec
