@@ -37,6 +37,8 @@ class TestCase(testtools.TestCase, aiohttp.test_utils.AioHTTPTestCase):
 
     async def get_application(self):
         app = web.Application(debug=True)
+        app.middlewares.append(web.normalize_path_middleware())
+
         return app
 
     def setUp(self):

@@ -14,6 +14,8 @@
 # License for the specific language governing permissions and limitations
 # under the License.
 
+import urllib.parse
+
 from aiohttp import web
 import aiohttp_apispec
 
@@ -45,7 +47,7 @@ async def index(request):
             "name": name,
             "links": [{
                 "rel": "self",
-                "href": "%s/%s" % (request.path, name),
+                "href": urllib.parse.urljoin("%s/" % request.path, name),
             }]
         }
         meta = obj.get_metadata()
@@ -74,7 +76,7 @@ def _get_handler(model_name, model_obj):
                 "name": self.model_name,
                 "links": [{
                     "rel": "self",
-                    "href": "%s" % request.path,
+                    "href": request.path.rstrip("/"),
                 }]
             }
             meta = self.model_obj.get_metadata()
@@ -86,11 +88,11 @@ def _get_handler(model_name, model_obj):
 
 
 def setup_routes(app):
-    app.router.add_get("/models", index)
+    app.router.add_get("/models/", index)
 
     # In the next lines we iterate over the loaded models and create the
     # different resources for each model. This way we can also load the
     # expected parameters if needed (as in the training method).
     for model_name, model_obj in model.V2_MODELS.items():
         hdlr = _get_handler(model_name, model_obj)
-        app.router.add_get("/models/%s" % model_name, hdlr.get)
+        app.router.add_get("/models/%s/" % model_name, hdlr.get)

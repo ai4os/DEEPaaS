@@ -135,8 +135,8 @@ def setup_routes(app):
     # expected parameters if needed (as in the training method).
     for model_name, model_obj in model.V2_MODELS.items():
         hdlr = _get_handler(model_name, model_obj)
-        app.router.add_post("/models/%s/train" % model_name, hdlr.post)
-        app.router.add_get("/models/%s/train" % model_name, hdlr.index)
+        app.router.add_post("/models/%s/train/" % model_name, hdlr.post)
+        app.router.add_get("/models/%s/train/" % model_name, hdlr.index)
         app.router.add_get("/models/%s/train/{uuid}" % model_name, hdlr.get)
         app.router.add_delete(
             "/models/%s/train/{uuid}" % model_name,

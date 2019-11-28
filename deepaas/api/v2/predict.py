@@ -74,4 +74,4 @@ def setup_routes(app):
     # expected parameters if needed (as in the training method).
     for model_name, model_obj in model.V2_MODELS.items():
         hdlr = _get_handler(model_name, model_obj)
-        app.router.add_post("/models/%s/predict" % model_name, hdlr.post)
+        app.router.add_post("/models/%s/predict/" % model_name, hdlr.post)

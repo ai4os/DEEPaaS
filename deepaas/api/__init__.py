@@ -63,6 +63,8 @@ async def get_app(doc="/docs"):
                           client_max_size=CONF.client_max_size
                           )
 
+    APP.middlewares.append(web.normalize_path_middleware())
+
     if CONF.enable_v1:
         LOG.warning("Using V1 version of the API is not anymore supported "
                     "and marked as deprecated, please switch to V2 as soon "

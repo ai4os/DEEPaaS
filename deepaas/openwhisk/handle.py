@@ -22,8 +22,11 @@
 
 import base64
 import io
+import re
 import sys
 
+from aiohttp import web
+import aiohttp.web_urldispatcher
 from werkzeug import http
 
 
@@ -45,6 +48,40 @@ def add_headers(environ, headers):
         if header not in block:
             wsgi_name = "HTTP_" + header.upper().replace('-', '_')
             environ[wsgi_name] = str(headers[header])
+
+
+async def _check_request_resolves(request, path, app):
+    alt_request = request.clone(rel_url=path)
+
+    match_info = await app.router.resolve(alt_request)
+    alt_request._match_info = match_info
+
+    if not isinstance(match_info.route,
+                      aiohttp.web_urldispatcher.SystemRoute):
+        return True, alt_request
+
+    return False, request
+
+
+async def _normalize(request, app):
+    paths_to_check = []
+    if '?' in request.raw_path:
+        path, query = request.raw_path.split('?', 1)
+        query = '?' + query
+    else:
+        query = ''
+        path = request.raw_path
+
+    paths_to_check.append(re.sub('//+', '/', path))
+    paths_to_check.append(path + '/')
+    paths_to_check.append(
+        re.sub('//+', '/', path + '/'))
+
+    for path in paths_to_check:
+        resolves, request = await _check_request_resolves(
+            request, path, app)
+        if resolves:
+            return request
 
 
 async def invoke(app, request, args):
@@ -86,8 +123,12 @@ async def invoke(app, request, args):
         rel_url=args.get('__ow_path', '/'),
         headers=headers
     )
-    response = await (await app.router.resolve(request)).handler(request)
 
+    request = await _normalize(request, app)
+    if request is None:
+        response = web.HTTPNotFound()
+    else:
+        response = await request.match_info.handler(request)
     response_type = http.parse_options_header(
         response.headers.get('Content-Type', 'application/octet-stream'))
 
