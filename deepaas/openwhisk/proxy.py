@@ -65,8 +65,8 @@ async def run(request):
     req_clone = request.clone()
     try:
         message = await request.json()
-    except Exception:
-        return error_bad_request()
+    except Exception as e:
+        return error_bad_request(msg="Error: {}".format(e))
 
     if message and not isinstance(message, dict):
         return error_bad_request()
@@ -92,11 +92,10 @@ async def run(request):
     return complete(response)
 
 
-def error_bad_request():
-    response = web.json_response(
-        {'error': 'The action did not receive a dictionary as an argument.'},
-        status=400
-    )
+def error_bad_request(msg=None):
+    if not msg:
+        msg = 'The action did not receive a dictionary as an argument.'
+    response = web.json_response({'error': msg}, status=400)
     return complete(response)
 
 
