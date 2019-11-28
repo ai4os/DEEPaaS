@@ -159,7 +159,32 @@ checklist in order.
 
 * **Catch error function**
 
-  The ``catch_error`` decorator around function is no longer needed.
+  By default Exceptions raised from the application side will be rendered as ``500 - HTTPInternalServerError``
+  with the message ``Server got itself in trouble``. If you want to render some Exceptions with custom status
+  codes and custom messages (see the ``reason`` arg) you have to raise an
+  `aiohttp web exception <https://docs.aiohttp.org/en/latest/web_exceptions.html>`_. For example::
+
+    from aiohttp.web import HTTPBadRequest
+
+    try:
+        f()
+    except Exception as e:
+        raise HTTPBadRequest(reason=e)
+
+  And if you want to wrap a whole function so that any error it raises is passed as a certain HTTP error::
+
+    def catch_error(f):
+        def wrap(*args, **kwargs):
+            try:
+                return f(*args, **kwargs)
+            except Exception as e:
+                raise HTTPBadRequest(reason=e)
+        return wrap
+
+
+    @catch_error
+    def f():
+        ...
 
 * **API url**
 
