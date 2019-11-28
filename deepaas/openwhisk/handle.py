@@ -21,46 +21,39 @@
 # under the License.
 
 import base64
-import io
 import re
-import sys
 
 from aiohttp import web
+from aiohttp import streams
 import aiohttp.web_urldispatcher
 from werkzeug import http
-
-
-def add_body(environ, body, content_type):
-    environ['CONTENT_TYPE'] = content_type
-    if body:
-        environ['wsgi.input'] = io.BytesIO(body)
-        environ['CONTENT_LENGTH'] = str(len(body))
-    else:
-        environ['wsgi.input'] = None
 
 
 block = set(['x-client-ip', 'x-forwarded-for',
              'x-forwarded-proto', 'x-global-transaction-id'])
 
 
-def add_headers(environ, headers):
+def get_headers(headers):
+    aux = {}
     for header in headers:
-        if header not in block:
-            wsgi_name = "HTTP_" + header.upper().replace('-', '_')
-            environ[wsgi_name] = str(headers[header])
+        if header not in block and not header.startswith('__ow'):
+            aux[header] = str(headers[header])
+    return aux
 
 
 async def _check_request_resolves(request, path, app):
     alt_request = request.clone(rel_url=path)
 
     match_info = await app.router.resolve(alt_request)
-    alt_request._match_info = match_info
-
     if not isinstance(match_info.route,
                       aiohttp.web_urldispatcher.SystemRoute):
-        return True, alt_request
+        return True, match_info
+    elif isinstance(match_info,
+                    aiohttp.web_urldispatcher.MatchInfoError):
+        if match_info.http_exception.status == 405:
+            return True, match_info
 
-    return False, request
+    return False, match_info
 
 
 async def _normalize(request, app):
@@ -78,35 +71,19 @@ async def _normalize(request, app):
         re.sub('//+', '/', path + '/'))
 
     for path in paths_to_check:
-        resolves, request = await _check_request_resolves(
+        resolves, match_info = await _check_request_resolves(
             request, path, app)
         if resolves:
-            return request
+            return match_info
 
 
 async def invoke(app, request, args):
     headers = args.get('__ow_headers', {})
-    environ = {
-        'REQUEST_METHOD': args.get('__ow_method', 'GET').upper(),
-        'SCRIPT_NAME': '',
-        'PATH_INFO': args.get('__ow_path', '/'),
-        'QUERY_STRING': args.get('__ow_query', None),
-        'SERVER_NAME': 'localhost',
-        'SERVER_PORT': '5000',
-        'SERVER_PROTOCOL': 'HTTP/1.1',
-        'SERVER_SOFTWARE': 'aiohttp-openwhisk',
-        'REMOTE_ADDR': headers.get('x-client-ip', '127.0.0.1'),
-        'wsgi.version': (1, 0),
-        'wsgi.url_scheme': headers.get('x-forwarded-proto', 'http'),
-        'wsgi.input': None,
-        'wsgi.errors': sys.stderr,
-        'wsgi.multiprocess': True,
-        'wsgi.multithread': False,
-        'wsgi.run_once': True
-    }
+    method = args.get('__ow_method', 'GET').upper()
+    path = args.get('__ow_path', '/')
 
     body = None
-    if environ['REQUEST_METHOD'] in ('POST', 'PUT'):
+    if method in ('POST', 'PUT'):
         content_type = headers.get('content-type', 'application/octet-stream')
         parsed_content_type = http.parse_options_header(content_type)
         raw = args.get('__ow_body')
@@ -114,21 +91,25 @@ async def invoke(app, request, args):
             body = raw.encode(parsed_content_type[1].get('charset', 'utf-8'))
         else:
             body = base64.b64decode(raw) if raw is not None else None
-        add_body(environ, body, content_type)
-
-    add_headers(environ, headers)
 
     request = request.clone(
-        method=environ["REQUEST_METHOD"],
-        rel_url=args.get('__ow_path', '/'),
-        headers=headers
+        method=method,
+        rel_url=path,
+        headers=get_headers(headers)
     )
+    request._payload = streams.StreamReader(request._payload._protocol)
+    request._payload.feed_data(body)
+    request._payload.feed_eof()
 
-    request = await _normalize(request, app)
-    if request is None:
+    match_info = await _normalize(request, app)
+    if match_info is None:
         response = web.HTTPNotFound()
     else:
-        response = await request.match_info.handler(request)
+        try:
+            response = await match_info.handler(request, wsk_args=args)
+        except web.HTTPException as e:
+            response = e
+
     response_type = http.parse_options_header(
         response.headers.get('Content-Type', 'application/octet-stream'))
 

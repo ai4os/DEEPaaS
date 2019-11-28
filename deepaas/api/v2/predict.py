@@ -33,8 +33,9 @@ def _get_model_response(model_name, model_obj):
 
 
 def _get_handler(model_name, model_obj):
-    args = webargs.core.dict2schema(model_obj.get_predict_args())
-    args.opts.ordered = True
+    handler_args = webargs.core.dict2schema(model_obj.get_predict_args())
+    handler_args.opts.ordered = True
+
     response = _get_model_response(model_name, model_obj)
 
     class Handler(object):
@@ -49,11 +50,13 @@ def _get_handler(model_name, model_obj):
             tags=["models"],
             summary="Make a prediction given the input data"
         )
-        @aiohttp_apispec.querystring_schema(args)
+        @aiohttp_apispec.querystring_schema(handler_args)
         @aiohttp_apispec.response_schema(response(), 200)
         @aiohttp_apispec.response_schema(responses.Failure(), 400)
-        @aiohttpparser.parser.use_args(args)
-        async def post(self, request, args):
+        async def post(self, request, wsk_args=None):
+            args = await aiohttpparser.parser.parse(handler_args, request)
+            if wsk_args:
+                args.update(wsk_args)
             task = self.model_obj.predict(**args)
             await task
 
