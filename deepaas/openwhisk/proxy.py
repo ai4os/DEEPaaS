@@ -49,7 +49,7 @@ async def init(request):
     try:
         if APP is None:
             APP = await api.get_app(doc=False)
-        return ('OK', 200)
+        return web.Response(text="OK", status=200)
     except Exception as e:
         response = web.json_response(
             {'error': 'Internal error. {}'.format(e)},
