@@ -250,7 +250,6 @@ class ModelWrapper(object):
             LOG.debug("Model '%s' has been warmed" % self.name)
         except NotImplementedError:
             LOG.debug("Cannot warm (initialize) model '%s'" % self.name)
-            return
 
     def predict(self, *args, **kwargs):
         """Perform a prediction on wrapped model's ``predict`` method.
