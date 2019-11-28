@@ -41,6 +41,7 @@ class TestApiV2(base.TestCase):
     async def get_application(self):
 
         app = web.Application(debug=True)
+        app.middlewares.append(web.normalize_path_middleware())
 
         deepaas.model.v2.register_models(app)
 
@@ -87,7 +88,7 @@ class TestApiV2(base.TestCase):
 
     @test_utils.unittest_run_loop
     async def test_predict_no_parameters(self):
-        ret = await self.client.post("/v2/models/deepaas-test/predict")
+        ret = await self.client.post("/v2/models/deepaas-test/predict/")
         json = await ret.json()
         self.assertDictEqual(
             {
@@ -102,15 +103,15 @@ class TestApiV2(base.TestCase):
     async def test_predict_data(self):
         f = six.BytesIO(b"foo")
         ret = await self.client.post(
-            "/v2/models/deepaas-test/predict",
+            "/v2/models/deepaas-test/predict/",
             data={"data": (f, "foo.txt"),
-                  "parameter": 1})
+                    "parameter": 1})
         await ret.json()
         self.assertEqual(200, ret.status)
 
     @test_utils.unittest_run_loop
     async def test_train(self):
-        ret = await self.client.post("/v2/models/deepaas-test/train",
+        ret = await self.client.post("/v2/models/deepaas-test/train/",
                                      data={"sleep": 1})
         await ret.json()
         self.assertEqual(200, ret.status)
@@ -131,16 +132,16 @@ class TestApiV2(base.TestCase):
              'version': '0.0.1'}
         ]}
 
-        ret = await self.client.get("/v2/models")
+        ret = await self.client.get("/v2/models/")
         self.assert_ok(ret)
         self.assertDictEqual(meta, await ret.json())
 
-        ret = await self.client.get("/v2/models/deepaas-test")
+        ret = await self.client.get("/v2/models/deepaas-test/")
         self.assert_ok(ret)
         self.assertDictEqual(meta["models"][0], await ret.json())
 
     @test_utils.unittest_run_loop
     async def test_bad_metods_metadata(self):
         for i in (self.client.post, self.client.put, self.client.delete):
-            ret = await i("/v2/models")
+            ret = await i("/v2/models/")
             self.assertEqual(405, ret.status)
