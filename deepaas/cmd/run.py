@@ -61,21 +61,6 @@ port will is hardcoded to 8080 (as OpenWhisk goes to port 8080). Note that
 if you are running inside a container, the most sensible option is to set
 listen-ip to 0.0.0.0
 """),
-    cfg.IntOpt('client-max-size',
-               default=0,
-               min=0,
-               help="""
-Client’s maximum size in a request, in bytes. If a POST request exceeds this
-value, it raises an HTTPRequestEntityTooLarge exception. If set to 0, no 
-file size limit will be enforced.
-"""),
-    cfg.BoolOpt('warm',
-               default=True,
-               help="""
-Pre-warm the modules (eg. load models, do preliminary checks, etc). You might
-want to disable this option if DEEPaaS is loading more than one module because
-you risk getting out of memory errors.
-"""),
 ]
 
 CONF = cfg.CONF
