@@ -118,7 +118,7 @@ async def invoke(app, request, args):
     else:
         body = base64.b64encode(response.text)
 
-    return {
+    return response.status, {
         'headers': dict(response.headers),
         'statusCode': response.status,
         'body': body

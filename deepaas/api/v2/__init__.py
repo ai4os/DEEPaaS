@@ -31,7 +31,7 @@ LOG = log.getLogger("deepaas.api.v2")
 APP = None
 
 
-def get_app():
+def get_app(enable_train=True, enable_predict=True):
     global APP
 
     APP = web.Application()
@@ -41,8 +41,8 @@ def get_app():
     APP.router.add_get('/', get_version, name="v2")
     v2_debug.setup_routes(APP)
     v2_model.setup_routes(APP)
-    v2_train.setup_routes(APP)
-    v2_predict.setup_routes(APP)
+    v2_train.setup_routes(APP, enable=enable_train)
+    v2_predict.setup_routes(APP, enable=enable_predict)
 
     return APP
 

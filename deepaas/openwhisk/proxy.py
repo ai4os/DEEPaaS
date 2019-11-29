@@ -48,7 +48,7 @@ async def init(request):
 
     try:
         if APP is None:
-            APP = await api.get_app(doc=False)
+            APP = await api.get_app(doc=False, enable_train=False)
         return web.Response(text="OK", status=200)
     except Exception as e:
         response = web.json_response(
@@ -77,8 +77,8 @@ async def run(request):
 
     if APP is not None:
         try:
-            result = await handle.invoke(APP, req_clone, args)
-            response = web.json_response(result)
+            status, result = await handle.invoke(APP, req_clone, args)
+            response = web.json_response(result, status=status)
         except Exception as e:
             response = web.json_response(
                 {'error': 'Internal error. {}'.format(e)},

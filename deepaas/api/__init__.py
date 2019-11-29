@@ -52,7 +52,7 @@ API_DESCRIPTION = (
 ) + LINKS
 
 
-async def get_app(doc="/docs"):
+async def get_app(doc="/docs", enable_train=True, enable_predict=True):
     """Get the main app."""
     global APP
 
@@ -82,7 +82,10 @@ async def get_app(doc="/docs"):
 
     model.register_v2_models(APP)
 
-    v2app = v2.get_app()
+    v2app = v2.get_app(
+        enable_train=enable_train,
+        enable_predict=enable_predict
+    )
     APP.add_subapp("/v2", v2app)
     versions.register_version("stable", v2.get_version)
 
