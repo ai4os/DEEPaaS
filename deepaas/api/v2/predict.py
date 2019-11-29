@@ -20,6 +20,7 @@ from webargs import aiohttpparser
 import webargs.core
 
 from deepaas.api.v2 import responses
+from deepaas.api.v2 import utils
 from deepaas import model
 
 
@@ -71,10 +72,13 @@ def _get_handler(model_name, model_obj):
     return Handler(model_name, model_obj)
 
 
-def setup_routes(app):
+def setup_routes(app, enable=True):
     # In the next lines we iterate over the loaded models and create the
     # different resources for each model. This way we can also load the
     # expected parameters if needed (as in the training method).
     for model_name, model_obj in model.V2_MODELS.items():
-        hdlr = _get_handler(model_name, model_obj)
+        if enable:
+            hdlr = _get_handler(model_name, model_obj)
+        else:
+            hdlr = utils.NotEnabledHandler()
         app.router.add_post("/models/%s/predict/" % model_name, hdlr.post)
