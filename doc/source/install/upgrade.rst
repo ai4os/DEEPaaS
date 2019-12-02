@@ -159,10 +159,10 @@ checklist in order.
 
 * **Catch error function**
 
-  By default Exceptions raised from the application side will be rendered as ``500 - HTTPInternalServerError``
-  with the message ``Server got itself in trouble``. If you want to render some Exceptions with custom status
-  codes and custom messages (see the ``reason`` arg) you have to raise an
-  `aiohttp web exception <https://docs.aiohttp.org/en/latest/web_exceptions.html>`_. For example::
+  By default Exceptions raised in the PREDICT method from the application side will be rendered as
+  ``500 - HTTPInternalServerError`` with the message ``Server got itself in trouble``. If you want to
+  render some Exceptions with custom status   codes and custom messages (see the ``reason`` arg) you have
+  to raise an `aiohttp web exception <https://docs.aiohttp.org/en/latest/web_exceptions.html>`_. For example::
 
     from aiohttp.web import HTTPBadRequest
 
@@ -185,6 +185,10 @@ checklist in order.
     @catch_error
     def f():
         ...
+
+  .. note::
+    Python Exceptions from the application side for the TRAIN method will be correctly rendered
+    by DEEPaaS so there is no need to wrap the train function with the catch_error decorator.
 
 * **API url**
 
