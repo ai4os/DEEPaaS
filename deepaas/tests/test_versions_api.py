@@ -22,12 +22,18 @@ from deepaas.api import v1
 from deepaas.api import v2
 from deepaas.api import versions
 from deepaas.tests import base
+from deepaas.tests import fake_responses
 
 
 class TestApiVersions(base.TestCase):
     async def get_application(self):
         app = web.Application(debug=True)
         app.add_routes(versions.routes)
+
+        app.add_subapp("/v1", v1.get_app())
+        app.add_subapp("/v2", v2.get_app())
+
+        versions.Versions.versions = {}
 
         return app
 
@@ -39,38 +45,20 @@ class TestApiVersions(base.TestCase):
 
     @test_utils.unittest_run_loop
     async def test_v1_version(self):
-        v1.get_app()
-        versions.register_version("v1", v1.get_version)
+        versions.register_version("deprecated", v1.get_version)
         ret = await self.client.get("/")
         self.assertEqual(200, ret.status)
         expect = {
             'versions': [
-                {'links': [{'href': '/', 'rel': 'self'}],
-                 'version': 'deprecated',
-                 'id': 'v1'}
+                fake_responses.v1_version
             ]
         }
-# NOTE(aloga): skip these for now, until this issue is solved:
-# https://github.com/maximdanilchenko/aiohttp-apispec/issues/65
-#                           {'href': '/doc', 'rel': 'help'},
-#                           {'href': '/swagger.json', 'rel': 'describedby'}],
         self.assertDictEqual(expect, await ret.json())
 
     @test_utils.unittest_run_loop
     async def test_v2_version(self):
-        v2.get_app()
-        versions.register_version("v2", v2.get_version)
+        versions.register_version("stable", v2.get_version)
         ret = await self.client.get("/")
         self.assertEqual(200, ret.status)
-        expect = {
-            'versions': [
-                {'links': [{'href': '/', 'rel': 'self'}],
-                 'version': 'stable',
-                 'id': 'v2'}
-            ]
-        }
-# NOTE(aloga): skip these for now, until this issue is solved:
-# https://github.com/maximdanilchenko/aiohttp-apispec/issues/65
-#                           {'href': '/doc', 'rel': 'help'},
-#                           {'href': '/swagger.json', 'rel': 'describedby'}],
+        expect = fake_responses.versions
         self.assertDictEqual(expect, await ret.json())
