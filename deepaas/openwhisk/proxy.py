@@ -62,6 +62,13 @@ async def init(request):
 @routes.get('/run')
 @routes.post('/run')
 async def run(request):
+    if APP is None:
+        response = web.json_response(
+            {'error': 'The action is not intialized. See logs for details.'},
+            status=502
+        )
+        return complete(response)
+
     req_clone = request.clone()
     try:
         message = await request.json()
@@ -75,19 +82,14 @@ async def run(request):
         if not isinstance(args, dict):
             return error_bad_request()
 
-    if APP is not None:
-        try:
-            status, result = await handle.invoke(APP, req_clone, args)
-            response = web.json_response(result, status=status)
-        except Exception as e:
-            response = web.json_response(
-                {'error': 'Internal error. {}'.format(e)},
-                status=500
-            )
-    else:
+    try:
+        status, result = await handle.invoke(APP, req_clone, args)
+        response = web.json_response(result, status=status)
+    except Exception as e:
+        raise e
         response = web.json_response(
-            {'error': 'The action is not intialized. See logs for details.'},
-            status=502
+            {'error': 'Internal error. {}'.format(e)},
+            status=500
         )
     return complete(response)
 

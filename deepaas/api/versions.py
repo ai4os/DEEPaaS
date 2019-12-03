@@ -30,6 +30,9 @@ class Versions(web.View):
 
     versions = {}
 
+    def __init__(self, *args, wsk_args=None, **kwargs):
+        super(Versions, self).__init__(*args, **kwargs)
+
     @aiohttp_apispec.docs(
         tags=["versions"],
         summary="Get available API versions",

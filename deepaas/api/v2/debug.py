@@ -85,7 +85,7 @@ def setup_debug():
         204: {"description": "Debug endpoint not enabled"},
     },
 )
-async def get(request):
+async def get(request, wsk_args=None):
     print("--- DEBUG MARKER %s ---" % datetime.datetime.now())
     if DEBUG_STREAM is not None:
         resp = DEBUG_STREAM.getvalue()
