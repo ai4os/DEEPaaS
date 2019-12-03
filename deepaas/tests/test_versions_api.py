@@ -41,7 +41,7 @@ class TestApiVersions(base.TestCase):
     async def test_get_no_versions(self):
         ret = await self.client.get("/")
         self.assertEqual(200, ret.status)
-        self.assertEqual({'versions': []}, await ret.json())
+        self.assertDictEqual({'versions': []}, await ret.json())
 
     @test_utils.unittest_run_loop
     async def test_v1_version(self):

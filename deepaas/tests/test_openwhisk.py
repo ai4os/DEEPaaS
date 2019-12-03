@@ -67,7 +67,8 @@ class TestOpenWhiskProxy(base.TestCase):
     async def test_init(self):
         ret = await self.client.post("/init")
         self.assertEqual(200, ret.status)
-        self.assertEqual("OK", await ret.text())
+        txt = await ret.text()
+        self.assertEqual("OK", txt)
 
     def test_mock(self):
         with mock.patch(
