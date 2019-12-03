@@ -25,6 +25,7 @@ import mock
 from webargs import fields
 
 import deepaas
+import deepaas.model.v2
 from deepaas.model.v2 import base as v2_base
 from deepaas.model.v2 import test as v2_test
 from deepaas.model.v2 import wrapper as v2_wrapper
@@ -32,6 +33,12 @@ from deepaas.tests import base
 
 
 class TestV2Model(base.TestCase):
+    def setUp(self):
+        super(TestV2Model, self).setUp()
+
+        deepaas.model.v2.MODELS_LOADED = False
+        deepaas.model.v2.MODELS = {}
+
     def test_abc(self):
         self.assertRaises(TypeError, v2_base.BaseModel)
 
@@ -200,13 +207,24 @@ class TestV2Model(base.TestCase):
     def test_loading_ok(self, mock_loading):
         mock_loading.return_value = {uuid.uuid4().hex: "bar"}
         deepaas.model.v2.register_models(self.app)
+        mock_loading.assert_called()
+        for m in deepaas.model.v2.MODELS.values():
+            self.assertIsInstance(m, v2_wrapper.ModelWrapper)
+
+    @mock.patch('deepaas.model.loading.get_available_models')
+    def test_loading_ok_singleton(self, mock_loading):
+        mock_loading.return_value = {uuid.uuid4().hex: "bar"}
+        deepaas.model.v2.register_models(self.app)
+        deepaas.model.v2.register_models(self.app)
+        mock_loading.assert_called_once()
         for m in deepaas.model.v2.MODELS.values():
             self.assertIsInstance(m, v2_wrapper.ModelWrapper)
 
     @mock.patch('deepaas.model.loading.get_available_models')
     def test_loading_error(self, mock_loading):
-        mock_loading.return_value = []
+        mock_loading.return_value = {}
         deepaas.model.v2.register_models(self.app)
+        mock_loading.assert_called()
         self.assertIn("deepaas-test", deepaas.model.v2.MODELS)
         m = deepaas.model.v2.MODELS.pop("deepaas-test")
         self.assertIsInstance(m, v2_wrapper.ModelWrapper)
