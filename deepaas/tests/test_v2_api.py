@@ -119,7 +119,6 @@ class TestApiV2(base.TestCase):
     async def test_train(self):
         ret = await self.client.post("/v2/models/deepaas-test/train/",
                                      data={"sleep": 0})
-        self.assertFalse(await ret.text())
         self.assertEqual(200, ret.status)
         json = await ret.json()
         json.pop("date")
