@@ -27,6 +27,7 @@ from deepaas.api.v2 import responses
 import deepaas.model
 import deepaas.model.v2
 from deepaas.tests import base
+from deepaas.tests import fake_responses
 
 
 class TestModelResponse(base.TestCase):
@@ -107,31 +108,23 @@ class TestApiV2(base.TestCase):
             data={"data": (f, "foo.txt"),
                   "parameter": 1}
         )
-        await ret.json()
+        json = await ret.json()
         self.assertEqual(200, ret.status)
+        self.assertDictEqual(fake_responses.deepaas_test_predict, json)
 
     @test_utils.unittest_run_loop
     async def test_train(self):
         ret = await self.client.post("/v2/models/deepaas-test/train/",
-                                     data={"sleep": 1})
-        await ret.json()
+                                     data={"sleep": 0})
+        self.assertFalse(await ret.text())
         self.assertEqual(200, ret.status)
+        json = await ret.json()
+        json.pop("date")
+        self.assertDictEqual(fake_responses.deepaas_test_train, json)
 
     @test_utils.unittest_run_loop
     async def test_get_metadata(self):
-        meta = {'models': [
-            {'author': 'Alvaro Lopez Garcia',
-             'description': ('This is not a model at all, just a '
-                             'placeholder for testing the API '
-                             'functionality. If you are seeing this, it is '
-                             'because DEEPaaS could not load a valid model.'),
-             'id': '0',
-             'links': [{'href': '/v2/models/deepaas-test', 'rel': 'self'}],
-             'name': 'deepaas-test',
-             'url': "https://github.com/indigo-dc/DEEPaaS/",
-             'license': "Apache 2.0",
-             'version': '0.0.1'}
-        ]}
+        meta = fake_responses.models_meta
 
         ret = await self.client.get("/v2/models/")
         self.assert_ok(ret)
