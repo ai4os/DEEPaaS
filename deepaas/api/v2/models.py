@@ -32,7 +32,7 @@ from deepaas import model
                 "metadata.",
 )
 @aiohttp_apispec.response_schema(responses.ModelMeta(), 200)
-async def index(request):
+async def index(request, wsk_args=None):
     """Return loaded models and its information.
 
     DEEPaaS can load several models and server them on the same endpoint,
@@ -70,7 +70,7 @@ def _get_handler(model_name, model_obj):
             summary="Return model's metadata",
         )
         @aiohttp_apispec.response_schema(responses.ModelMeta(), 200)
-        async def get(self, request):
+        async def get(self, request, wsk_args=None):
             m = {
                 "id": self.model_name,
                 "name": self.model_name,
