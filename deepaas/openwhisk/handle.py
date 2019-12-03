@@ -23,8 +23,8 @@
 import base64
 import re
 
-from aiohttp import web
 from aiohttp import streams
+from aiohttp import web
 import aiohttp.web_urldispatcher
 from werkzeug import http
 

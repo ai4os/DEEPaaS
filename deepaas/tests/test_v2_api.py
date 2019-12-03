@@ -105,7 +105,8 @@ class TestApiV2(base.TestCase):
         ret = await self.client.post(
             "/v2/models/deepaas-test/predict/",
             data={"data": (f, "foo.txt"),
-                    "parameter": 1})
+                  "parameter": 1}
+        )
         await ret.json()
         self.assertEqual(200, ret.status)
 
