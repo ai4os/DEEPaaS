@@ -53,7 +53,7 @@ def get_app(enable_train=True, enable_predict=True):
 )
 @aiohttp_apispec.response_schema(responses.Version(), 200)
 @aiohttp_apispec.response_schema(responses.Failure(), 400)
-async def get_version(request):
+async def get_version(request, wsk_args=None):
     version = {
         "version": "stable",
         "id": "v2",
