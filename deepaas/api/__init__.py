@@ -52,7 +52,8 @@ API_DESCRIPTION = (
 ) + LINKS
 
 
-async def get_app(doc="/docs", enable_train=True, enable_predict=True):
+async def get_app(swagger=True, doc="/docs", prefix="",
+                  enable_train=True, enable_predict=True):
     """Get the main app."""
     global APP
 
@@ -98,7 +99,7 @@ async def get_app(doc="/docs", enable_train=True, enable_predict=True):
             LOG.debug("Warming models...")
             await m.warm()
 
-    if doc:
+    if swagger:
         # init docs with all parameters, usual for ApiSpec
         aiohttp_apispec.setup_aiohttp_apispec(
             app=APP,
@@ -119,7 +120,9 @@ async def get_app(doc="/docs", enable_train=True, enable_predict=True):
             },
             version=deepaas.__version__,
             url="/swagger.json",
-            swagger_path=doc,
+            swagger_path=doc if doc else None,
+            prefix=prefix,
+            in_place=True,
         )
 
     return APP

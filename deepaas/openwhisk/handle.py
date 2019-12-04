@@ -74,6 +74,7 @@ async def _normalize(request, app):
         resolves, match_info = await _check_request_resolves(
             request, path, app)
         if resolves:
+            match_info.add_app(app)
             return match_info
 
 
@@ -105,8 +106,12 @@ async def invoke(app, request, args):
     if match_info is None:
         response = web.HTTPNotFound()
     else:
+        request._match_info = match_info
         try:
-            response = await match_info.handler(request, wsk_args=args)
+            if path == "/swagger.json":
+                response = await match_info.handler(request)
+            else:
+                response = await match_info.handler(request, wsk_args=args)
         except web.HTTPException as e:
             response = e
 
