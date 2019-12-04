@@ -118,7 +118,9 @@ async def invoke(app, request, args):
     response_type = http.parse_options_header(
         response.headers.get('Content-Type', 'application/octet-stream'))
 
-    if response_type[0][0:response_type[0].find('/')] != 'octet-stream':
+    if not response.body:
+        body = None
+    elif response_type[0][0:response_type[0].find('/')] != 'octet-stream':
         body = response.body.decode(response_type[1].get('charset', 'utf-8'))
     else:
         body = base64.b64encode(response.text)
