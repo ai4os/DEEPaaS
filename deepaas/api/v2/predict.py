@@ -34,7 +34,16 @@ def _get_model_response(model_name, model_obj):
 
 
 def _get_handler(model_name, model_obj):
-    handler_args = webargs.core.dict2schema(model_obj.get_predict_args())
+    aux = model_obj.get_predict_args()
+    accept = aux.get("accept", None)
+    if accept and "application/json" not in accept.validate.choices:
+        accept.validate.choices.insert(0, "application/json")
+        accept.validate.choices.append("*/*")
+        accept.default = "application/json"
+        accept.missing = "application/json"
+        accept.location = "headers"
+
+    handler_args = webargs.core.dict2schema(aux)
     handler_args.opts.ordered = True
 
     response = _get_model_response(model_name, model_obj)
@@ -49,7 +58,8 @@ def _get_handler(model_name, model_obj):
 
         @aiohttp_apispec.docs(
             tags=["models"],
-            summary="Make a prediction given the input data"
+            summary="Make a prediction given the input data",
+            produces=accept.validate.choices if accept else None,
         )
         @aiohttp_apispec.querystring_schema(handler_args)
         @aiohttp_apispec.response_schema(response(), 200)
@@ -63,6 +73,13 @@ def _get_handler(model_name, model_obj):
 
             ret = task.result()
 
+            accept = args.get("accept", "application/json")
+            if accept != "application/json":
+                response = web.Response(
+                    body=ret,
+                    content_type=accept,
+                )
+                return response
             if self.model_obj.has_schema:
                 self.model_obj.validate_response(ret)
                 return web.json_response(ret)
