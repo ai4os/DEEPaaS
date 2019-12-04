@@ -86,10 +86,12 @@ async def run(request):
             return error_bad_request()
 
     try:
-        status, result = await handle.invoke(APP, req_clone, args)
-        response = web.json_response(result, status=status)
+        result = await handle.invoke(APP, req_clone, args)
+        # NOTE(aloga): we got a response, even if it is a failure, therefore we
+        # return a 200 error
+        response = web.json_response(result, status=200)
     except Exception as e:
-        raise e
+        # NOTE(aloga): something weird happened server-side, return a 500.
         response = web.json_response(
             {'error': 'Internal error. {}'.format(e)},
             status=500
