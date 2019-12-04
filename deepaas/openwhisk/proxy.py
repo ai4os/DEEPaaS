@@ -48,7 +48,10 @@ async def init(request):
 
     try:
         if APP is None:
-            APP = await api.get_app(doc=False, enable_train=False)
+            APP = await api.get_app(swagger=True,
+                                    doc=False,
+                                    prefix=".",
+                                    enable_train=False)
         return web.Response(text="OK", status=200)
     except Exception as e:
         response = web.json_response(
