@@ -241,6 +241,30 @@ In order to define a custom response, the ``response`` attribute is used:
 
         schema = Response
 
+Returning different content types
+*********************************
+
+Sometimes it is useful to return something different than a JSON file. For such
+cases, you can define an additional argument ``accept`` defining the content
+types that you are able to return as follows::
+
+   def get_predict_args():
+        return {
+            "accept": fields.Str(
+                description="Media type(s) that is/are acceptable for the response.",
+                validate=validate.OneOf(["text/plain"]),
+         }
+
+Consequantly, the predict calls will receive an ``accept`` argument containing
+the content type requested by the user.
+
+.. important:: Please be aware the the JSON content type (i.e.
+   ``application/json``) must be always supported and it will be defined and
+   presented to the user even if you do not define it in your ``accept``
+   argument. This means that if you do not receive an accept argument, or the
+   accept argument is empty you **must** return content that can be redered as
+   a JSON following the schema definition described above.
+
 Using classes
 -------------
 
