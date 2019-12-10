@@ -156,7 +156,7 @@ string, and will be returned in the following JSON response::
       "predictions": "<model response as string>"
    }
 
-However, it is reccomended that you specify a custom custom response schema.
+However, it is recommended that you specify a custom response schema.
 This way the API exposed will be richer and it will be easier for developers to
 build applications against your API, as they will be able to discover the
 response schemas from your endpoints.
@@ -255,15 +255,9 @@ types that you are able to return as follows::
                 validate=validate.OneOf(["text/plain"]),
          }
 
-Consequantly, the predict calls will receive an ``accept`` argument containing
-the content type requested by the user.
-
-.. important:: Please be aware the the JSON content type (i.e.
-   ``application/json``) must be always supported and it will be defined and
-   presented to the user even if you do not define it in your ``accept``
-   argument. This means that if you do not receive an accept argument, or the
-   accept argument is empty you **must** return content that can be redered as
-   a JSON following the schema definition described above.
+Consequently, the predict calls will receive an ``accept`` argument containing
+the content type requested by the user. Find `here <https://www.iana.org/assignments/media-types/media-types.xhtml>`_
+a comprehensive list of possible content types.
 
 Using classes
 -------------
