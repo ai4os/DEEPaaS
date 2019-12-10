@@ -88,11 +88,13 @@ def _get_handler(model_name, model_obj):
 
 
 def setup_routes(app):
-    app.router.add_get("/models/", index)
+    app.router.add_get("/models/", index, allow_head=False)
 
     # In the next lines we iterate over the loaded models and create the
     # different resources for each model. This way we can also load the
     # expected parameters if needed (as in the training method).
     for model_name, model_obj in model.V2_MODELS.items():
         hdlr = _get_handler(model_name, model_obj)
-        app.router.add_get("/models/%s/" % model_name, hdlr.get)
+        app.router.add_get("/models/%s/" % model_name,
+                           hdlr.get,
+                           allow_head=False)

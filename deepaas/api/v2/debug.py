@@ -94,4 +94,4 @@ async def get(request, wsk_args=None):
 
 
 def setup_routes(app):
-    app.router.add_get("/debug/", get)
+    app.router.add_get("/debug/", get, allow_head=False)

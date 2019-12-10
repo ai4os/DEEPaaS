@@ -140,8 +140,12 @@ def setup_routes(app, enable=True):
         else:
             hdlr = utils.NotEnabledHandler()
         app.router.add_post("/models/%s/train/" % model_name, hdlr.post)
-        app.router.add_get("/models/%s/train/" % model_name, hdlr.index)
-        app.router.add_get("/models/%s/train/{uuid}" % model_name, hdlr.get)
+        app.router.add_get("/models/%s/train/" % model_name,
+                           hdlr.index,
+                           allow_head=False)
+        app.router.add_get("/models/%s/train/{uuid}" % model_name,
+                           hdlr.get,
+                           allow_head=False)
         app.router.add_delete(
             "/models/%s/train/{uuid}" % model_name,
             hdlr.delete
