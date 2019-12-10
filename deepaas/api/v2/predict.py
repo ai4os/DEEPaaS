@@ -16,9 +16,9 @@
 
 from aiohttp import web
 import aiohttp_apispec
+import marshmallow
 from webargs import aiohttpparser
 import webargs.core
-import marshmallow
 
 from deepaas.api.v2 import responses
 from deepaas.api.v2 import utils
