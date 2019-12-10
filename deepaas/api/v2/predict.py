@@ -98,4 +98,7 @@ def setup_routes(app, enable=True):
             hdlr = _get_handler(model_name, model_obj)
         else:
             hdlr = utils.NotEnabledHandler()
-        app.router.add_post("/models/%s/predict/" % model_name, hdlr.post)
+        app.router.add_post(
+            "/models/%s/predict/" % model_name,
+            hdlr.post
+        )
