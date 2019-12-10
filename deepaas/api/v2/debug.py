@@ -86,8 +86,8 @@ def setup_debug():
     },
 )
 async def get(request, wsk_args=None):
-    print("--- DEBUG MARKER %s ---" % datetime.datetime.now())
     if DEBUG_STREAM is not None:
+        print("--- DEBUG MARKER %s ---" % datetime.datetime.now())
         resp = DEBUG_STREAM.getvalue()
         return web.Response(text=resp)
     return web.HTTPNoContent()
