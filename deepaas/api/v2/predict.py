@@ -18,6 +18,7 @@ from aiohttp import web
 import aiohttp_apispec
 from webargs import aiohttpparser
 import webargs.core
+import marshmallow
 
 from deepaas.api.v2 import responses
 from deepaas.api.v2 import utils
@@ -36,11 +37,11 @@ def _get_model_response(model_name, model_obj):
 def _get_handler(model_name, model_obj):
     aux = model_obj.get_predict_args()
     accept = aux.get("accept", None)
-    if accept and "application/json" not in accept.validate.choices:
-        accept.validate.choices.insert(0, "application/json")
+    if accept:
         accept.validate.choices.append("*/*")
-        accept.default = "application/json"
-        accept.missing = "application/json"
+        # If no default value use first possible choice:
+        if isinstance(accept.missing, marshmallow.utils._Missing):
+            accept.missing = accept.validate.choices[0]
         accept.location = "headers"
 
     handler_args = webargs.core.dict2schema(aux)
