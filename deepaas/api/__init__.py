@@ -52,7 +52,7 @@ API_DESCRIPTION = (
 ) + LINKS
 
 
-async def get_app(swagger=True, doc="/docs", prefix="",
+async def get_app(swagger=True, doc="/ui", prefix="",
                   enable_train=True, enable_predict=True):
     """Get the main app."""
     global APP

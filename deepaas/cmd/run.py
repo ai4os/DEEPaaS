@@ -103,7 +103,7 @@ def main():
     else:
         base = "http://{}:{}".format(CONF.listen_ip, CONF.listen_port)
         spec = "{}/swagger.json".format(base)
-        docs = "{}/docs".format(base)
+        docs = "{}/ui".format(base)
         v2 = "{}/v2".format(base)
 
         print(INTRO)
@@ -111,7 +111,7 @@ def main():
 
         log.info("Starting DEEPaaS version %s", deepaas.__version__)
 
-        app = api.get_app(doc="/docs")
+        app = api.get_app(doc="/ui")
         web.run_app(
             app,
             host=CONF.listen_ip,
