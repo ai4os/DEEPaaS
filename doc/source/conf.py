@@ -69,7 +69,7 @@ author = u"DEEP-Hybrid-DataCloud consortium"
 # The full version, including alpha/beta/rc tags.
 release = version.release_string
 # The short X.Y version.
-version = version.version_string
+version = version.release_string
 
 # A list of glob-style patterns that should be excluded when looking for
 # source files. They are matched against the source file names relative to the
