@@ -1,6 +1,6 @@
 #!/usr/bin/groovy
 
-@Library(['github.com/indigo-dc/jenkins-pipeline-library@1.3.5']) _
+@Library(['github.com/indigo-dc/jenkins-pipeline-library@release/1.4.0']) _
 
 pipeline {
     agent {
@@ -74,7 +74,6 @@ pipeline {
             }
         }
 
-        /*
         stage('Dependency check') {
             agent {
                 label 'docker-build'
@@ -85,7 +84,7 @@ pipeline {
             }
             post {
                 always {
-                    OWASPDependencyCheckPublish()
+                    OWASPDependencyCheckPublish(report='**/dependency-check-report.xml')
                     HTMLReport(
                         "$WORKSPACE/DEEPaaS/deepaas",
                         'dependency-check-report.html',
@@ -94,7 +93,6 @@ pipeline {
                 }
             }
         }
-        */
 
         stage('DockerHub delivery') {
             when {

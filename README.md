@@ -43,7 +43,7 @@ The DEEPaaS documentation is hosted on [Read the Docs](https://deepaas.readthedo
 If you are using this software and want to cite it in any work, please use the
 following:
 
-> López García, A. "DEEPaaS API: a REST API for Machine Learning and
+> Lopez Garcia, A. "DEEPaaS API: a REST API for Machine Learning and
 > Deep Learning models". In: _Journal of Open Source Software_ 4(42) (2019),
 > pp. 1517. ISSN: 2475-9066. DOI: [10.21105/joss.01517](https://doi.org/10.21105/joss.01517)
 
