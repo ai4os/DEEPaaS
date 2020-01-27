@@ -30,7 +30,7 @@ def main():
     parser = argparse.ArgumentParser (
             description= '''######Option to obtain the prediction of the model through the command line.##### ''',
             )
-    parser.add_argument ("-ct", "--content_type", default="application/json" , help="Especify the content type of the file ('image/png', 'application/json', 'application/zip (by default application/json)')")
+    parser.add_argument ("-ct", "--content_type", default="application/json" , help="Especify the content type of the output file ('image/png', 'application/json', 'application/zip (by default application/json)')")
     parser.add_argument("input_file", help="Set input file to predict")
     parser.add_argument("-o", "--output", help="Save the result to a local file.", required=True)
     parser.add_argument("--url", type=bool, default=False, help="If we want to use the URL of an image as input method, we set this option to TRUE and use the image URL as input file.")
@@ -38,20 +38,16 @@ def main():
     output = args.output
     file_type = args.url
 
-    UploadedFile = collections.namedtuple("UploadedFile", ("name",
-                                                       "filename",
-                                                       "content_type"))
+    UploadedFile = collections.namedtuple("UploadedFile", ("name","filename","content_type"))
 
     content_type = args.content_type
     
     file = UploadedFile(name=args.input_file, filename=args.input_file, content_type='image/png')
 
-    
-
     if file_type == True:
         input_data = {'urls': [args.input_file], 'accept': content_type}
         output_pred = predict_url(input_data)
-    else :
+    else:
         input_data = {'files': [file], 'accept': content_type}
         output_pred = predict_data(input_data)
 
