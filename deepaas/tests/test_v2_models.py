@@ -69,7 +69,8 @@ class TestV2Model(base.TestCase):
         self.assertRaises(NotImplementedError, m.train)
         self.assertRaises(NotImplementedError, m.get_train_args)
 
-    def test_bad_schema(self):
+    @mock.patch("deepaas.model.v2.wrapper.ModelWrapper._setup_cleanup")
+    def test_bad_schema(self, m_clean):
         class Model(object):
             schema = []
 
@@ -80,7 +81,8 @@ class TestV2Model(base.TestCase):
             self.app
         )
 
-    def test_validate_no_schema(self):
+    @mock.patch("deepaas.model.v2.wrapper.ModelWrapper._setup_cleanup")
+    def test_validate_no_schema(self, m_clean):
         class Model(object):
             schema = None
 
@@ -91,7 +93,8 @@ class TestV2Model(base.TestCase):
             None
         )
 
-    def test_invalid_schema(self):
+    @mock.patch("deepaas.model.v2.wrapper.ModelWrapper._setup_cleanup")
+    def test_invalid_schema(self, m_clean):
         class Model(object):
             schema = object()
 
@@ -102,7 +105,8 @@ class TestV2Model(base.TestCase):
             self.app
         )
 
-    def test_marshmallow_schema(self):
+    @mock.patch("deepaas.model.v2.wrapper.ModelWrapper._setup_cleanup")
+    def test_marshmallow_schema(self, m_clean):
         class Schema(marshmallow.Schema):
             foo = m_fields.Str()
 
@@ -118,7 +122,8 @@ class TestV2Model(base.TestCase):
             {"foo": 1.0}
         )
 
-    def test_dict_schema(self):
+    @mock.patch("deepaas.model.v2.wrapper.ModelWrapper._setup_cleanup")
+    def test_dict_schema(self, m_clean):
         class Model(object):
             schema = {
                 "foo": m_fields.Str()
@@ -151,8 +156,9 @@ class TestV2Model(base.TestCase):
         for arg, val in itertools.chain(pargs.items(), targs.items()):
             self.assertIsInstance(val, fields.Field)
 
+    @mock.patch("deepaas.model.v2.wrapper.ModelWrapper._setup_cleanup")
     @test_utils.unittest_run_loop
-    async def test_dummy_model_with_wrapper(self):
+    async def test_dummy_model_with_wrapper(self, m_clean):
         w = v2_wrapper.ModelWrapper("foo", v2_test.TestModel(), self.app)
         task = w.predict()
         await task
@@ -175,8 +181,10 @@ class TestV2Model(base.TestCase):
         for arg, val in itertools.chain(pargs.items(), targs.items()):
             self.assertIsInstance(val, fields.Field)
 
+    @mock.patch("deepaas.model.v2.wrapper.ModelWrapper._setup_cleanup")
     @test_utils.unittest_run_loop
-    async def test_model_with_not_implemented_attributes_and_wrapper(self):
+    async def test_model_with_not_implemented_attributes_and_wrapper(self,
+                                                                     m_clean):
         w = v2_wrapper.ModelWrapper("foo", object(), self.app)
 
         # NOTE(aloga): Cannot use assertRaises here directly, as testtools
@@ -203,16 +211,18 @@ class TestV2Model(base.TestCase):
         for arg, val in itertools.chain(pargs.items(), targs.items()):
             self.assertIsInstance(val, fields.Field)
 
+    @mock.patch("deepaas.model.v2.wrapper.ModelWrapper._setup_cleanup")
     @mock.patch('deepaas.model.loading.get_available_models')
-    def test_loading_ok(self, mock_loading):
+    def test_loading_ok(self, mock_loading, m_clean):
         mock_loading.return_value = {uuid.uuid4().hex: "bar"}
         deepaas.model.v2.register_models(self.app)
         mock_loading.assert_called()
         for m in deepaas.model.v2.MODELS.values():
             self.assertIsInstance(m, v2_wrapper.ModelWrapper)
 
+    @mock.patch("deepaas.model.v2.wrapper.ModelWrapper._setup_cleanup")
     @mock.patch('deepaas.model.loading.get_available_models')
-    def test_loading_ok_singleton(self, mock_loading):
+    def test_loading_ok_singleton(self, mock_loading, m_clean):
         mock_loading.return_value = {uuid.uuid4().hex: "bar"}
         deepaas.model.v2.register_models(self.app)
         deepaas.model.v2.register_models(self.app)
@@ -220,8 +230,9 @@ class TestV2Model(base.TestCase):
         for m in deepaas.model.v2.MODELS.values():
             self.assertIsInstance(m, v2_wrapper.ModelWrapper)
 
+    @mock.patch("deepaas.model.v2.wrapper.ModelWrapper._setup_cleanup")
     @mock.patch('deepaas.model.loading.get_available_models')
-    def test_loading_error(self, mock_loading):
+    def test_loading_error(self, mock_loading, m_clean):
         mock_loading.return_value = {}
         deepaas.model.v2.register_models(self.app)
         mock_loading.assert_called()
