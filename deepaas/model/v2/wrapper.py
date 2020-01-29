@@ -22,6 +22,7 @@ import functools
 import multiprocessing
 import multiprocessing.pool
 import os
+import signal
 import tempfile
 
 from aiohttp import web
@@ -80,6 +81,8 @@ class ModelWrapper(object):
         self._train_workers = CONF.train_workers
         self._train_executor = self._init_train_executor()
 
+        self._setup_cleanup()
+
         schema = getattr(self.model_obj, "schema", None)
 
         if isinstance(schema, dict):
@@ -109,6 +112,13 @@ class ModelWrapper(object):
 
         self.response_schema = schema
 
+    def _setup_cleanup(self):
+        self._app.on_cleanup.append(self._close_executors)
+
+    async def _close_executors(self, app):
+        self._train_executor.shutdown()
+        self._predict_executor.shutdown()
+
     def _init_predict_executor(self):
         n = self._predict_workers
         executor = concurrent.futures.ThreadPoolExecutor(max_workers=n)
@@ -118,22 +128,6 @@ class ModelWrapper(object):
         n = self._train_workers
         executor = CancellablePool(max_workers=n)
         return executor
-
-#        run = sconcurrent.futures.elf.loop.run_in_executor
-
-#        fs = [run(executor, self.warm, path) for i in range(0, n)]
-#        await asyncio.gather(*fs)
-#
-        async def close_executor():
-            self._executor.shutdown()
-
-#        async def close_executor():
-#            fs = [run(executor, self.clean) for i in range(0, n)]
-#            await asyncio.shield(asyncio.gather(*fs))
-#            executor.shutdown(wait=True)
-
-        self._app.on_cleanup.append(close_executor)
-#        app['executor'] = executor
 
     @contextlib.contextmanager
     def _catch_error(self):
@@ -408,6 +402,13 @@ class CancellablePool(object):
         try:
             return await fut
         except asyncio.CancelledError:
+            # This is ugly, but since our pools only have one slot we can
+            # kill the process before termination
+            try:
+                pool._pool[0].kill()
+            except AttributeError:
+                os.kill(pool._pool[0].pid,
+                        signal.SIGKILL)
             pool.terminate()
             usable_pool = self._new_pool()
         finally:
@@ -416,6 +417,6 @@ class CancellablePool(object):
             self._change.set()
 
     def shutdown(self):
-        for p in self._working | self._free:
+        for p in self._working:
             p.terminate()
         self._free.clear()
