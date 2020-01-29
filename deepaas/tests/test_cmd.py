@@ -19,6 +19,7 @@ import sys
 
 import mock
 
+from deepaas.cmd import execute
 from deepaas.cmd import run
 from deepaas.cmd import wsk
 from deepaas.tests import base
@@ -101,3 +102,31 @@ class TestWsk(base.TestCase):
             wsk.main()
         m_proxy_main.assert_called_once()
         m_handle_signals.assert_called_once()
+
+class TestExecute(base.TestCase):
+    @mock.patch("deepaas.cmd.execute.prediction")
+    def test_execute_data(self, m_model_name):
+        in_file = "image.png"
+        out_file = "deepaas/tests/out_test/"
+        self.flags(input_file=in_file)
+        self.flags(output=out_file)
+        m_model_name.return_value = [{
+            'nose': {'coordinate_x': 1, 'coordinate_y': 2, 'score': 0.9}}]
+        with mock.patch.object(sys, 'argv', ["deepaas-execute"]):
+            execute.main()
+        m_model_name.assert_called_once
+
+    @mock.patch("deepaas.cmd.execute.prediction")
+    def test_execute_url(self, m_model_name):
+        in_file = "https://storage.googleapis.com/tfjs-models/image.png"
+        out_file = "deepaas/tests/out_test/"
+        self.flags(input_file=in_file)
+        self.flags(output=out_file)
+        self.flags(url=True)
+        m_model_name.return_value = [{
+            'nose': {'coordinate_x': 1, 'coordinate_y': 2, 'score': 0.9}}]
+        with mock.patch.object(sys, 'argv', ["deepaas-execute"]):
+            execute.main()
+        m_model_name.assert_called_once
+
+        
