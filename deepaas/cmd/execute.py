@@ -1,82 +1,144 @@
-import argparse
-import shutil
-import ntpath
-import os
+#!/usr/bin/env python
+# -*- coding: utf-8 -*-
+
+# Copyright 2020 Spanish National Research Council (CSIC)
+#
+# Licensed under the Apache License, Version 2.0 (the "License"); you may
+# not use this file except in compliance with the License. You may obtain
+# a copy of the License at
+#
+#      http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
+# WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
+# License for the specific language governing permissions and limitations
+# under the License.
+
 import collections
+import mimetypes
+import os
+import shutil
+import sys
+
+
+from oslo_config import cfg
+from oslo_log import log
 
 from deepaas.model import loading
-from oslo_log import log
+
+cli_opts = [
+    cfg.StrOpt('input_file',
+               short="i",
+               required=True,
+               help="""
+Set local input file to predict.
+"""),
+    cfg.StrOpt('content_type',
+               default='application/json',
+               short='ct',
+               help="""
+Especify the content type of the output file. The available options are
+(image/png, application/json (by default), application/zip).
+"""),
+    cfg.StrOpt('output',
+               short="o",
+               required=True,
+               help="""
+Save the result to a local file.
+"""),
+    cfg.BoolOpt('url',
+                short='u',
+                default=False,
+                help="""
+Run as input file an URL.
+If this option is set to True, we can use the URL
+of an image as an input file.
+"""),
+]
+
+CONF = cfg.CONF
+CONF.register_cli_opts(cli_opts)
 
 LOG = log.getLogger(__name__)
 
-### Loading the model installed 
+# Loading the model installed
+
+
 def model_name():
     global MODEL_NAME
     try:
         for name, model in loading.get_available_models("v2").items():
             MODEL_NAME = name
     except Exception as e:
-        LOG.warning("Error loading models: %s",e)
+        LOG.warning("Error loading models: %s", e)
 
 
-
-def main():
-    model_name() #Function to know the name of the installed model
+def prediction(input_file, file_type, content_type):
+    model_name()  # Function to know the name of the installed model
 
     package_name = MODEL_NAME
-    predict_data=__import__(package_name).api.predict_data  #import function
-    predict_url=__import__(package_name).api.predict_url  #import function
+    predict_data = __import__(package_name).api.predict_data  # Import function
+    predict_url = __import__(package_name).api.predict_url  # Import function
 
-    parser = argparse.ArgumentParser (
-            description= '''######Option to obtain the prediction of the model through the command line.##### ''',
-            )
-    parser.add_argument ("-ct", "--content_type", default="application/json" , help="Especify the content type of the output file ('image/png', 'application/json', 'application/zip (by default application/json)')")
-    parser.add_argument("input_file", help="Set input file to predict")
-    parser.add_argument("-o", "--output", help="Save the result to a local file.", required=True)
-    parser.add_argument("--url", type=bool, default=False, help="If we want to use the URL of an image as input method, we set this option to TRUE and use the image URL as input file.")
-    args = parser.parse_args()
-    output = args.output
-    file_type = args.url
+    UploadedFile = collections.namedtuple("UploadedFile", ("name",
+                                                           "filename",
+                                                           "content_type"))
 
-    UploadedFile = collections.namedtuple("UploadedFile", ("name","filename","content_type"))
+    file = UploadedFile(name=input_file,
+                        filename=input_file,
+                        content_type='image/png')
 
-    content_type = args.content_type
-    
-    file = UploadedFile(name=args.input_file, filename=args.input_file, content_type='image/png')
-
-    if file_type == True:
-        input_data = {'urls': [args.input_file], 'accept': content_type}
+    if file_type is True:
+        input_data = {'urls': [input_file], 'accept': content_type}
         output_pred = predict_url(input_data)
     else:
         input_data = {'files': [file], 'accept': content_type}
         output_pred = predict_data(input_data)
 
-    dirName = output+"out_"+os.path.basename(args.input_file)+"_folder" 
-    
-    if content_type == 'image/png':
-        output_path_image = output_pred.name       #Path where the resulting image is saved            
-        if os.path.exists(dirName):
-            shutil.rmtree(dirName)   ####if path already exists, remove it before copy with copytree()
-        shutil.copytree(os.path.dirname(output_path_image),dirName)  #copy all files of output(image and json)
-        print ("Image saved in: "+dirName )
+    return (output_pred)
 
-    elif content_type == 'application/zip':
-        if not os.path.exists(output):  ####if path does no exists, create it before copy
-            os.makedirs(output)
-        shutil.copyfile(output_pred.name,dirName+".zip")
-        print ("Image saved in: "+dirName )
-    elif content_type == 'application/json':
-        f = open (os.path.basename(args.input_file)+".json","w+")
-        f.write(repr(output_pred)+'\n')
+
+def main():
+    cfg.CONF(sys.argv[1:])
+    input_file = CONF.input_file
+    content_type = CONF.content_type
+    file_type = CONF.url
+    output = CONF.output
+
+    output_pred = prediction(input_file, file_type, content_type)
+    print(output_pred)
+    extension = mimetypes.guess_extension(content_type)
+    out_file_name = "out_" + os.path.splitext(os.path.basename(input_file))[0]
+    if extension is None:
+        sys.stderr.write(
+            "ERROR: Content type {} not valid.\n".format(content_type))
+        sys.exit(1)
+    if extension == ".json":
+        f = open(out_file_name + ".json", "w+")
+        f.write(repr(output_pred) + '\n')
         f.close()
-        print (output_pred)
-        if not os.path.exists(output):  ####if path does no exists, create it before copy
+        if not os.path.exists(output):  # Create path if does not exist
             os.makedirs(output)
-        shutil.copy(f.name,output)
-        os.remove(f.name)
-    else:
-        print ("Error in content_type")
+        dir_name = output + f.name
+        shutil.move(f.name, os.path.join(output, f.name))
 
+    if extension == '.png':
+        output_path_image = output_pred.name  # Path of resulting image
+        print(output_pred)
+        dir_name = output + out_file_name
+        if os.path.exists(dir_name):
+            shutil.rmtree(dir_name)   # Remove path if exist
+        shutil.copytree(os.path.dirname(output_path_image), dir_name)
+
+    if extension == '.zip':
+        print(output_pred)
+        dir_name = output + out_file_name + ".zip"
+        if not os.path.exists(output):  # Create path if does not exist
+            os.makedirs(output)
+        shutil.move(output_pred.name, dir_name)
+
+    print("Output saved at {}" .format(dir_name))
 
 
 if __name__ == "__main__":
