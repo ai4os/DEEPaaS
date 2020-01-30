@@ -1,5 +1,4 @@
-#!/usr/bin/env python
-# -*- coding: utf-8 -*-
+#!/usr/bin/env python -*- coding: utf-8 -*-
 
 # Copyright 2020 Spanish National Research Council (CSIC)
 #
@@ -15,17 +14,17 @@
 # License for the specific language governing permissions and limitations
 # under the License.
 
-import collections
+import magic
 import mimetypes
 import os
 import shutil
 import sys
 
-
 from oslo_config import cfg
 from oslo_log import log
 
 from deepaas.model import loading
+from deepaas.model.v2.wrapper import UploadedFile
 
 cli_opts = [
     cfg.StrOpt('input_file',
@@ -80,14 +79,12 @@ def prediction(input_file, file_type, content_type):
     package_name = MODEL_NAME
     predict_data = __import__(package_name).api.predict_data  # Import function
     predict_url = __import__(package_name).api.predict_url  # Import function
-
-    UploadedFile = collections.namedtuple("UploadedFile", ("name",
-                                                           "filename",
-                                                           "content_type"))
-
+    
+    mime = magic.Magic(mime=True)
+    content_type_in = mime.from_file(input_file)
     file = UploadedFile(name=input_file,
                         filename=input_file,
-                        content_type='image/png')
+                        content_type=content_type_in)
 
     if file_type is True:
         input_data = {'urls': [input_file], 'accept': content_type}
@@ -107,14 +104,15 @@ def main():
     output = CONF.output
 
     output_pred = prediction(input_file, file_type, content_type)
-    print(output_pred)
+    print(type(output_pred))
     extension = mimetypes.guess_extension(content_type)
-    out_file_name = "out_" + os.path.splitext(os.path.basename(input_file))[0]
-    if extension is None:
+    if extension is None or output_pred is None:
         sys.stderr.write(
             "ERROR: Content type {} not valid.\n".format(content_type))
         sys.exit(1)
     if extension == ".json":
+        name_image = os.path.splitext(os.path.basename(input_file))[0]
+        out_file_name = "out_" + name_image
         f = open(out_file_name + ".json", "w+")
         f.write(repr(output_pred) + '\n')
         f.close()
@@ -122,21 +120,13 @@ def main():
             os.makedirs(output)
         dir_name = output + f.name
         shutil.move(f.name, os.path.join(output, f.name))
-
-    if extension == '.png':
-        output_path_image = output_pred.name  # Path of resulting image
-        print(output_pred)
-        dir_name = output + out_file_name
-        if os.path.exists(dir_name):
-            shutil.rmtree(dir_name)   # Remove path if exist
-        shutil.copytree(os.path.dirname(output_path_image), dir_name)
-
-    if extension == '.zip':
-        print(output_pred)
-        dir_name = output + out_file_name + ".zip"
+    else:
+        output_path_image = output_pred.name
+        dir_name = output + os.path.basename(output_path_image)
+        print("Estoy aqui")
         if not os.path.exists(output):  # Create path if does not exist
             os.makedirs(output)
-        shutil.move(output_pred.name, dir_name)
+        shutil.copy(output_path_image, output)
 
     print("Output saved at {}" .format(dir_name))
 
