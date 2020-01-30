@@ -104,7 +104,6 @@ def main():
     output = CONF.output
 
     output_pred = prediction(input_file, file_type, content_type)
-    print(type(output_pred))
     extension = mimetypes.guess_extension(content_type)
     if extension is None or output_pred is None:
         sys.stderr.write(
@@ -122,8 +121,7 @@ def main():
         shutil.move(f.name, os.path.join(output, f.name))
     else:
         output_path_image = output_pred.name
-        dir_name = output + os.path.basename(output_path_image)
-        print("Estoy aqui")
+        dir_name = output + os.path.basename(output_path_image)        
         if not os.path.exists(output):  # Create path if does not exist
             os.makedirs(output)
         shutil.copy(output_path_image, output)
