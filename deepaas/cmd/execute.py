@@ -29,7 +29,6 @@ from deepaas.model.v2.wrapper import UploadedFile
 cli_opts = [
     cfg.StrOpt('input_file',
                short="i",
-               required=True,
                help="""
 Set local input file to predict.
 """),
@@ -37,12 +36,12 @@ Set local input file to predict.
                default='application/json',
                short='ct',
                help="""
-Especify the content type of the output file. The available options are
-(image/png, application/json (by default), application/zip).
+Especify the content type of the output file. The selected
+option must be available in the model used.
+(by default application/json).
 """),
     cfg.StrOpt('output',
                short="o",
-               required=True,
                help="""
 Save the result to a local file.
 """),
@@ -80,16 +79,15 @@ def prediction(input_file, file_type, content_type):
     predict_data = __import__(package_name).api.predict_data  # Import function
     predict_url = __import__(package_name).api.predict_url  # Import function
     
-    mime = magic.Magic(mime=True)
-    content_type_in = mime.from_file(input_file)
-    file = UploadedFile(name=input_file,
-                        filename=input_file,
-                        content_type=content_type_in)
-
     if file_type is True:
         input_data = {'urls': [input_file], 'accept': content_type}
         output_pred = predict_url(input_data)
     else:
+        mime = magic.Magic(mime=True)
+        content_type_in = mime.from_file(input_file)
+        file = UploadedFile(name=input_file,
+                            filename=input_file,
+                            content_type=content_type_in)
         input_data = {'files': [file], 'accept': content_type}
         output_pred = predict_data(input_data)
 
@@ -102,6 +100,17 @@ def main():
     content_type = CONF.content_type
     file_type = CONF.url
     output = CONF.output
+
+    # Checking required argument
+    if input_file is None:
+        sys.stderr.write(
+            "ERROR: Option input_file is required.\n")
+        sys.exit(1)
+
+    if output is None:
+        sys.stderr.write(
+            "ERROR: Option output is required.\n")
+        sys.exit(1)
 
     output_pred = prediction(input_file, file_type, content_type)
     extension = mimetypes.guess_extension(content_type)
@@ -121,7 +130,7 @@ def main():
         shutil.move(f.name, os.path.join(output, f.name))
     else:
         output_path_image = output_pred.name
-        dir_name = output + os.path.basename(output_path_image)        
+        dir_name = output + os.path.basename(output_path_image)
         if not os.path.exists(output):  # Create path if does not exist
             os.makedirs(output)
         shutil.copy(output_path_image, output)
