@@ -9,9 +9,17 @@
 
 <img src="https://marketplace.deep-hybrid-datacloud.eu/images/logo-deep.png" width=200 alt="DEEP-Hybrid-DataCloud logo"/>
 
-DEEP as a Service (DEEPaaS) is a REST API that is focused on providing access
-to machine learning models. By using DEEPaaS users can easily run a REST API
-in front of their model, thus accessing its functionality via HTTP calls.
+DEEP as a Service API (DEEPaaS API) is a REST API built on
+[aiohttp](https://docs.aiohttp.org/) that allows to provide easy access to
+machine learning, deep learning and artificial intelligence models. By using
+the DEEPaaS API users can easily run a REST API in front of their model, thus
+accessing its functionality via HTTP calls. DEEPaaS API leverages the [OpenAPI
+specification](https://github.com/OAI/OpenAPI-Specification).
+
+# Documentation
+
+The DEEPaaS documentation is hosted on [Read the Docs](https://deepaas.readthedocs.io/).
+
 
 ## Quickstart
 
@@ -22,7 +30,7 @@ The best way to quickly try the DEEPaaS API is through:
 This command will install a virtualenv (in the `virtualenv` directory) with
 DEEPaaS and all its dependencies and will run the DEEPaaS REST API, listening
 on `127.0.0.1:5000`. If you browse to `http://127.0.0.1:5000` you will get the
-swagger documentation page.
+Swagger documentation page (i.e. the Swagger web UI).
 
 ### Develop mode
 
@@ -30,10 +38,6 @@ If you want to run the code in develop mode (i.e. `pip install -e`), you can
 issue the following command before:
 
     make develop
-
-# Documentation
-
-The DEEPaaS documentation is hosted on [Read the Docs](https://deepaas.readthedocs.io/).
 
 
 # Citing
@@ -64,3 +68,10 @@ You can also use the following BibTeX entry:
         year = {2019},
         month = {10},
         day = {25},}
+
+# Acknowledgements
+
+This software has been developed within the DEEP-Hybrid-DataCloud (Designing
+and Enabling E-infrastructures for intensive Processing in a Hybrid DataCloud)
+project that has received funding from the European Union’s Horizon 2020
+research and innovation programme under grant agreement No 777435.
