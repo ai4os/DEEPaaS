@@ -18,6 +18,8 @@ python-subunit>=0.0.18
 stestr>=1.0.0 # Apache-2.0
 testtools>=1.4.0
 
+
+python-libmagic
 mock>=1.2
 pytest
 pytest-cov
