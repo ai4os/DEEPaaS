@@ -78,7 +78,7 @@ def prediction(input_file, file_type, content_type):
     package_name = MODEL_NAME
     predict_data = __import__(package_name).api.predict_data  # Import function
     predict_url = __import__(package_name).api.predict_url  # Import function
-    
+
     if file_type is True:
         input_data = {'urls': [input_file], 'accept': content_type}
         output_pred = predict_url(input_data)
