@@ -106,13 +106,6 @@ async def get_app(swagger=True, doc="/ui", prefix="",
             title="DEEP as a Service API endpoint",
             info={
                 "description": API_DESCRIPTION,
-                "license": {
-                    "name": "Apache 2.0",
-                    "url": "http://www.apache.org/licenses/LICENSE-2.0.html",
-                },
-                "contact": {
-                    "email": "deep-support@listas.csic.es"
-                },
             },
             externalDocs={
                 "description": "API documentation",
