@@ -51,6 +51,7 @@ def _get_handler(model_name, model_obj):  # noqa
 
             ret = {}
             ret["date"] = training["date"]
+            ret["args"] = training["args"]
             ret["uuid"] = uuid
 
             if training["task"].cancelled():
@@ -62,6 +63,11 @@ def _get_handler(model_name, model_obj):  # noqa
                     ret["message"] = "%s" % exc
                 else:
                     ret["status"] = "done"
+                    ret["result"] = training["task"].result()
+                    ret["result"]["duration"] = str(datetime.datetime.strptime(ret["result"]["finish_date"],
+                                                                               '%Y-%m-%d %H:%M:%S.%f')
+                                                    - datetime.datetime.strptime(ret["date"],
+                                                                                 '%Y-%m-%d %H:%M:%S.%f'))
             else:
                 ret["status"] = "running"
             return ret
@@ -78,6 +84,7 @@ def _get_handler(model_name, model_obj):  # noqa
             self._trainings[uuid_] = {
                 "date": str(datetime.datetime.now()),
                 "task": train_task,
+                "args": args,
             }
             ret = self.build_train_response(uuid_, self._trainings[uuid_])
             return web.json_response(ret)
