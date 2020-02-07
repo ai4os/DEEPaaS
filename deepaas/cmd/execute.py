@@ -14,12 +14,12 @@
 # License for the specific language governing permissions and limitations
 # under the License.
 
-import magic
 import mimetypes
 import os
 import shutil
 import sys
 
+import magic
 from oslo_config import cfg
 from oslo_log import log
 
@@ -27,12 +27,21 @@ from deepaas.model import loading
 from deepaas.model.v2.wrapper import UploadedFile
 
 cli_opts = [
-    cfg.StrOpt('input_file',
+    cfg.StrOpt('model-name',
+               help="""
+Add the name of the model from which you want
+to obtain the prediction.
+If there are multiple models installed and youd don't
+specify the name of the one you want to use the program will fail.
+If there is only one model installed, that will be used
+to make the prediction.
+"""),
+    cfg.StrOpt('input-file',
                short="i",
                help="""
 Set local input file to predict.
 """),
-    cfg.StrOpt('content_type',
+    cfg.StrOpt('content-type',
                default='application/json',
                short='ct',
                help="""
@@ -63,21 +72,40 @@ LOG = log.getLogger(__name__)
 # Loading the model installed
 
 
-def model_name():
-    global MODEL_NAME
+def get_model_name():
+    models = {}
+    models_loaded = False
+    model_name = CONF.model_name
     try:
         for name, model in loading.get_available_models("v2").items():
-            MODEL_NAME = name
+            models[name] = model
+            if model_name == name:
+                models_loaded = True
+                model_obj = model
+
+        if models_loaded is True:
+            return (model_name, model_obj)
+        else:
+            if len(models) == 1:
+                for model_name, model_obj in models.items():
+                    a_model_name = model_name
+                    a_model_obj = model_obj
+                LOG.warning(
+                    "You are using the only available model: %s", a_model_name)
+                return (a_model_name, a_model_obj)
+            else:
+                sys.stderr.write(
+                    "ERROR: The specified model is not set.\n")
+                sys.exit(1)
     except Exception as e:
         LOG.warning("Error loading models: %s", e)
 
 
 def prediction(input_file, file_type, content_type):
-    model_name()  # Function to know the name of the installed model
 
-    package_name = MODEL_NAME
-    predict_data = __import__(package_name).api.predict_data  # Import function
-    predict_url = __import__(package_name).api.predict_url  # Import function
+    model_name, model_obj = get_model_name()
+    predict_data = model_obj.predict_data
+    predict_url = model_obj.predict_url
 
     if file_type is True:
         input_data = {'urls': [input_file], 'accept': content_type}
