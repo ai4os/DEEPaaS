@@ -1,16 +1,16 @@
 ===========
-deepaas-execute
+deepaas-predict
 ===========
 
 Synopsis
 ========
 
-:program:`deepaas-execute` [options]
+:program:`deepaas-predict` [options]
 
 Description
 ===========
 
-:program:`deepaas-execute` It is a command that allows you to obtain, 
+:program:`deepaas-predict` It is a command that allows you to obtain, 
     through the command line, the prediction of a file or the url of 
     a file, of the models that are loaded through the ``deepaas.v2.models``
     entrypoint API.
@@ -18,16 +18,25 @@ Description
 Options
 =======
 
-.. option:: --input_file INPUT_FILE, -i INPUT_FILE
+.. option:: --input-file INPUT_FILE, -i INPUT_FILE
 
    Set local input file to predict. This option is required.
 
-.. option:: --content_type CONTENT_TYPE, -c CONTENT_TYPE
+.. option:: --content-type CONTENT_TYPE, -c CONTENT_TYPE
 
-   Especify the content type of the output file. The
-   available options are (image/png, application/json (by
-   default), application/zip).
+   Especify the content type of the output file. The selected
+   option must be available in the model used.
+   (by default application/json).
 
+.. option:: --model-name CONTENT_TYPE, -c CONTENT_TYPE
+
+   Add the name of the model from which you want
+   to obtain the prediction.
+   If there are multiple models installed and youd don't
+   specify the name of the one you want to use the program will fail.
+   If there is only one model installed, that will be used
+   to make the prediction.
+   
 .. option:: --output OUTPUT_DIR, -o OUTPUT_DIR
 
    Save the result to a local file. This option is required.
