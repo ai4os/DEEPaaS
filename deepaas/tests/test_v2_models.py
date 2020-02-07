@@ -171,7 +171,7 @@ class TestV2Model(base.TestCase):
         task = w.train(sleep=0)
         await task
         ret = task.result()
-        self.assertIsNone(ret)
+        self.assertIsNone(ret['output'])
         meta = w.get_metadata()
         self.assertIn("description", meta)
         self.assertIn("id", meta)
