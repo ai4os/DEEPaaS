@@ -39,7 +39,7 @@ implement feature ideas as separate projects outside of the core codebase.
 
 ### Write Documentation
 
-cASO could always use more documentation, whether as part of the official cASO
+DEEPaaS could always use more documentation, whether as part of the official DEEPaaS
 docs, in docstrings, or even on the web in blog posts, articles, and such.
 
 If you want to review your changes on the documentation locally, you can do::
