@@ -54,7 +54,7 @@ API_DESCRIPTION = (
 
 
 async def get_app(swagger=True, doc="/ui", prefix="",
-                  static_path="/static/swagger",
+                  static_path="/static/swagger", base_path="",
                   enable_train=True, enable_predict=True):
     """Get the main app."""
     global APP
@@ -120,6 +120,7 @@ async def get_app(swagger=True, doc="/ui", prefix="",
                 "description": "API documentation",
                 "url": "https://deepaas.readthedocs.org/",
             },
+            basePath=base_path,
             version=deepaas.__version__,
             url="/swagger.json",
             swagger_path=doc if doc else None,

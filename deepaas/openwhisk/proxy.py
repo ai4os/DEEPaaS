@@ -29,10 +29,23 @@ from oslo_config import cfg
 from deepaas import api
 from deepaas.openwhisk import handle
 
+cli_opts = [
+    cfg.StrOpt('base-openwhisk-path',
+               default='/api/v1/web',
+               help="""
+Base path where OpenWhisk web actions are served.
+
+This option is being used to build the base path for the swagger.json file
+that is served as part of the OpenWhisk action. By default this configuration
+variable points to "/api/v1/web/". We append to this variable the name of the
+action, so that the swagger.json contains the correct basePath.
+"""),
+]
+
 CONF = cfg.CONF
+CONF.register_cli_opts(cli_opts)
 
 LOG_SENTINEL = 'XXX_THE_END_OF_A_WHISK_ACTIVATION_XXX'
-
 
 routes = web.RouteTableDef()
 
@@ -47,10 +60,29 @@ async def init(request):
     global APP
 
     try:
+        message = await request.json()
+    except Exception as e:
+        return error_bad_request(msg="Error: {}".format(e))
+
+    if message and not isinstance(message, dict):
+        return error_bad_request()
+    else:
+        args = message.get('value', {}) if message else {}
+        if not isinstance(args, dict):
+            return error_bad_request()
+        env = args.get('env', {})
+        if not isinstance(env, dict):
+            return error_bad_request()
+
+    base = CONF.base_openwhisk_path
+    action_name = env.get('__OW_ACTION_NAME', '')
+    base_path = "{}{}".format(base, action_name)
+
+    try:
         if APP is None:
             APP = await api.get_app(swagger=True,
                                     doc=False,
-                                    prefix=".",
+                                    base_path=base_path,
                                     enable_train=False)
         return web.Response(text="OK", status=200)
     except Exception as e:
