@@ -44,9 +44,10 @@ v2_version = {
     'id': 'v2',
     'links': [
         {
-            'href': '/v2/',
-            'rel': 'self'
-        }
+            "rel": "self",
+            "type": "application/json",
+            "href": "/v2/"
+        },
     ],
 }
 
@@ -55,9 +56,10 @@ v1_version = {
     'id': 'v1',
     'links': [
         {
-            'href': '/v1/',
-            'rel': 'self'
-        }
+            "rel": "self",
+            "type": "application/json",
+            "href": "/v1/"
+        },
     ],
 }
 
@@ -65,12 +67,52 @@ all_versions = {
     'versions': [
         v1_version,
         v2_version,
+    ],
+    'links': [
+        {
+            "rel": "help",
+            "type": "text/html",
+            "href": "/ui"
+        },
+        {
+            "rel": "describedby",
+            "type": "application/json",
+            "href": "/swagger.json"
+        },
     ]
 }
 
 versions = {
     'versions': [
         v2_version,
+    ],
+    'links': [
+        {
+            "rel": "help",
+            "type": "text/html",
+            "href": "/ui"
+        },
+        {
+            "rel": "describedby",
+            "type": "application/json",
+            "href": "/swagger.json"
+        },
+    ]
+}
+
+empty_versions = {
+    'versions': [],
+    'links': [
+        {
+            "rel": "help",
+            "type": "text/html",
+            "href": "/ui"
+        },
+        {
+            "rel": "describedby",
+            "type": "application/json",
+            "href": "/swagger.json"
+        },
     ]
 }
 

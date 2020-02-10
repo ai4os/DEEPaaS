@@ -106,7 +106,9 @@ class TestOpenWhiskProxy(base.TestCase):
             data = self.get_wsk_args("/")
             ret = await self.client.post("/init")
             ret = await self.client.post("/run", json=data)
-            body = fake_responses.versions
+            body = copy.deepcopy(fake_responses.versions)
+            # Terrible
+            body["links"].pop(0)
             resp = {
                 'body': body,
                 'headers': {'Content-Type': 'application/json; charset=utf-8'},
