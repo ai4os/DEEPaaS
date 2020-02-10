@@ -49,6 +49,16 @@ class TestOpenWhiskProxy(base.TestCase):
 
         proxy.APP = None
 
+    async def init_action(self):
+        data = {
+            "value": {
+                "env": {
+                    "__OW_ACTION_NAME": "/foo/bar",
+                }
+            }
+        }
+        return await self.client.post("/init", json=data)
+
     def get_wsk_args(self, path):
         return {
             "value": {
@@ -65,7 +75,7 @@ class TestOpenWhiskProxy(base.TestCase):
 
     @test_utils.unittest_run_loop
     async def test_init(self):
-        ret = await self.client.post("/init")
+        ret = await self.init_action()
         self.assertEqual(200, ret.status)
         txt = await ret.text()
         self.assertEqual("OK", txt)
@@ -78,7 +88,7 @@ class TestOpenWhiskProxy(base.TestCase):
             m_get_app.side_effect = Exception("K-Boom")
 
             async def test_init_failure():
-                ret = await self.client.post("/init")
+                ret = await self.init_action()
                 self.assertEqual(500, ret.status)
                 self.assertDictEqual(
                     {'error': 'Internal error. K-Boom'},
@@ -96,7 +106,7 @@ class TestOpenWhiskProxy(base.TestCase):
 
     def test_run_no_data(self):
         async def do_test():
-            ret = await self.client.post("/init")
+            ret = await self.init_action()
             ret = await self.client.post("/run")
             self.assertEqual(400, ret.status)
         self.loop.run_until_complete(do_test())
@@ -104,7 +114,7 @@ class TestOpenWhiskProxy(base.TestCase):
     def test_run_versions(self):
         async def do_test():
             data = self.get_wsk_args("/")
-            ret = await self.client.post("/init")
+            ret = await self.init_action()
             ret = await self.client.post("/run", json=data)
             body = copy.deepcopy(fake_responses.versions)
             # Terrible
@@ -120,7 +130,7 @@ class TestOpenWhiskProxy(base.TestCase):
     def test_run_version_v2(self):
         async def do_test():
             data = self.get_wsk_args("/v2/")
-            ret = await self.client.post("/init")
+            ret = await self.init_action()
             ret = await self.client.post("/run", json=data)
             body = fake_responses.v2_version
             resp = {
@@ -134,7 +144,7 @@ class TestOpenWhiskProxy(base.TestCase):
     def test_run_models(self):
         async def do_test():
             data = self.get_wsk_args("/v2/models")
-            ret = await self.client.post("/init")
+            ret = await self.init_action()
             ret = await self.client.post("/run", json=data)
             body = fake_responses.models_meta
             resp = {
@@ -148,7 +158,7 @@ class TestOpenWhiskProxy(base.TestCase):
     def test_run_models_deepaas(self):
         async def do_test():
             data = self.get_wsk_args("/v2/models/deepaas-test")
-            ret = await self.client.post("/init")
+            ret = await self.init_action()
             ret = await self.client.post("/run", json=data)
             body = fake_responses.deepaas_test_meta
             resp = {
