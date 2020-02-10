@@ -16,7 +16,6 @@
 
 
 from aiohttp import web
-import aiohttp_apispec
 from oslo_config import cfg
 from oslo_log import log as logging
 
@@ -24,6 +23,8 @@ import deepaas
 from deepaas.api import v2
 from deepaas.api import versions
 from deepaas import model
+
+from deepaas import aiohttp_apispec
 
 LOG = logging.getLogger(__name__)
 
@@ -53,6 +54,7 @@ API_DESCRIPTION = (
 
 
 async def get_app(swagger=True, doc="/ui", prefix="",
+                  static_path="/static/swagger", base_path="",
                   enable_train=True, enable_predict=True):
     """Get the main app."""
     global APP
@@ -118,10 +120,12 @@ async def get_app(swagger=True, doc="/ui", prefix="",
                 "description": "API documentation",
                 "url": "https://deepaas.readthedocs.org/",
             },
+            basePath=base_path,
             version=deepaas.__version__,
             url="/swagger.json",
             swagger_path=doc if doc else None,
             prefix=prefix,
+            static_path=static_path,
             in_place=True,
         )
 

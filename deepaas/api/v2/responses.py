@@ -22,12 +22,13 @@ from marshmallow import validate
 class Location(marshmallow.Schema):
     rel = fields.Str(required=True)
     href = fields.Url(required=True)
+    type = fields.Str(required=True)
 
 
 class Version(marshmallow.Schema):
     version = fields.Str(required="True")
     id = fields.Str(required="True")
-    link = fields.Nested(Location)
+    links = fields.Nested(Location)
     type = fields.Str()
 
 

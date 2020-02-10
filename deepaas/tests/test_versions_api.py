@@ -18,6 +18,7 @@
 from aiohttp import test_utils
 from aiohttp import web
 
+from deepaas import aiohttp_apispec
 from deepaas.api import v1
 from deepaas.api import v2
 from deepaas.api import versions
@@ -35,13 +36,19 @@ class TestApiVersions(base.TestCase):
 
         versions.Versions.versions = {}
 
+        aiohttp_apispec.setup_aiohttp_apispec(
+            app=app,
+            url="/swagger.json",
+            swagger_path="/ui"
+        )
+
         return app
 
     @test_utils.unittest_run_loop
     async def test_get_no_versions(self):
         ret = await self.client.get("/")
         self.assertEqual(200, ret.status)
-        self.assertDictEqual({'versions': []}, await ret.json())
+        self.assertDictEqual(fake_responses.empty_versions, await ret.json())
 
     @test_utils.unittest_run_loop
     async def test_v1_version(self):
@@ -53,7 +60,9 @@ class TestApiVersions(base.TestCase):
                 fake_responses.v1_version
             ]
         }
-        self.assertDictEqual(expect, await ret.json())
+        resp = await ret.json()
+        resp.pop("links")
+        self.assertDictEqual(expect, resp)
 
     @test_utils.unittest_run_loop
     async def test_v2_version(self):

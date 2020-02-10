@@ -38,7 +38,7 @@ class TestRun(base.TestCase):
             run.main()
         m_get_app.assert_called_once()
         m_run_app.assert_called_with(
-            m,
+            mock.ANY,
             host="127.0.0.1",
             port=5000,
         )
@@ -58,7 +58,7 @@ class TestRun(base.TestCase):
             run.main()
         m_get_app.assert_called_once()
         m_run_app.assert_called_with(
-            m,
+            mock.ANY,
             host=ip,
             port=port,
         )
@@ -87,7 +87,7 @@ class TestRun(base.TestCase):
             run.main()
         m_get_app.assert_called_once()
         m_run_app.assert_called_with(
-            m,
+            mock.ANY,
             host="127.0.0.1",
             port=5000,
         )
