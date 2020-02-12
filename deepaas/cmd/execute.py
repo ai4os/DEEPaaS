@@ -73,32 +73,22 @@ LOG = log.getLogger(__name__)
 
 
 def get_model_name():
-    models = {}
-    models_loaded = False
     model_name = CONF.model_name
-    try:
-        for name, model in loading.get_available_models("v2").items():
-            models[name] = model
-            if model_name == name:
-                models_loaded = True
-                model_obj = model
-
-        if models_loaded is True:
-            return (model_name, model_obj)
-        else:
-            if len(models) == 1:
-                for model_name, model_obj in models.items():
-                    a_model_name = model_name
-                    a_model_obj = model_obj
-                LOG.warning(
-                    "You are using the only available model: %s", a_model_name)
-                return (a_model_name, a_model_obj)
-            else:
-                sys.stderr.write(
-                    "ERROR: The specified model is not set.\n")
-                sys.exit(1)
-    except Exception as e:
-        LOG.warning("Error loading models: %s", e)
+    models = loading.get_available_models("v2")
+    if model_name:
+        model_obj = models.get(model_name)
+        if model_obj is None:
+            sys.stderr.write(
+                "ERROR: The model {} is not available.\n".format(model_name))
+            sys.exit(1)
+        return model_name, model_obj
+    elif len(models) == 1:
+        return models.popitem()
+    else:
+        sys.stderr.write(
+            'ERROR: There are several models available ({}) '
+            'you have to choose one.\n'.format(list(models.keys())))
+        sys.exit(1)
 
 
 def prediction(input_file, file_type, content_type):
