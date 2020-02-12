@@ -18,6 +18,7 @@ import asyncio
 import collections
 import concurrent.futures
 import contextlib
+import datetime
 import functools
 import multiprocessing
 import multiprocessing.pool
@@ -392,7 +393,9 @@ class CancellablePool(object):
         fut = loop.create_future()
 
         def _on_done(obj):
-            loop.call_soon_threadsafe(fut.set_result, obj)
+            ret = {'output': obj,
+                   'finish_date': str(datetime.datetime.now())}
+            loop.call_soon_threadsafe(fut.set_result, ret)
 
         def _on_err(err):
             loop.call_soon_threadsafe(fut.set_exception, err)
