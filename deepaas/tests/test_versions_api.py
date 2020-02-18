@@ -17,8 +17,8 @@
 
 from aiohttp import test_utils
 from aiohttp import web
+import aiohttp_apispec
 
-from deepaas import aiohttp_apispec
 from deepaas.api import v1
 from deepaas.api import v2
 from deepaas.api import versions
