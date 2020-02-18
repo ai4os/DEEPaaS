@@ -20,11 +20,10 @@ import sys
 import warnings
 
 from aiohttp import web
+import aiohttp_apispec
 from oslo_config import cfg
 from oslo_log import log
 import six
-
-from deepaas import aiohttp_apispec
 
 CONF = cfg.CONF
 

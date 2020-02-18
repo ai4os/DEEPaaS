@@ -19,11 +19,11 @@ from datetime import datetime
 import uuid
 
 from aiohttp import web
+import aiohttp_apispec
 from oslo_log import log
 from webargs import aiohttpparser
 import webargs.core
 
-from deepaas import aiohttp_apispec
 from deepaas.api.v2 import responses
 from deepaas.api.v2 import utils
 from deepaas import model

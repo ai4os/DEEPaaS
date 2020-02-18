@@ -15,7 +15,7 @@
 # under the License.
 
 from aiohttp import web
-from deepaas import aiohttp_apispec
+import aiohttp_apispec
 import marshmallow
 from marshmallow import fields
 from webargs import aiohttpparser
