@@ -53,6 +53,7 @@ API_DESCRIPTION = (
 
 
 async def get_app(swagger=True, doc="/ui", prefix="",
+                  static_path="/static/swagger", base_path="",
                   enable_train=True, enable_predict=True):
     """Get the main app."""
     global APP
@@ -106,22 +107,17 @@ async def get_app(swagger=True, doc="/ui", prefix="",
             title="DEEP as a Service API endpoint",
             info={
                 "description": API_DESCRIPTION,
-                "license": {
-                    "name": "Apache 2.0",
-                    "url": "http://www.apache.org/licenses/LICENSE-2.0.html",
-                },
-                "contact": {
-                    "email": "deep-support@listas.csic.es"
-                },
             },
             externalDocs={
                 "description": "API documentation",
                 "url": "https://deepaas.readthedocs.org/",
             },
+            basePath=base_path,
             version=deepaas.__version__,
             url="/swagger.json",
             swagger_path=doc if doc else None,
             prefix=prefix,
+            static_path=static_path,
             in_place=True,
         )
 

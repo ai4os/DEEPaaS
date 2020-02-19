@@ -15,7 +15,7 @@
 # under the License.
 
 import asyncio
-import datetime
+from datetime import datetime
 import uuid
 
 from aiohttp import web
@@ -51,6 +51,7 @@ def _get_handler(model_name, model_obj):  # noqa
 
             ret = {}
             ret["date"] = training["date"]
+            ret["args"] = training["args"]
             ret["uuid"] = uuid
 
             if training["task"].cancelled():
@@ -62,6 +63,12 @@ def _get_handler(model_name, model_obj):  # noqa
                     ret["message"] = "%s" % exc
                 else:
                     ret["status"] = "done"
+                    ret["result"] = training["task"].result()
+                    end = datetime.strptime(ret["result"]["finish_date"],
+                                            '%Y-%m-%d %H:%M:%S.%f')
+                    start = datetime.strptime(ret["date"],
+                                              '%Y-%m-%d %H:%M:%S.%f')
+                    ret["result"]["duration"] = str(end - start)
             else:
                 ret["status"] = "running"
             return ret
@@ -76,8 +83,9 @@ def _get_handler(model_name, model_obj):  # noqa
             uuid_ = uuid.uuid4().hex
             train_task = self.model_obj.train(**args)
             self._trainings[uuid_] = {
-                "date": str(datetime.datetime.now()),
+                "date": str(datetime.now()),
                 "task": train_task,
+                "args": args,
             }
             ret = self.build_train_response(uuid_, self._trainings[uuid_])
             return web.json_response(ret)

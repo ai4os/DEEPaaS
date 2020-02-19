@@ -51,37 +51,21 @@ def get_app():
 @aiohttp_apispec.response_schema(responses.Version(), 200)
 @aiohttp_apispec.response_schema(responses.Failure(), 400)
 async def get_version(request):
+    # NOTE(aloga): we use the router table from this application (i.e. the
+    # global APP in this module) to be able to build the correct url, as it can
+    # be prefixed outside of this module (in an add_subapp() call)
+    root = APP.router["v1"].url_for()
     version = {
         "version": "deprecated",
         "id": "v1",
         "links": [
             {
                 "rel": "self",
-                # NOTE(aloga): we use our the router table from this
-                # application (i.e. the global APP in this module) to be able
-                # to build the correct url, as it can be prefixed outside of
-                # this module (in an add_subapp() call)
-                "href": "%s" % APP.router["v1"].url_for(),
-            },
+                "type": "application/json",
+                "href": "%s" % root,
+            }
         ]
     }
-
-# NOTE(aloga): skip these for now, until this issue is solved:
-# https://github.com/maximdanilchenko/aiohttp-apispec/issues/65
-#                doc = "%s.doc" % v.split(".")[0]
-#            d = {"rel": "help",
-#                 "type": "text/html",
-#                 # FIXME(aloga): this -v is wrong
-#                 "href": "flask.url_for(doc)"}
-#            versions[-1]["links"].append(d)
-#
-#                specs = "%s.specs" % v.split(".")[0]
-#            d = {"rel": "describedby",
-#                 "type": "application/json",
-#                 # FIXME(aloga): this -v is wrong
-#                 "href": "flask.url_for(specs)"}
-#            versions[-1]["links"].append(d)
-
     return web.json_response(version)
 
 

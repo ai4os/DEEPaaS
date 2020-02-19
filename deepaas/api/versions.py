@@ -45,7 +45,30 @@ class Versions(web.View):
             resp = await info(self.request)
             versions.append(json.loads(resp.body))
 
-        return web.json_response({"versions": versions})
+        response = {
+            "versions": versions,
+            "links": []
+        }
+        # But here we use the global app coming in the request
+        doc = self.request.app.router.named_resources().get("swagger.docs")
+        if doc:
+            doc = {
+                "rel": "help",
+                "type": "text/html",
+                "href": "%s" % doc.url_for()
+            }
+            response["links"].append(doc)
+
+        spec = self.request.app.router.named_resources().get("swagger.spec")
+        if spec:
+            spec = {
+                "rel": "describedby",
+                "type": "application/json",
+                "href": "%s" % spec.url_for(),
+            }
+            response["links"].append(spec)
+
+        return web.json_response(response)
 
 
 def register_version(version, func):
