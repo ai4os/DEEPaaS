@@ -348,24 +348,27 @@ class ModelWrapper(object):
         return aux
 
 
+class NonDaemonProcess(multiprocessing.context.SpawnProcess):
+    """Processes must use 'spawn' instead of 'fork' (which is the default
+    in Linux) in order to work CUDA [1] or Tensorflow [2].
+
+    [1] https://pytorch.org/docs/stable/notes/multiprocessing.html
+    #cuda-in-multiprocessing
+    [2] https://github.com/tensorflow/tensorflow/issues/5448
+    #issuecomment-258934405
+    """
+    @property
+    def daemon(self):
+        return False
+
+    @daemon.setter
+    def daemon(self, value):
+        pass
+
+
 class NonDaemonPool(multiprocessing.pool.Pool):
-    def Process(self, *args, **kwds):
-        proc = super(NonDaemonPool, self).Process(*args, **kwds)
-
-        class NonDaemonProcess(proc.__class__):
-            """Monkey-patch process to ensure it is never daemonized"""
-
-            @property
-            def daemon(self):
-                return False
-
-            @daemon.setter
-            def daemon(self, val):
-                pass
-
-        proc.__class__ = NonDaemonProcess
-
-        return proc
+    # Based on https://stackoverflow.com/questions/6974695/
+    Process = NonDaemonProcess
 
 
 class CancellablePool(object):
@@ -375,7 +378,7 @@ class CancellablePool(object):
         self._change = asyncio.Event()
 
     def _new_pool(self):
-        return NonDaemonPool(1)
+        return NonDaemonPool(1, context=multiprocessing.get_context('spawn'))
 
     async def apply(self, fn, *args):
         """

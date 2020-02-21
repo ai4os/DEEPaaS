@@ -15,10 +15,10 @@
 # under the License.
 
 from aiohttp import web
+import aiohttp_apispec
 from oslo_config import cfg
 from oslo_log import log
 
-from deepaas import aiohttp_apispec
 from deepaas.api.v2 import debug as v2_debug
 from deepaas.api.v2 import models as v2_model
 from deepaas.api.v2 import predict as v2_predict

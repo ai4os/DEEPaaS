@@ -17,8 +17,8 @@
 import urllib.parse
 
 from aiohttp import web
+import aiohttp_apispec
 
-from deepaas import aiohttp_apispec
 from deepaas.api.v2 import responses
 from deepaas import model
 

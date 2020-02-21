@@ -73,5 +73,5 @@ You can also use the following BibTeX entry:
 
 This software has been developed within the DEEP-Hybrid-DataCloud (Designing
 and Enabling E-infrastructures for intensive Processing in a Hybrid DataCloud)
-project that has received funding from the European Union’s Horizon 2020
+project that has received funding from the European Union's Horizon 2020
 research and innovation programme under grant agreement No 777435.
