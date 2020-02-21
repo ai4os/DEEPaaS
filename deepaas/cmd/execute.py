@@ -19,7 +19,10 @@ import os
 import shutil
 import sys
 
-import magic
+try:
+    import magic
+except ImportError as e:
+    (print(e), sys.exit(1))
 from oslo_config import cfg
 from oslo_log import log
 
