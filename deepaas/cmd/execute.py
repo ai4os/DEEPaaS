@@ -19,10 +19,6 @@ import os
 import shutil
 import sys
 
-try:
-    import magic
-except ImportError as e:
-    (print(e), sys.exit(1))
 from oslo_config import cfg
 from oslo_log import log
 
@@ -104,8 +100,7 @@ def prediction(input_file, file_type, content_type):
         input_data = {'urls': [input_file], 'accept': content_type}
         output_pred = predict_url(input_data)
     else:
-        mime = magic.Magic(mime=True)
-        content_type_in = mime.from_file(input_file)
+        content_type_in, fileEncoding = mimetypes.guess_type(input_file)
         file = UploadedFile(name=input_file,
                             filename=input_file,
                             content_type=content_type_in)
