@@ -148,7 +148,10 @@ def complete(response):
 
 
 def main():
-    proxy = web.Application(debug=False)
+    proxy = web.Application(
+        debug=False,
+        client_max_size=CONF.client_max_size,
+    )
     proxy.initialized = False
     proxy.add_routes(routes)
 
