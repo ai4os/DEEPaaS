@@ -248,16 +248,33 @@ Sometimes it is useful to return something different than a JSON file. For such
 cases, you can define an additional argument ``accept`` defining the content
 types that you are able to return as follows::
 
-   def get_predict_args():
+    def get_predict_args():
         return {
-            "accept": fields.Str(
-                description="Media type(s) that is/are acceptable for the response.",
-                validate=validate.OneOf(["text/plain"]),
+            'accept': fields.Str(description="Media type(s) that is/are acceptable for the response.",
+                                 missing='application/zip',
+                                 validate=validate.OneOf(['application/zip', 'image/png', 'application/json']))
          }
 
-Consequently, the predict calls will receive an ``accept`` argument containing
-the content type requested by the user. Find `here <https://www.iana.org/assignments/media-types/media-types.xhtml>`_
-a comprehensive list of possible content types.
+Find `here <https://www.iana.org/assignments/media-types/media-types.xhtml>`_ a comprehensive list of possible
+content types. Then the predict function will have to return the raw bytes of a file according to the user selection.
+For example::
+
+
+    def predict(**args):
+        # Run your prediction
+
+        # Return file according to user selection
+        if args['accept'] == 'image/png':
+            return open(img_path, 'rb')
+
+        elif args['accept'] == 'application/json':
+            return {'some': 'json'}
+
+        elif args['accept'] == 'application/zip':
+            return open(zip_path, 'rb')
+
+If you want to return several content types at the same time (let's say a JSON and an image), the easiest way it to
+return a zip file with all the files.
 
 Using classes
 -------------
