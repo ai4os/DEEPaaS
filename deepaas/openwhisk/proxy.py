@@ -149,7 +149,7 @@ def complete(response):
 
 def main():
     proxy = web.Application(
-        debug=False,
+        debug=CONF.debug,
         client_max_size=CONF.client_max_size,
     )
     proxy.initialized = False
