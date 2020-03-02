@@ -1,0 +1,9 @@
+---
+prelude: >
+    Fallback loading of arguments (from V1 style) is now removed.
+upgrade:
+  - |
+    The old way of returning the arguments, to load the arguments using the old
+    ``get_*_args`` functions is now removed. If you were still relying on them
+    (check the logs) you must migrate to using the argument parser as soon as
+    possible. 

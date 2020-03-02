@@ -28,7 +28,6 @@ import tempfile
 
 from aiohttp import web
 import marshmallow
-from webargs import fields
 
 from oslo_config import cfg
 from oslo_log import log
@@ -324,56 +323,26 @@ class ModelWrapper(object):
 
         :param parser: an argparse like object
 
-        This method will call the wrapped model ``add_train_args``. If the
-        underlying methid implements the DEPRECATED way of passing arguments
-        we will try to load them from there.
+        This method will call the wrapped model ``add_train_args``.
         """
         try:
             args = self.model_obj.get_train_args()
-            args = self._convert_old_args(args)
-            return args
         except (NotImplementedError, AttributeError):
-            return {}
+            args = {}
+        return args
 
     def get_predict_args(self):
         """Add predict arguments into the predict parser.
 
         :param parser: an argparse like object
 
-        This method will call the wrapped model ``get_predict_args``. If the
-        method does not exist, but the wrapped model implements the DEPRECATED
-        ``get_test_args`` we will try to load the arguments from there.
+        This method will call the wrapped model ``get_predict_args``.
         """
         try:
             args = self.model_obj.get_predict_args()
         except (NotImplementedError, AttributeError):
-            try:
-                args = self.model_obj.get_test_args()
-                args = self._convert_old_args(args)
-            except (NotImplementedError, AttributeError):
-                args = {}
+            args = {}
         return args
-
-    def _convert_old_args(self, args):
-        aux = {}
-        for k, v in args.items():
-            if isinstance(v, dict):
-                LOG.warning("Loading arguments using the old and DEPRECATED "
-                            "return value (i.e. an plain Python dictionary. "
-                            "You should move to the new return value (i.e. a "
-                            "webargs.fields dictionary as soon as possible. "
-                            "All the loaded arguments will be converted to "
-                            "strings. This is only supported for backwards "
-                            "compatibility and may lead to unexpected errors. "
-                            "Argument raising this warningr: '%s'", k)
-
-                v = fields.Str(
-                    missing=v.get("default"),
-                    description=v.get("help"),
-                    required=v.get("required"),
-                )
-            aux[k] = v
-        return aux
 
 
 class NonDaemonProcess(multiprocessing.context.SpawnProcess):
