@@ -78,14 +78,14 @@ class TestApiV1(base.TestCase):
         ret = await self.client.post(
             "/v1/models/deepaas-test/predict",
             data={"url": "http://example.org/"})
-        self.assertEqual(400, ret.status)
+        self.assertEqual(501, ret.status)
 
     @test_utils.unittest_run_loop
     async def test_predict_various_urls_not_implemented(self):
         ret = await self.client.post(
             "/v1/models/deepaas-test/predict",
             data={"url": ["http://example.org/", "http://example.com"]})
-        self.assertEqual(400, ret.status)
+        self.assertEqual(501, ret.status)
 
     @test_utils.unittest_run_loop
     async def test_get_metadata(self):

@@ -92,12 +92,13 @@ class TestApiV2(base.TestCase):
     async def test_predict_no_parameters(self):
         ret = await self.client.post("/v2/models/deepaas-test/predict/")
         json = await ret.json()
+        print(json)
         self.assertDictEqual(
             {
                 'parameter': ['Missing data for required field.'],
                 'data': ['Missing data for required field.']
             },
-            json["json"]
+            json
         )
         self.assertEqual(422, ret.status)
 
