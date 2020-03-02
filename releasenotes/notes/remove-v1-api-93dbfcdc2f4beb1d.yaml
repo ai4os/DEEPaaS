@@ -1,0 +1,12 @@
+---
+prelude: >
+    This new release removes support for the V1 API (marked as deprecated in
+    version 1.0.0).
+upgrade:
+  - |
+    V1 API is now removed, therefore all modules using the ``deepaas.model``
+    entrypoint will stop working. The ``--enable-v1`` configuration option is
+    now removed.
+other:
+  - |
+    V1 support is now removed.

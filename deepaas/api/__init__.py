@@ -67,21 +67,6 @@ async def get_app(swagger=True, doc="/ui", prefix="",
 
     APP.middlewares.append(web.normalize_path_middleware())
 
-    if CONF.enable_v1:
-        LOG.warning("Using V1 version of the API is not anymore supported "
-                    "and marked as deprecated, please switch to V2 as soon "
-                    "as possible.")
-
-        from deepaas.api import v1  # noqa
-
-        model.register_v1_models()
-
-        v1app = v1.get_app()
-        APP.add_subapp("/v1", v1app)
-        versions.register_version("deprecated", v1.get_version)
-
-        LOG.info("Serving loaded V1 models: %s", list(model.V1_MODELS.keys()))
-
     model.register_v2_models(APP)
 
     v2app = v2.get_app(
