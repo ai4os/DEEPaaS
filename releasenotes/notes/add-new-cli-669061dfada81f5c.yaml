@@ -1,0 +1,7 @@
+---
+features:
+  - |
+    Include a new command line tool to execute inference and prediction calls 
+    from the shell, whitout spawning a server and making cURL requests to it.
+    This is useful for execution of batch tasks in a HPC/HTC or batch system
+    cluster.
