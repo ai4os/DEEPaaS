@@ -26,14 +26,6 @@ logging.captureWarnings(True)
 warnings.simplefilter("default", DeprecationWarning)
 
 opts = [
-    cfg.BoolOpt('enable-v1',
-                default="False",
-                help="""
-Whether to enable V1 version of the API or not.
-
-If this option is set to True, DEEPaaS API will offer a /v1/ endpoing with
-the DEPRECATED version of the API.
-"""),
     cfg.BoolOpt('debug-endpoint',
                 default="false",
                 help="""

@@ -51,21 +51,8 @@ v2_version = {
     ],
 }
 
-v1_version = {
-    'version': 'deprecated',
-    'id': 'v1',
-    'links': [
-        {
-            "rel": "self",
-            "type": "application/json",
-            "href": "/v1/"
-        },
-    ],
-}
-
 all_versions = {
     'versions': [
-        v1_version,
         v2_version,
     ],
     'links': [

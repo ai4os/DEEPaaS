@@ -44,20 +44,8 @@ def register_models(app):
         MODELS_LOADED = True
         return
 
-    LOG.warning("No models found using V2 namespace, trying with V1. This is "
-                "DEPRECATED and it is done only to try to preserve backards "
-                "compatibility, but may lead to unexpected behaviour. You "
-                "should move to the new namespace as soon as possible. Please "
-                "refer to the documentation to get more details.")
-
-    try:
-        for name, model in loading.get_available_models("v1").items():
-            MODELS[name] = wrapper.ModelWrapper(name, model, app)
-    except Exception as e:
-        LOG.warning("Error loading models: %s", e)
-
     if not MODELS:
-        LOG.info("No models found with V2 or V1 namespace, loading test model")
+        LOG.info("No models found in V2, loading test model")
         MODELS["deepaas-test"] = wrapper.ModelWrapper(
             "deepaas-test",
             test.TestModel(),

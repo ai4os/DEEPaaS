@@ -28,12 +28,6 @@ Options
    ``/debug`` endpoint. Default is to not provide this information. This will
    not provide logging information about the API itself.
 
-.. option:: --enable-v1
-
-   Whether to enable V1 version of the API or not. If this option is set to
-   ``True``, DEEPaaS API will offer a ``/v1/`` endpoint with the DEPRECATED
-   version of the API.
-
 .. option:: --listen-ip LISTEN_IP
 
    IP address on which the DEEPaaS API will listen. The DEEPaaS API service

@@ -17,7 +17,6 @@
 import stevedore
 
 NAMESPACES = {
-    "v1": "deepaas.model",
     "v2": "deepaas.v2.model",
 }
 

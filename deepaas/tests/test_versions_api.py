@@ -19,7 +19,6 @@ from aiohttp import test_utils
 from aiohttp import web
 import aiohttp_apispec
 
-from deepaas.api import v1
 from deepaas.api import v2
 from deepaas.api import versions
 from deepaas.tests import base
@@ -31,7 +30,6 @@ class TestApiVersions(base.TestCase):
         app = web.Application(debug=True)
         app.add_routes(versions.routes)
 
-        app.add_subapp("/v1", v1.get_app())
         app.add_subapp("/v2", v2.get_app())
 
         versions.Versions.versions = {}
@@ -49,20 +47,6 @@ class TestApiVersions(base.TestCase):
         ret = await self.client.get("/")
         self.assertEqual(200, ret.status)
         self.assertDictEqual(fake_responses.empty_versions, await ret.json())
-
-    @test_utils.unittest_run_loop
-    async def test_v1_version(self):
-        versions.register_version("deprecated", v1.get_version)
-        ret = await self.client.get("/")
-        self.assertEqual(200, ret.status)
-        expect = {
-            'versions': [
-                fake_responses.v1_version
-            ]
-        }
-        resp = await ret.json()
-        resp.pop("links")
-        self.assertDictEqual(expect, resp)
 
     @test_utils.unittest_run_loop
     async def test_v2_version(self):

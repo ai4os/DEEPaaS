@@ -3,6 +3,13 @@
 Upgrade notes
 =============
 
+Upgrading to version 2.0.0
+--------------------------
+
+The release ``2.0.0`` drops the support for the V1 version of the API. Before
+upgrading your code and deploying into production please ensure that you are no
+longer using the V1 version of the API.
+
 Upgrading to version 1.0.0
 --------------------------
 
@@ -14,10 +21,10 @@ checklist in order.
 
 
 * **Python version**
-  
-  The new version of DEEPaaS uses ``aiohttp`` which requires `at least 
+
+  The new version of DEEPaaS uses ``aiohttp`` which requires `at least
   <https://aiohttp.readthedocs.io/en/stable/faq.html#why-is-python-3-5-3-the-lowest-supported-version>`_
-  Python 3.5.3. So please update you module accordingly if needed. 
+  Python 3.5.3. So please update you module accordingly if needed.
 
 * **Migrate new namespace entry point.**
 
@@ -150,7 +157,7 @@ checklist in order.
 * **Changes in the data response**
 
   The returned object in ``args['files']`` is no longer a ``werkzeug.FileStorage`` but a
-  ``deepaas.model.v2.wrapper.UploadedFile`` which has attributes like ``name`` (name of the 
+  ``deepaas.model.v2.wrapper.UploadedFile`` which has attributes like ``name`` (name of the
   argument where this file is being sent), ``filename`` (complete file path to the temporary
   file in the filesystem) and ``content_type`` (content-type of the uploaded file).
 
