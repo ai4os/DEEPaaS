@@ -1,0 +1,9 @@
+---
+fixes:
+  - |
+    This new release fixes an error introduced by `webargs` in its 6.0.0
+    version.  Since we cannot yet fix it (`aiohttp-webargs` needs to be updated
+    as well) we pin webargs to the 5.X.X versions
+    https://github.com/indigo-dc/DEEPaaS/issues/82
+  - | 
+    Set `debug` in OpenWhisk mode as configured by the user.
