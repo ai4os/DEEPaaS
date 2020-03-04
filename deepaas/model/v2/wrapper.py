@@ -40,7 +40,8 @@ CONF = cfg.CONF
 
 UploadedFile = collections.namedtuple("UploadedFile", ("name",
                                                        "filename",
-                                                       "content_type"))
+                                                       "content_type",
+                                                       "original_filename"))
 """Class to hold uploaded field metadata when passed to model's methods
 
 .. py:attribute:: name
@@ -53,8 +54,15 @@ UploadedFile = collections.namedtuple("UploadedFile", ("name",
 
 .. py:attribute:: content_type
 
-   Content-type of the uploaded file.
+   Content-type of the uploaded file
+
+.. py:attribute:: original_filename
+
+   Filename of the original file being uploaded.
 """
+
+# set defaults to None, mainly for compatibility (vkoz)
+UploadedFile.__new__.__defaults__ = (None, None, None, None)
 
 
 class ModelWrapper(object):
@@ -266,6 +274,7 @@ class ModelWrapper(object):
                     name=val.name,
                     filename=name,
                     content_type=val.content_type,
+                    original_filename=val.filename
                 )
                 kwargs[key] = aux
                 # FIXME(aloga); cleanup of tmpfile here
