@@ -72,7 +72,10 @@ def _get_handler(model_name, model_obj):
             task = self.model_obj.predict(**args)
             await task
 
-            ret = task.result()
+            ret = task.result()['output']
+
+            if isinstance(ret, model.v2.wrapper.ReturnedFile):
+                ret = open(ret.filename, 'rb')
 
             accept = args.get("accept", "application/json")
             if accept != "application/json":

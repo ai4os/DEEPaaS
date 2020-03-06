@@ -1,0 +1,5 @@
+---
+fixes:
+  - |
+    Fix [#83](https://github.com/indigo-dc/DEEPaaS/issues/87) out out memory
+    errors due to the usage of two different executor pools.
