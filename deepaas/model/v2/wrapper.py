@@ -16,10 +16,10 @@
 
 import asyncio
 import collections
-import concurrent.futures
 import contextlib
 import datetime
 import functools
+import io
 import multiprocessing
 import multiprocessing.pool
 import os
@@ -50,7 +50,7 @@ UploadedFile = collections.namedtuple("UploadedFile", ("name",
 
 .. py:attribute:: filename
 
-   Complete file path to the temporary file in the filesyste,
+   Complete file path to the temporary file in the filesystem,
 
 .. py:attribute:: content_type
 
@@ -61,8 +61,33 @@ UploadedFile = collections.namedtuple("UploadedFile", ("name",
    Filename of the original file being uploaded.
 """
 
+ReturnedFile = collections.namedtuple("ReturnedFile", ("name",
+                                                       "filename",
+                                                       "content_type",
+                                                       "original_filename"))
+"""Class to pass the files returned from predict in a pickable way
+
+.. py:attribute:: name
+
+   Name of the argument where this file is being sent.
+
+.. py:attribute:: filename
+
+   Complete file path to the temporary file in the filesystem,
+
+.. py:attribute:: content_type
+
+   Content-type of the uploaded file
+
+.. py:attribute:: original_filename
+
+   Filename of the original file being uploaded.
+"""
+
+
 # set defaults to None, mainly for compatibility (vkoz)
 UploadedFile.__new__.__defaults__ = (None, None, None, None)
+ReturnedFile.__new__.__defaults__ = (None, None, None, None)
 
 
 class ModelWrapper(object):
@@ -75,7 +100,7 @@ class ModelWrapper(object):
     :param name: Model name
     :param model: Model object
     :raises HTTPInternalServerError: in case that a model has defined
-        a reponse schema that is nod JSON schema valid (DRAFT 4)
+        a response schema that is not JSON schema valid (DRAFT 4)
     """
     def __init__(self, name, model_obj, app):
         self.name = name
@@ -84,11 +109,8 @@ class ModelWrapper(object):
 
         self._loop = asyncio.get_event_loop()
 
-        self._predict_workers = CONF.predict_workers
-        self._predict_executor = self._init_predict_executor()
-
-        self._train_workers = CONF.train_workers
-        self._train_executor = self._init_train_executor()
+        self._workers = CONF.workers
+        self._executor = self._init_executor()
 
         self._setup_cleanup()
 
@@ -125,16 +147,10 @@ class ModelWrapper(object):
         self._app.on_cleanup.append(self._close_executors)
 
     async def _close_executors(self, app):
-        self._train_executor.shutdown()
-        self._predict_executor.shutdown()
+        self._executor.shutdown()
 
-    def _init_predict_executor(self):
-        n = self._predict_workers
-        executor = concurrent.futures.ThreadPoolExecutor(max_workers=n)
-        return executor
-
-    def _init_train_executor(self):
-        n = self._train_workers
+    def _init_executor(self):
+        n = self._workers
         executor = CancellablePool(max_workers=n)
         return executor
 
@@ -168,7 +184,7 @@ class ModelWrapper(object):
         If the wrapped model has defined a ``response`` attribute we will
         validate the response that
 
-        :param response: The reponse that will be validated.
+        :param response: The response that will be validated.
         :raises exceptions.InternalServerError: in case the reponse cannot be
             validated.
         """
@@ -213,18 +229,10 @@ class ModelWrapper(object):
             }
         return d
 
-    def _run_in_predict_pool(self, func, *args, **kwargs):
-        async def task(fn):
-            return await self._loop.run_in_executor(self._predict_executor, fn)
-
-        return self._loop.create_task(
-            task(functools.partial(func, *args, **kwargs))
-        )
-
-    def _run_in_train_pool(self, func, *args, **kwargs):
+    def _run_in_pool(self, func, *args, **kwargs):
         fn = functools.partial(func, *args, **kwargs)
         ret = self._loop.create_task(
-            self._train_executor.apply(fn)
+            self._executor.apply(fn)
         )
         return ret
 
@@ -243,16 +251,26 @@ class ModelWrapper(object):
             LOG.debug("Cannot warm (initialize) model '%s'" % self.name)
             return
 
-        run = self._loop.run_in_executor
-        executor = self._predict_executor
-        n = self._predict_workers
         try:
+            n = self._workers
             LOG.debug("Warming '%s' model with %s workers" % (self.name, n))
-            fs = [run(executor, func) for i in range(0, n)]
+            fs = [self._run_in_pool(func) for _ in range(0, n)]
             await asyncio.gather(*fs)
             LOG.debug("Model '%s' has been warmed" % self.name)
         except NotImplementedError:
             LOG.debug("Cannot warm (initialize) model '%s'" % self.name)
+
+    @staticmethod
+    def predict_wrap(predict_func, *args, **kwargs):
+        """Wrapper function to allow returning files from predict
+        This wrapper exists because buffer objects are not pickable,
+        thus cannot be returned from the executor.
+        """
+        ret = predict_func(*args, **kwargs)
+        if isinstance(ret, io.BufferedReader):
+            ret = ReturnedFile(filename=ret.name)
+
+        return ret
 
     def predict(self, *args, **kwargs):
         """Perform a prediction on wrapped model's ``predict`` method.
@@ -280,8 +298,8 @@ class ModelWrapper(object):
                 # FIXME(aloga); cleanup of tmpfile here
 
         with self._catch_error():
-            return self._run_in_predict_pool(
-                self.model_obj.predict, *args, **kwargs
+            return self._run_in_pool(
+                self.predict_wrap, self.model_obj.predict, *args, **kwargs
             )
 
     def train(self, *args, **kwargs):
@@ -296,7 +314,7 @@ class ModelWrapper(object):
         """
 
         with self._catch_error():
-            return self._run_in_train_pool(
+            return self._run_in_pool(
                 self.model_obj.train, *args, **kwargs
             )
 
