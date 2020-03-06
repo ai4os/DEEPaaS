@@ -162,7 +162,7 @@ class TestV2Model(base.TestCase):
         w = v2_wrapper.ModelWrapper("foo", v2_test.TestModel(), self.app)
         task = w.predict()
         await task
-        ret = task.result()
+        ret = task.result()['output']
         self.assertDictEqual(
             {'date': '2019-01-1',
              'labels': [{'label': 'foo', 'probability': 1.0}]},
