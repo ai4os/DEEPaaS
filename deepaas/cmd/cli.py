@@ -191,28 +191,30 @@ def main():
         print("[INFO] Finished warm()")
     elif args.method == 'predict':
         # TODO: change to many files ('for' itteration)
-        if args.files:
-            # create tmp file as later it will be deleted
-            temp = tempfile.NamedTemporaryFile()
-            temp.close()
-            # copy original file into tmp file
-            with open(args.files, "rb") as f:
-                with open(temp.name, "wb") as f_tmp:
-                    for line in f:
-                        f_tmp.write(line)
+        if args.__contains__('files'):
+            if args.files:
+                # create tmp file as later it supposed 
+                # to be deleted by the application
+                temp = tempfile.NamedTemporaryFile()
+                temp.close()
+                # copy original file into tmp file
+                with open(args.files, "rb") as f:
+                    with open(temp.name, "wb") as f_tmp:
+                        for line in f:
+                            f_tmp.write(line)
 
-            # create file object
-            file_obj = UploadedFile(name="data",
+                # create file object
+                file_obj = UploadedFile(name="data",
                                     filename = temp.name,
                                     content_type=mimetypes.MimeTypes().guess_type(args.files)[0],
                                     original_filename=args.files)
-            args.files = file_obj
+                args.files = file_obj
 
         results = model_obj.predict(**vars(args))
 
         if args.deepaas_model_output:
             out_file = args.deepaas_model_output
-            out_path = os.path.dirname(out_file)
+            out_path = os.path.dirname(os.path.abspath(out_file))
             if not os.path.exists(out_path):  # Create path if does not exist
                 os.makedirs(out_path)
             # check extension of the output file
