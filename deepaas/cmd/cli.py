@@ -163,7 +163,7 @@ def _store_output(results, out_file):
     :param results:  what to store (JSON expected)
     :param out_file: in what file to store
     '''
-    out_path = os.path.dirname(out_file)
+    out_path = os.path.dirname(os.path.abspath(out_file))
     if not os.path.exists(out_path):  # Create path if does not exist
         os.makedirs(out_path)
 
@@ -178,6 +178,26 @@ def main():
     Executes model's methods with corresponding parameters
     """
 
+    # TODO: change to many files ('for' itteration)
+    if args.__contains__('files'):
+        if args.files:
+            # create tmp file as later it supposed 
+            # to be deleted by the application
+            temp = tempfile.NamedTemporaryFile()
+            temp.close()
+            # copy original file into tmp file
+            with open(args.files, "rb") as f:
+                with open(temp.name, "wb") as f_tmp:
+                    for line in f:
+                        f_tmp.write(line)
+
+            # create file object
+            file_obj = UploadedFile(name="data",
+                                    filename = temp.name,
+                                    content_type=mimetypes.MimeTypes().guess_type(args.files)[0],
+                                    original_filename=args.files)
+            args.files = file_obj
+    
     if args.method == 'get_metadata':
         meta = model_obj.get_metadata()
         meta_json = json.dumps(meta)
@@ -190,26 +210,7 @@ def main():
         model_obj.warm()
         print("[INFO] Finished warm()")
     elif args.method == 'predict':
-        # TODO: change to many files ('for' itteration)
-        if args.__contains__('files'):
-            if args.files:
-                # create tmp file as later it supposed 
-                # to be deleted by the application
-                temp = tempfile.NamedTemporaryFile()
-                temp.close()
-                # copy original file into tmp file
-                with open(args.files, "rb") as f:
-                    with open(temp.name, "wb") as f_tmp:
-                        for line in f:
-                            f_tmp.write(line)
-
-                # create file object
-                file_obj = UploadedFile(name="data",
-                                    filename = temp.name,
-                                    content_type=mimetypes.MimeTypes().guess_type(args.files)[0],
-                                    original_filename=args.files)
-                args.files = file_obj
-
+        # call predict method
         results = model_obj.predict(**vars(args))
 
         if args.deepaas_model_output:
@@ -220,7 +221,7 @@ def main():
             # check extension of the output file
             out_filename, out_extension = os.path.splitext(out_file)
 
-            # set default extension for data returned 
+            # set default extension for the data returned 
             # by the application to .json
             extension = ".json"
             # check what is asked to return by the application (if --accept)
@@ -228,14 +229,14 @@ def main():
                 if args.accept:
                     extension = mimetypes.guess_extension(args.accept)
 
-                if extension != None and out_extension != None and extension != out_extension:
-                    out_file = out_file + extension
-                    print("[WARNING] You are trying to store {} " \
-                          "type data in the file " \
-                          "with {} extension!\n" \
-                          "......... New output is {}".format(extension, 
-                                                              out_extension,
-                                                              out_file))
+            if extension != None and out_extension != None and extension != out_extension:
+                out_file = out_file + extension
+                print("[WARNING] You are trying to store {} " \
+                      "type data in the file " \
+                      "with {} extension!\n" \
+                      "......... New output is {}".format(extension, 
+                                                          out_extension,
+                                                          out_file))
             if extension == ".json" or extension == None:
                 results_json = json.dumps(results)
                 print("[OUTPUT]:\n{}".format(results_json)) if debug_cli else ''
