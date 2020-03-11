@@ -1,7 +1,7 @@
 #!/usr/bin/env python -*- coding: utf-8 -*-
 
 # Copyright 2020 Spanish National Research Council (CSIC)
-# Copyright (c) 2018 - 2020 Karlsruhe Institute of Technology - Steinbuch Centre for Computing
+# Copyright (c) 2018 - 2020 Karlsruhe Institute of Technology - SCC
 #
 # Licensed under the Apache License, Version 2.0 (the "License"); you may
 # not use this file except in compliance with the License. You may obtain
@@ -16,15 +16,15 @@
 # under the License.
 
 
+import argparse
+import json
+import mimetypes
 import os
 import re
-import sys
-import time
-import json
 import shutil
-import argparse
+import sys
 import tempfile
-import mimetypes
+import time
 
 from oslo_log import log
 
@@ -35,11 +35,11 @@ LOG = log.getLogger(__name__)
 
 debug_cli = False
 
+
 # Convert mashmallow fields to dict()
 def _fields_to_dict(fields_in):
-    """
-    Function to convert mashmallow fields to dict()
-    """
+    """Function to convert mashmallow fields to dict()"""
+
     dict_out = {}
 
     for key, val in fields_in.items():
@@ -57,13 +57,13 @@ def _fields_to_dict(fields_in):
             val_help = re.sub(r'(?<!%)%(?!%)', r'%%', val_help)
 
         if 'enum' in val.metadata.keys():
-            val_help = "{}. Choices: {}".format(val_help, 
+            val_help = "{}. Choices: {}".format(val_help,
                                                 val.metadata['enum'])
         param['help'] = val_help
 
         try:
             val_req = val.required
-        except:
+        except Exception:
             val_req = False
         param['required'] = val_req
 
@@ -73,17 +73,17 @@ def _fields_to_dict(fields_in):
 
 # Loading a model
 def _get_model_name(model_name=None):
-    """
-    Function to get model_obj from the name of the model.
+    """Function to get model_obj from the name of the model.
     In case of error, prints the list of available models
     """
+
     models = loading.get_available_models("v2")
     if model_name:
         model_obj = models.get(model_name)
         if model_obj is None:
             sys.stderr.write(
                 "[ERROR]: The model {} is not available.\n"
-                "Available models: {}\n".format(model_name, 
+                "Available models: {}\n".format(model_name,
                                                 list(models.keys())))
             sys.exit(1)
         return model_name, model_obj
@@ -97,7 +97,7 @@ def _get_model_name(model_name=None):
         sys.exit(1)
 
 
-### DEFINE ARGS with ARGPARSE
+# DEFINE ARGS with ARGPARSE
 # By default assume a single loaded model.
 # If many available, one has to provide which one to load
 # via DEEPAAS_V2_MODEL environment setting
@@ -107,62 +107,65 @@ if 'DEEPAAS_V2_MODEL' in os.environ:
 
 model_name, model_obj = _get_model_name(model_name)
 
-parser = argparse.ArgumentParser(description='Model parameters', 
+parser = argparse.ArgumentParser(description='Model parameters',
                                  add_help=False)
 
 # intentionally long to avoid conflict with flags from predict, train etc
-parser.add_argument('--deepaas_model_output', 
-                     help="Define an output file, if needed")
+parser.add_argument('--deepaas_model_output',
+                    help="Define an output file, if needed")
 
-cmd_parser = argparse.ArgumentParser()    
-subparsers = cmd_parser.add_subparsers(
-                     help='Use \"{} method --help\" to get more info on options for each method'.format(parser.prog),
-                     dest='method')
+cmd_parser = argparse.ArgumentParser()
+subparsers = cmd_parser.add_subparsers(help='Use \"{} method --help\" to get'
+                                       'more info on options for'
+                                       'each method'.format(parser.prog),
+                                       dest='method')
 
-get_metadata_parser = subparsers.add_parser('get_metadata', 
-                     help='get_metadata method',
-                     parents=[parser])
+get_metadata_parser = subparsers.add_parser('get_metadata',
+                                            help='get_metadata method',
+                                            parents=[parser])
 
-get_warm_parser = subparsers.add_parser('warm', 
-                     help='warm method, e.g. to prepare the model for execution',
-                     parents=[parser])
+get_warm_parser = subparsers.add_parser('warm',
+                                        help='warm method, e.g. to prepare'
+                                        'the model for execution',
+                                        parents=[parser])
 
 # get train arguments configured
-train_parser = subparsers.add_parser('train', 
-                                      help='commands for training',
-                                      parents=[parser])
+train_parser = subparsers.add_parser('train',
+                                     help='commands for training',
+                                     parents=[parser])
+
 train_args = _fields_to_dict(model_obj.get_train_args())
 for key, val in train_args.items():
     train_parser.add_argument('--%s' % key,
                               default=val['default'],
-                              type=val['type'], #may just put str?
+                              type=val['type'],
                               help=val['help'],
                               required=val['required'])
 
 # get predict arguments configured
-predict_parser = subparsers.add_parser('predict', 
-                                        help='commands for prediction',
-                                        parents=[parser])
+predict_parser = subparsers.add_parser('predict',
+                                       help='commands for prediction',
+                                       parents=[parser])
 
 predict_args = _fields_to_dict(model_obj.get_predict_args())
 for key, val in predict_args.items():
     predict_parser.add_argument('--%s' % key,
-                              default=val['default'],
-                              type=val['type'], #may just put str?
-                              help=val['help'],
-                              required=val['required'])
+                                default=val['default'],
+                                type=val['type'],
+                                help=val['help'],
+                                required=val['required'])
 
 args = cmd_parser.parse_args()
-### FINISH with ARGS
+# FINISH with ARGS
 
 
 # store DEEPAAS_MODEL output in a file
 def _store_output(results, out_file):
-    '''
-    Function to store model results in the file
+    """Function to store model results in the file
     :param results:  what to store (JSON expected)
     :param out_file: in what file to store
-    '''
+    """
+
     out_path = os.path.dirname(os.path.abspath(out_file))
     if not os.path.exists(out_path):  # Create path if does not exist
         os.makedirs(out_path)
@@ -170,18 +173,16 @@ def _store_output(results, out_file):
     f = open(out_file, "w+")
     f.write(results)
     f.close()
-    print("[OUTPUT] Output is saved in {}" .format(out_file))
+    print("[OUTPUT] Output is saved in {}".format(out_file))
 
 
 def main():
-    """
-    Executes model's methods with corresponding parameters
-    """
+    """Executes model's methods with corresponding parameters"""
 
-    # TODO: change to many files ('for' itteration)
+    # TODO(multi-file): change to many files ('for' itteration)
     if args.__contains__('files'):
         if args.files:
-            # create tmp file as later it supposed 
+            # create tmp file as later it supposed
             # to be deleted by the application
             temp = tempfile.NamedTemporaryFile()
             temp.close()
@@ -192,12 +193,13 @@ def main():
                         f_tmp.write(line)
 
             # create file object
+            file_type = mimetypes.MimeTypes().guess_type(args.files)[0]
             file_obj = UploadedFile(name="data",
-                                    filename = temp.name,
-                                    content_type=mimetypes.MimeTypes().guess_type(args.files)[0],
+                                    filename=temp.name,
+                                    content_type=file_type,
                                     original_filename=args.files)
             args.files = file_obj
-    
+
     if args.method == 'get_metadata':
         meta = model_obj.get_metadata()
         meta_json = json.dumps(meta)
@@ -221,7 +223,7 @@ def main():
             # check extension of the output file
             out_filename, out_extension = os.path.splitext(out_file)
 
-            # set default extension for the data returned 
+            # set default extension for the data returned
             # by the application to .json
             extension = ".json"
             # check what is asked to return by the application (if --accept)
@@ -229,17 +231,19 @@ def main():
                 if args.accept:
                     extension = mimetypes.guess_extension(args.accept)
 
-            if extension != None and out_extension != None and extension != out_extension:
+            if (extension is not None and out_extension is not None
+                    and extension != out_extension):
                 out_file = out_file + extension
-                print("[WARNING] You are trying to store {} " \
-                      "type data in the file " \
-                      "with {} extension!\n" \
-                      "......... New output is {}".format(extension, 
+                print("[WARNING] You are trying to store {} "
+                      "type data in the file "
+                      "with {} extension!\n"
+                      "......... New output is {}".format(extension,
                                                           out_extension,
                                                           out_file))
-            if extension == ".json" or extension == None:
+            if extension == ".json" or extension is None:
                 results_json = json.dumps(results)
-                print("[OUTPUT]:\n{}".format(results_json)) if debug_cli else ''
+                if debug_cli:
+                    print("[OUTPUT]:\n{}".format(results_json))
                 f = open(out_file, "w+")
                 f.write(results_json)
                 f.close()
@@ -256,7 +260,8 @@ def main():
         print("Elapsed time:  ", time.time() - start)
         # we assume that train always returns JSON
         results_json = json.dumps(results)
-        print("[OUTPUT]:\n{}".format(results_json)) if debug_cli else ''
+        if debug_cli:
+            print("[OUTPUT]:\n{}".format(results_json))
         if args.deepaas_model_output:
             _store_output(results_json, args.deepaas_model_output)
 
