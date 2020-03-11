@@ -19,6 +19,7 @@
 import argparse
 import json
 import mimetypes
+import multiprocessing as mp
 import os
 import re
 import shutil
@@ -114,6 +115,9 @@ parser = argparse.ArgumentParser(description='Model parameters',
 parser.add_argument('--deepaas_model_output',
                     help="Define an output file, if needed")
 
+parser.add_argument('--deepaas_with_multiprocessing', action='store_true',
+                    help="Activate multiprocessing, if your model requires it")
+
 cmd_parser = argparse.ArgumentParser()
 subparsers = cmd_parser.add_subparsers(help='Use \"{} method --help\" to get'
                                        'more info on options for'
@@ -178,6 +182,9 @@ def _store_output(results, out_file):
 
 def main():
     """Executes model's methods with corresponding parameters"""
+
+    if args.deepaas_with_multiprocessing:
+        mp.set_start_method('spawn', force=True)
 
     # TODO(multi-file): change to many files ('for' itteration)
     if args.__contains__('files'):
