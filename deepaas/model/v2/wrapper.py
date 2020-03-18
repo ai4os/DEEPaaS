@@ -102,7 +102,7 @@ class ModelWrapper(object):
     :raises HTTPInternalServerError: in case that a model has defined
         a response schema that is not JSON schema valid (DRAFT 4)
     """
-    def __init__(self, name, model_obj, app):
+    def __init__(self, name, model_obj, app=None):
         self.name = name
         self.model_obj = model_obj
         self._app = app
@@ -112,7 +112,8 @@ class ModelWrapper(object):
         self._workers = CONF.workers
         self._executor = self._init_executor()
 
-        self._setup_cleanup()
+        if self._app is not None:
+            self._setup_cleanup()
 
         schema = getattr(self.model_obj, "schema", None)
 
