@@ -216,7 +216,7 @@ def _store_output(results, out_file):
     f.write(results)
     f.close()
 
-    LOG.info("[OUTPUT] Output is saved in {}".format(out_file))
+    LOG.info("[INFO, Output] Output is saved in {}".format(out_file))
 
 
 # async def main():
@@ -233,7 +233,9 @@ def main():
          project='deepaas',
          version=deepaas.__version__)
 
-    log.setup(CONF, "deepaas")
+    log.setup(CONF, "deepaas-cli")
+
+    LOG.info("[INFO, Method] {} was called.".format(CONF.methods.name))
 
     # put all variables in dict, makes life easier...
     conf_vars = vars(CONF._namespace)
@@ -262,11 +264,13 @@ def main():
             # re-write 'files' parameter in conf_vars
             conf_vars['files'] = file_obj
 
+    # debug of input parameters
+    LOG.debug("[DEBUG provided options, conf_vars]: {}".format(conf_vars))
+
     if CONF.methods.name == 'get_metadata':
         meta = model_obj.get_metadata()
         meta_json = json.dumps(meta)
-        print("[get_metadata, OUTPUT]:\n{}"
-              .format(meta_json)) if debug_cli else ''
+        LOG.debug("[DEBUG, get_metadata, Output]: {}".format(meta_json))
         if CONF.deepaas_method_output:
             _store_output(meta_json, CONF.deepaas_method_output)
 
@@ -275,11 +279,9 @@ def main():
     elif CONF.methods.name == 'warm':
         # await model_obj.warm()
         model_obj.warm()
-        LOG.info("[warm, INFO] Finished warm() method")
+        LOG.info("[INFO, warm] Finished warm() method")
 
     elif CONF.methods.name == 'predict':
-        print("print: ", conf_vars) if debug_cli else ''
-
         # call predict method
         predict_vars = _get_subdict(conf_vars, predict_args)
         task = model_obj.predict(**predict_vars)
@@ -312,8 +314,7 @@ def main():
                                                    out_file))
             if extension == ".json" or extension is None:
                 results_json = json.dumps(task)
-                print("[predict, OUTPUT]:\n{}".
-                      format(results_json)) if debug_cli else ''
+                LOG.debug("[DEBUG, predict, Output]: {}".format(results_json))
                 f = open(out_file, "w+")
                 f.write(results_json)
                 f.close()
@@ -321,7 +322,7 @@ def main():
                 out_results = task.name
                 shutil.copy(out_results, out_file)
 
-            LOG.info("[OUTPUT] Output is saved in {}".format(out_file))
+            LOG.info("[INFO, Output] Output is saved in {}".format(out_file))
 
         return task
 
@@ -332,8 +333,7 @@ def main():
         LOG.info("[INFO] Elapsed time:  %s", str(time.time() - start))
         # we assume that train always returns JSON
         results_json = json.dumps(task)
-        print("[train, OUTPUT]:\n{}".
-              format(results_json)) if debug_cli else ''
+        LOG.debug("[DEBUG, train, Output]: {}".format(results_json))
         if CONF.deepaas_method_output:
             _store_output(results_json, CONF.deepaas_method_output)
 
@@ -343,8 +343,7 @@ def main():
         LOG.warn("[WARNING] No Method was requested! Return get_metadata()")
         meta = model_obj.get_metadata()
         meta_json = json.dumps(meta)
-        print("[get_metadata, OUTPUT]:\n{}"
-              .format(meta_json)) if debug_cli else ''
+        LOG.debug("[DEBUG, get_metadata, Output]: {}".format(meta_json))
 
         return meta_json
 
