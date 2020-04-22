@@ -1,0 +1,6 @@
+---
+features:
+  - |
+    Include ``deepaas-cli`` a new command line tool that provides the same
+    functionality as the API through the commandline. This is useful for
+    execution of batch tasks in a HPC/HTC or batch system cluster.
