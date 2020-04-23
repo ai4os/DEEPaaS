@@ -285,3 +285,10 @@ want to do so, you may find useful to inhering from the
 
 .. autoclass:: deepaas.model.v2.base.BaseModel
    :members:
+
+.. warning::
+    The API uses ``multiprocessing`` for handling tasks. Therefore if you use
+    decorators around your methods, please follow best practices and use
+    `functools.wraps <http://gael-varoquaux.info/programming/decoration-in-python-done-right-decorating-and-pickling.html>`_
+    so that the methods are still pickable. Beware also of using global variables
+    that might not be shared between processes.
