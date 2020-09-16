@@ -78,7 +78,7 @@ INTRO = """
 
 BANNER = """
 Welcome to the DEEPaaS API API endpoint. You can directly browse to the
-API documentation endpoint to check the API using the builtint Swagger UI
+API documentation endpoint to check the API using the builtin Swagger UI
 or you can use any of our endpoints.
 
     API documentation: {}
