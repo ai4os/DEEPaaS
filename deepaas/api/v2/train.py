@@ -45,7 +45,7 @@ def _get_handler(model_name, model_obj):  # noqa
             self._trainings = {}
 
         @staticmethod
-        def build_train_response(uuid, training):
+        async def build_train_response(uuid, training):
             if not training:
                 return
 
@@ -57,18 +57,20 @@ def _get_handler(model_name, model_obj):  # noqa
             if training["task"].cancelled():
                 ret["status"] = "cancelled"
             elif training["task"].done():
-                exc = training["task"].exception()
+                exc = await training["task"].exception()
                 if exc:
                     ret["status"] = "error"
                     ret["message"] = "%s" % exc
                 else:
                     ret["status"] = "done"
-                    ret["result"] = training["task"].result()
-                    end = datetime.strptime(ret["result"]["finish_date"],
-                                            '%Y-%m-%d %H:%M:%S.%f')
-                    start = datetime.strptime(ret["date"],
-                                              '%Y-%m-%d %H:%M:%S.%f')
-                    ret["result"]["duration"] = str(end - start)
+                    ret["result"] = {}
+                    ret["result"]["output"] = await training["task"].result()
+# FIXME(aloga): when moving to dask, this has disspared.
+#                    end = datetime.strptime(ret["result"]["finish_date"],
+#                                            '%Y-%m-%d %H:%M:%S.%f')
+#                    start = datetime.strptime(ret["date"],
+#                                              '%Y-%m-%d %H:%M:%S.%f')
+#                    ret["result"]["duration"] = str(end - start)
             else:
                 ret["status"] = "running"
             return ret
@@ -87,7 +89,8 @@ def _get_handler(model_name, model_obj):  # noqa
                 "task": train_task,
                 "args": args,
             }
-            ret = self.build_train_response(uuid_, self._trainings[uuid_])
+            ret = await self.build_train_response(uuid_,
+                                                  self._trainings[uuid_])
             return web.json_response(ret)
 
         @aiohttp_apispec.docs(
@@ -105,7 +108,7 @@ def _get_handler(model_name, model_obj):  # noqa
             except asyncio.TimeoutError:
                 pass
             LOG.info("Training %s has been cancelled" % uuid_)
-            ret = self.build_train_response(uuid_, training)
+            ret = await self.build_train_response(uuid_, training)
             return web.json_response(ret)
 
         @aiohttp_apispec.docs(
@@ -117,7 +120,7 @@ def _get_handler(model_name, model_obj):  # noqa
             ret = []
             for uuid_, training in self._trainings.items():
                 training = self._trainings.get(uuid_, None)
-                aux = self.build_train_response(uuid_, training)
+                aux = await self.build_train_response(uuid_, training)
                 ret.append(aux)
 
             return web.json_response(ret)
@@ -130,7 +133,7 @@ def _get_handler(model_name, model_obj):  # noqa
         async def get(self, request, wsk_args=None):
             uuid_ = request.match_info["uuid"]
             training = self._trainings.get(uuid_, None)
-            ret = self.build_train_response(uuid_, training)
+            ret = await self.build_train_response(uuid_, training)
             if ret:
                 return web.json_response(ret)
             raise web.HTTPNotFound()

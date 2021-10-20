@@ -17,3 +17,5 @@ marshmallow>=3.2.1
 webargs>=5.5.2,<6.0.0
 
 jsonschema>=2.6.0
+
+distributed>=2021.9.1

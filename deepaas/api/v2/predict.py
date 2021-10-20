@@ -70,12 +70,7 @@ def _get_handler(model_name, model_obj):
             if wsk_args:
                 args.update(wsk_args)
             task = self.model_obj.predict(**args)
-            await task
-
-            ret = task.result()['output']
-
-            if isinstance(ret, model.v2.wrapper.ReturnedFile):
-                ret = open(ret.filename, 'rb')
+            ret = await task.result()
 
             accept = args.get("accept", "application/json")
             if accept not in ["application/json", "*/*"]:
