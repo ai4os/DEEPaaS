@@ -29,6 +29,10 @@ LOG = log.getLogger(__name__)
 CONF = cfg.CONF
 
 
+def get_default_executor():
+    return LocalDaskExecutor()
+
+
 class Executor:
     def __repr__(self) -> str:
         return "<Executor: {}>".format(type(self).__name__)

@@ -149,7 +149,7 @@ class ModelWrapper(object):
     def _init_executor(self):
 # FIXME(aloga): we need to implement worker number of threads, etc.
 #        n = self._train_workers
-        _executor = executor.LocalDaskExecutor()
+        _executor = executor.get_default_executor()
         return _executor
 
     @contextlib.contextmanager
