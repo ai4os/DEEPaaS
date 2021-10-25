@@ -14,12 +14,6 @@
 # License for the specific language governing permissions and limitations
 # under the License.
 
-import datetime
-import contextlib
-import signal
-import sys
-import uuid
-
 import dask.distributed
 from oslo_config import cfg
 from oslo_log import log
