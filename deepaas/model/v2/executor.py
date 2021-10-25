@@ -73,5 +73,5 @@ class LocalDaskExecutor(Executor):
         fut = self.client.submit(fn, *args, **kwargs)
         return fut
 
-    def shutdown():
+    def shutdown(self):
         self.client.shutdown()
