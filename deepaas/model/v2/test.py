@@ -14,6 +14,7 @@
 # License for the specific language governing permissions and limitations
 # under the License.
 
+import base64
 import time
 
 from oslo_log import log
@@ -45,6 +46,7 @@ class TestModel(base.BaseModel):
                 },
             )
         ),
+        "data": fields.Str(),
     }
 
     _logo = (
@@ -82,15 +84,22 @@ class TestModel(base.BaseModel):
 
     def predict(self, **kwargs):
         LOG.debug("Got the following kw arguments: %s", kwargs)
-        d = {
-            "date": "2019-01-1",
-            "labels": [{"label": "foo", "probability": 1.0}]
-        }
-        if kwargs.get("accept") == "text/plain":
-            return str(d)
-        elif kwargs.get("accept") == "image/png":
+        if kwargs.get("accept") == "image/png":
             return self._logo
-        return d
+
+        encoded = base64.b64encode(self._logo)
+        b64_str = str(encoded, 'utf-8')
+        b64_str = f"data:image/png;base64,{b64_str}"
+
+        if kwargs.get("accept") == "text/plain":
+            return b64_str
+        else:
+            d = {
+                "date": "2019-01-1",
+                "labels": [{"label": "foo", "probability": 1.0}],
+                "data": b64_str,
+            }
+            return d
 
     def train(self, *args, **kwargs):
         sleep = kwargs.get("sleep", 1)
@@ -120,7 +129,9 @@ class TestModel(base.BaseModel):
             "accept": fields.Str(
                 description=("Media type(s) that is/are acceptable for the "
                              "response."),
-                validate=validate.OneOf(["text/plain", "image/png"]),
+                validate=validate.OneOf(["application/json",
+                                         "text/plain",
+                                         "image/png"]),
                 location="headers",
             )
         }
