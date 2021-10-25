@@ -42,6 +42,16 @@ Specify the number of workers to spawn. If using a CPU you probably want to
 increase this number, if using a GPU probably you want to leave it to 1.
 (defaults to 1)
 """),
+    cfg.StrOpt('dask-config',
+               default=None,
+               help="""
+Specify the path where the dask configuration file is stored. If no file is
+provided, the default Dask configuration file locations will be used. If none
+of them exists, default configuration values will be used.
+
+Check https://docs.dask.org/en/latest/configuration.html for more information
+about Dask configurations.
+"""),
     cfg.IntOpt('client-max-size',
                default=0,
                min=0,

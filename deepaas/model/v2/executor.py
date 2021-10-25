@@ -55,9 +55,19 @@ class Executor:
         raise NotImplementedError()
 
 
-
 class LocalDaskExecutor(Executor):
     def __init__(self):
+        config = {
+            "temporary-directory": "/tmp/",
+        }
+        paths = CONF.dask_config
+        if paths:
+            tmp_conf = dask.config.collect(paths=paths)
+        else:
+            tmp_conf = dask.config.collect()
+        config.update(tmp_conf)
+        dask.config.set(config)
+
         self.client = dask.distributed.Client(
             asynchronous=True,
         )
