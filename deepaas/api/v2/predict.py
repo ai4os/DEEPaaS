@@ -78,7 +78,7 @@ def _get_handler(model_name, model_obj):
                 ret = open(ret.filename, 'rb')
 
             accept = args.get("accept", "application/json")
-            if accept != "application/json":
+            if accept not in ["application/json", "*/*"]:
                 response = web.Response(
                     body=ret,
                     content_type=accept,
