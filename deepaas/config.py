@@ -37,10 +37,27 @@ provide logging information about the API itself.
     cfg.IntOpt('workers',
                short='p',
                default=1,
+               deprecated_for_removal=True,
                help="""
-Specify the number of workers to spawn. If using a CPU you probably want to
-increase this number, if using a GPU probably you want to leave it to 1.
-(defaults to 1)
+Specify the number of workers to spawn for prediction tasks. If using a CPU you
+probably want to increase this number, if using a GPU probably you want to
+leave it to 1. (defaults to 1)
+
+This option is deprecated for removal, as DEEPaaS has switched to Dask to
+manage the execution of background tasks. Please check the documentation
+for the 'dask-config' option for more details.
+"""),
+    cfg.IntOpt('train-workers',
+               default=1,
+               deprecated_for_removal=True,
+               help="""
+Specify the number of workers to spawn for training tasks. Unless you know what
+you are doing you should leave this number to 1. (defaults to 1)
+
+This option is deprecated for removal, as DEEPaaS has switched to Dask to
+manage the execution of background tasks. Please check the documentation
+for the 'dask-config' option for more details.
+>>>>>>> 68dcd2d (dask: deprecate old worker options)
 """),
     cfg.StrOpt('dask-config',
                default=None,
