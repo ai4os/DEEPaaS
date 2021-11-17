@@ -14,6 +14,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Drop support for V1 API.
 
 ### Fixed
+- Fix broken multiprocessing API in some Python versions (#95)
 - Updated documentation.
 
 ### Security
