@@ -7,6 +7,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 ### Added
 ### Changed
+- DEEPaaS now requires Python >= 3.7
 - Start using a changelog.
 
 ### Deprecated
