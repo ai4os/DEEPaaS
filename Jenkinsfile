@@ -27,7 +27,7 @@ pipeline {
             }
             post {
                 always {
-                    WarningsReport('Pep8')
+                    recordIssues(tools: [flake8()])
                 }
             }
         }
