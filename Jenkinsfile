@@ -4,9 +4,11 @@
 
 pipeline {
     agent {
-        label 'python3.6'
+        dockerfile {
+            filename 'Dockerfile.CI'
+        }
     }
-    
+
     environment {
         dockerhub_repo = "indigodatacloud/deepaas"
         dockerhub_image_id = ""
