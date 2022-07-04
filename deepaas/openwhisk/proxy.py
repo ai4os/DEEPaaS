@@ -22,6 +22,7 @@
 # under the License.
 
 import sys
+import warnings
 
 from aiohttp import web
 from oslo_config import cfg
@@ -32,6 +33,7 @@ from deepaas.openwhisk import handle
 cli_opts = [
     cfg.StrOpt('base-openwhisk-path',
                default='/api/v1/web',
+               deprecated_for_removal=True,
                help="""
 Base path where OpenWhisk web actions are served.
 
@@ -148,6 +150,12 @@ def complete(response):
 
 
 def main():
+    msg = ("\033[0;31;40m WARNING: You are using the OpenWhisk integration! "
+           "This integration is marked for removal in the next major version "
+           "of the API. Please get in touch with the developers if you still "
+           "require it. \033[0m")
+
+    warnings.warn(msg, DeprecationWarning)
     proxy = web.Application(
         debug=CONF.debug,
         client_max_size=CONF.client_max_size,

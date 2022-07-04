@@ -48,6 +48,7 @@ requests.
     cfg.BoolOpt('openwhisk-detect',
                 short='w',
                 default=False,
+                deprecated_for_removal=True,
                 help="""
 Run as an OpenWhisk action.
 
