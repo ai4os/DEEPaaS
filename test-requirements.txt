@@ -4,7 +4,7 @@
 flake8>=3.7.9
 pyflakes>=2.1.1
 
-hacking
+hacking>=1.0.0
 
 bandit>=1.1.0 # Apache-2.0
 
