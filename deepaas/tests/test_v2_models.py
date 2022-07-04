@@ -140,10 +140,12 @@ class TestV2Model(base.TestCase):
 
     def test_dummy_model(self):
         m = v2_test.TestModel()
+        pred = m.predict()
+        pred.pop("data")
         self.assertDictEqual(
             {'date': '2019-01-1',
              'labels': [{'label': 'foo', 'probability': 1.0}]},
-            m.predict()
+            pred
         )
         self.assertIsNone(m.train())
         meta = m.get_metadata()
