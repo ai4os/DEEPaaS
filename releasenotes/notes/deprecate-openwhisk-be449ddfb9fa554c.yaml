@@ -1,0 +1,4 @@
+---
+deprecations:
+  - |
+    OpenWhisk integration is marked as deprecated.

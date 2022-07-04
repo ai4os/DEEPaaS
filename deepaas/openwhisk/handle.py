@@ -98,7 +98,7 @@ async def invoke(app, request, args):
         rel_url=path,
         headers=get_headers(headers)
     )
-    request._payload = streams.StreamReader(request._payload._protocol)
+    request._payload = streams.StreamReader(request._payload._protocol, 0)
     request._payload.feed_data(body)
     request._payload.feed_eof()
 
