@@ -62,22 +62,8 @@ pipeline {
         }
 
         stage('Dependency check') {
-            agent {
-                label 'docker-build'
-            }
             steps {
-                checkout scm
-                OWASPDependencyCheckRun("$WORKSPACE/DEEPaaS/deepaas", project="DEEPaaS")
-            }
-            post {
-                always {
-                    OWASPDependencyCheckPublish(report='**/dependency-check-report.xml')
-                    HTMLReport(
-                        "$WORKSPACE/DEEPaaS/deepaas",
-                        'dependency-check-report.html',
-                        'OWASP Dependency Report')
-                    deleteDir()
-                }
+                ToxEnvRun('pip-missing-reqs')
             }
         }
 
