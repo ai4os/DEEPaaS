@@ -45,21 +45,6 @@ pipeline {
             }
         }
 
-        stage('Metrics gathering') {
-            agent {
-                label 'sloc'
-            }
-            steps {
-                checkout scm
-                SLOCRun()
-            }
-            post {
-                success {
-                    SLOCPublish()
-                }
-            }
-        }
-
         stage('Security scanner') {
             steps {
                 ToxEnvRun('bandit-report')
