@@ -122,7 +122,10 @@ class BaseModel(object):
                 "version": "Model version",
             }
 
-        The only fields that are mandatory are 'description' and 'name'.
+        If you want to integrate with the deephdc platform you should
+        provide at least an [``name``, ``author``, ``author-email``,
+         ``license``]. You can nevertheless set them to ``None``
+        if you don't feel like providing the information.
 
         The schema that we are following is the following::
 
@@ -203,7 +206,8 @@ class BaseModel(object):
             able to pass them down. Usually you would populate these with all
             the training hyper-parameters
 
-        :return: TBD
+        :return: You can return any Python object that is JSON parseable
+        (eg. dict, string, float).
         """
         raise NotImplementedError()
 
