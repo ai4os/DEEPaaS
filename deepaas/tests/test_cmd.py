@@ -23,7 +23,6 @@ import mock
 
 from deepaas.cmd import execute
 from deepaas.cmd import run
-from deepaas.cmd import wsk
 from deepaas.tests import base
 
 
@@ -62,47 +61,6 @@ class TestRun(base.TestCase):
             host=ip,
             port=port,
         )
-        m_handle_signals.assert_called_once()
-
-    @mock.patch("deepaas.cmd._shutdown.handle_signals")
-    @mock.patch("deepaas.openwhisk.proxy.main")
-    def test_run_wsk(self, m_proxy_main, m_handle_signals):
-        m = mock.MagicMock()
-        m_proxy_main.return_value = m
-        self.flags(openwhisk_detect=True)
-        with mock.patch.object(sys, 'argv', ["deepaas-run"]):
-            with mock.patch.dict(os.environ, {'__OW_API_HOST': 'XXXX'}):
-                run.main()
-        m_proxy_main.assert_called_once()
-        m_handle_signals.assert_called_once()
-
-    @mock.patch("deepaas.cmd._shutdown.handle_signals")
-    @mock.patch("aiohttp.web.run_app")
-    @mock.patch("deepaas.api.get_app")
-    def test_run_wsk_false(self, m_get_app, m_run_app, m_handle_signals):
-        m = mock.MagicMock()
-        m_get_app.return_value = m
-        self.flags(openwhisk_detect=True)
-        with mock.patch.object(sys, 'argv', ["deepaas-run"]):
-            run.main()
-        m_get_app.assert_called_once()
-        m_run_app.assert_called_with(
-            mock.ANY,
-            host="127.0.0.1",
-            port=5000,
-        )
-        m_handle_signals.assert_called_once()
-
-
-class TestWsk(base.TestCase):
-    @mock.patch("deepaas.cmd._shutdown.handle_signals")
-    @mock.patch("deepaas.openwhisk.proxy.main")
-    def test_run(self, m_proxy_main, m_handle_signals):
-        m = mock.MagicMock()
-        m_proxy_main.return_value = m
-        with mock.patch.object(sys, 'argv', ["deepaas-wsk"]):
-            wsk.main()
-        m_proxy_main.assert_called_once()
         m_handle_signals.assert_called_once()
 
 

@@ -38,17 +38,6 @@ Options
    Port on which the DEEPaaS API will listen. The DEEPaaS API service listens
    on this port number for incoming requests.
 
-.. option:: --openwhisk-detect, -w
-
-   Run as an OpenWhisk action. If this option is set to ``True`` DEEPaaS will
-   check if the ``__OW_API_HOST`` environment variable is set. If it is set, it
-   will run an OpenWhisk Docker action listener rather than the DEEPaaS API. If
-   it is not set, it will run a DEEPaaS in normal mode. If you specify this
-   option, the value of ``listen-ip`` will be used, but the port will is
-   hardcoded to ``8080`` (as OpenWhisk goes to port ``8080``).  Note that if
-   you are running inside a container, the most sensible option is to set
-   ``listen-ip`` to ``0.0.0.0``.
-
 .. option:: --predict-workers PREDICT_WORKERS, -p PREDICT_WORKERS
 
    Specify the number of workers to spawn for prediction tasks. If using a CPU
