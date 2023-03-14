@@ -4,6 +4,8 @@
 pbr>=4.1.0
 six>=1.9.0 # MIT
 
+typer>=0.4.1
+
 oslo.log>=1.8.0 # Apache-2.0
 oslo.config>=2.3.0 # Apache-2.0
 
