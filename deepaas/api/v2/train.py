@@ -79,7 +79,7 @@ def _get_handler(model_name, model_obj):  # noqa
         )
         @aiohttp_apispec.querystring_schema(args)
         @aiohttpparser.parser.use_args(args)
-        async def post(self, request, args, wsk_args=None):
+        async def post(self, request, args):
             uuid_ = uuid.uuid4().hex
             train_task = self.model_obj.train(**args)
             self._trainings[uuid_] = {
@@ -94,7 +94,7 @@ def _get_handler(model_name, model_obj):  # noqa
             tags=["models"],
             summary="Cancel a running training"
         )
-        async def delete(self, request, wsk_args=None):
+        async def delete(self, request):
             uuid_ = request.match_info["uuid"]
             training = self._trainings.pop(uuid_, None)
             if not training:
@@ -113,7 +113,7 @@ def _get_handler(model_name, model_obj):  # noqa
             summary="Get a list of trainings (running or completed)"
         )
         @aiohttp_apispec.response_schema(responses.TrainingList(), 200)
-        async def index(self, request, wsk_args=None):
+        async def index(self, request):
             ret = []
             for uuid_, training in self._trainings.items():
                 training = self._trainings.get(uuid_, None)
@@ -127,7 +127,7 @@ def _get_handler(model_name, model_obj):  # noqa
             summary="Get status of a training"
         )
         @aiohttp_apispec.response_schema(responses.Training(), 200)
-        async def get(self, request, wsk_args=None):
+        async def get(self, request):
             uuid_ = request.match_info["uuid"]
             training = self._trainings.get(uuid_, None)
             ret = self.build_train_response(uuid_, training)

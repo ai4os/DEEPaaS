@@ -65,10 +65,8 @@ def _get_handler(model_name, model_obj):
         @aiohttp_apispec.querystring_schema(handler_args)
         @aiohttp_apispec.response_schema(response(), 200)
         @aiohttp_apispec.response_schema(responses.Failure(), 400)
-        async def post(self, request, wsk_args=None):
+        async def post(self, request):
             args = await aiohttpparser.parser.parse(handler_args, request)
-            if wsk_args:
-                args.update(wsk_args)
             task = self.model_obj.predict(**args)
             await task
 

@@ -42,4 +42,4 @@ EXPOSE 5000
 # container will not stop on a "docker stop" command, as Docker sends
 # SIGTERM to the PID 1 (the shell will not propagate the signal to 
 # the child process.
-CMD ["deepaas-run", "--openwhisk-detect", "--listen-ip", "0.0.0.0", "--listen-port", "5000"]
+CMD ["deepaas-run", "--listen-ip", "0.0.0.0", "--listen-port", "5000"]

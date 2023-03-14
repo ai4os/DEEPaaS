@@ -58,7 +58,7 @@ def get_app(enable_train=True, enable_predict=True):
 )
 @aiohttp_apispec.response_schema(responses.Version(), 200)
 @aiohttp_apispec.response_schema(responses.Failure(), 400)
-async def get_version(request, wsk_args=None):
+async def get_version(request):
     # NOTE(aloga): we use the router table from this application (i.e. the
     # global APP in this module) to be able to build the correct url, as it can
     # be prefixed outside of this module (in an add_subapp() call)

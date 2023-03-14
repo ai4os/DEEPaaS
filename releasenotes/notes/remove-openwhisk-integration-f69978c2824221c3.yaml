@@ -1,0 +1,3 @@
+---
+upgrade:
+  - OpenWhisk integration is now fully removed.
