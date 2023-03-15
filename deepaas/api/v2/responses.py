@@ -37,37 +37,33 @@ class Versions(marshmallow.Schema):
 
 
 class Failure(marshmallow.Schema):
-    message = fields.Str(required=True,
-                         description="Failure message")
+    message = fields.Str(required=True, description="Failure message")
 
 
 class Prediction(marshmallow.Schema):
-    status = fields.String(required=True,
-                           description='Response status message')
-    predictions = fields.Str(required=True,
-                             description='String containing predictions')
+    status = fields.String(required=True, description="Response status message")
+    predictions = fields.Str(required=True, description="String containing predictions")
 
 
 class ModelMeta(marshmallow.Schema):
-    id =  fields.Str(required=True, description='Model identifier')  # noqa
-    name = fields.Str(required=True, description='Model name')
-    description = fields.Str(required=True,
-                             description='Model description')
-    license = fields.Str(required=False, description='Model license')
-    author = fields.Str(required=False, description='Model author')
-    version = fields.Str(required=False, description='Model version')
-    url = fields.Str(required=False, description='Model url')
+    id = fields.Str(required=True, description="Model identifier")  # noqa
+    name = fields.Str(required=True, description="Model name")
+    description = fields.Str(required=True, description="Model description")
+    license = fields.Str(required=False, description="Model license")
+    author = fields.Str(required=False, description="Model author")
+    version = fields.Str(required=False, description="Model version")
+    url = fields.Str(required=False, description="Model url")
     links = fields.List(fields.Nested(Location))
 
 
 class Training(marshmallow.Schema):
-    uuid = fields.UUID(required=True, description='Training identifier')
-    date = fields.DateTime(required=True, description='Training start time')
+    uuid = fields.UUID(required=True, description="Training identifier")
+    date = fields.DateTime(required=True, description="Training start time")
     status = fields.Str(
         required=True,
-        description='Training status',
+        description="Training status",
         enum=["running", "error", "completed", "cancelled"],
-        validate=validate.OneOf(["running", "error", "completed", "cancelled"])
+        validate=validate.OneOf(["running", "error", "completed", "cancelled"]),
     )
     message = fields.Str(description="Optional message explaining status")
 

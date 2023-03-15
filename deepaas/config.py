@@ -26,37 +26,45 @@ logging.captureWarnings(True)
 warnings.simplefilter("default", DeprecationWarning)
 
 opts = [
-    cfg.BoolOpt('debug-endpoint',
-                default="false",
-                help="""
+    cfg.BoolOpt(
+        "debug-endpoint",
+        default="false",
+        help="""
 Enable debug endpoint. If set we will provide all the information that you
 print to the standard output and error (i.e. stdout and stderr) through the
 "/debug" endpoint. Default is to not provide this information. This will not
 provide logging information about the API itself.
-"""),
-    cfg.IntOpt('workers',
-               short='p',
-               default=1,
-               help="""
+""",
+    ),
+    cfg.IntOpt(
+        "workers",
+        short="p",
+        default=1,
+        help="""
 Specify the number of workers to spawn. If using a CPU you probably want to
 increase this number, if using a GPU probably you want to leave it to 1.
 (defaults to 1)
-"""),
-    cfg.IntOpt('client-max-size',
-               default=0,
-               min=0,
-               help="""
+""",
+    ),
+    cfg.IntOpt(
+        "client-max-size",
+        default=0,
+        min=0,
+        help="""
 Client’s maximum size in a request, in bytes. If a POST request exceeds this
 value, it raises an HTTPRequestEntityTooLarge exception. If set to 0, no
 file size limit will be enforced.
-"""),
-    cfg.BoolOpt('warm',
-                default=True,
-                help="""
+""",
+    ),
+    cfg.BoolOpt(
+        "warm",
+        default=True,
+        help="""
 Pre-warm the modules (eg. load models, do preliminary checks, etc). You might
 want to disable this option if DEEPaaS is loading more than one module because
 you risk getting out of memory errors.
-"""),
+""",
+    ),
 ]
 
 CONF = cfg.CONF
@@ -69,10 +77,12 @@ def prepare_logging():
 
 
 def parse_args(argv, default_config_files=None):
-    cfg.CONF(argv[1:],
-             project='deepaas',
-             version=deepaas.__version__,
-             default_config_files=default_config_files)
+    cfg.CONF(
+        argv[1:],
+        project="deepaas",
+        version=deepaas.__version__,
+        default_config_files=default_config_files,
+    )
 
 
 def config_and_logging(argv, default_config_files=None):

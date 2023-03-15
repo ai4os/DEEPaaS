@@ -77,8 +77,9 @@ class TestV2Model(base.TestCase):
         self.assertRaises(
             web.HTTPInternalServerError,
             v2_wrapper.ModelWrapper,
-            "test", Model(),
-            self.app
+            "test",
+            Model(),
+            self.app,
         )
 
     @mock.patch("deepaas.model.v2.wrapper.ModelWrapper._setup_cleanup")
@@ -87,11 +88,7 @@ class TestV2Model(base.TestCase):
             schema = None
 
         wrapper = v2_wrapper.ModelWrapper("test", Model(), self.app)
-        self.assertRaises(
-            web.HTTPInternalServerError,
-            wrapper.validate_response,
-            None
-        )
+        self.assertRaises(web.HTTPInternalServerError, wrapper.validate_response, None)
 
     @mock.patch("deepaas.model.v2.wrapper.ModelWrapper._setup_cleanup")
     async def test_invalid_schema(self, m_clean):
@@ -101,8 +98,9 @@ class TestV2Model(base.TestCase):
         self.assertRaises(
             web.HTTPInternalServerError,
             v2_wrapper.ModelWrapper,
-            "test", Model(),
-            self.app
+            "test",
+            Model(),
+            self.app,
         )
 
     @mock.patch("deepaas.model.v2.wrapper.ModelWrapper._setup_cleanup")
@@ -117,25 +115,19 @@ class TestV2Model(base.TestCase):
 
         self.assertTrue(wrapper.validate_response({"foo": "bar"}))
         self.assertRaises(
-            web.HTTPInternalServerError,
-            wrapper.validate_response,
-            {"foo": 1.0}
+            web.HTTPInternalServerError, wrapper.validate_response, {"foo": 1.0}
         )
 
     @mock.patch("deepaas.model.v2.wrapper.ModelWrapper._setup_cleanup")
     async def test_dict_schema(self, m_clean):
         class Model(object):
-            schema = {
-                "foo": m_fields.Str()
-            }
+            schema = {"foo": m_fields.Str()}
 
         wrapper = v2_wrapper.ModelWrapper("test", Model(), self.app)
 
         self.assertTrue(wrapper.validate_response({"foo": "bar"}))
         self.assertRaises(
-            web.HTTPInternalServerError,
-            wrapper.validate_response,
-            {"foo": 1.0}
+            web.HTTPInternalServerError, wrapper.validate_response, {"foo": 1.0}
         )
 
     def test_dummy_model(self):
@@ -143,9 +135,8 @@ class TestV2Model(base.TestCase):
         pred = m.predict()
         pred.pop("data")
         self.assertDictEqual(
-            {'date': '2019-01-1',
-             'labels': [{'label': 'foo', 'probability': 1.0}]},
-            pred
+            {"date": "2019-01-1", "labels": [{"label": "foo", "probability": 1.0}]},
+            pred,
         )
         self.assertIsNone(m.train())
         meta = m.get_metadata()
@@ -164,16 +155,14 @@ class TestV2Model(base.TestCase):
         w = v2_wrapper.ModelWrapper("foo", v2_test.TestModel(), self.app)
         task = w.predict()
         await task
-        ret = task.result()['output']
+        ret = task.result()["output"]
         self.assertDictEqual(
-            {'date': '2019-01-1',
-             'labels': [{'label': 'foo', 'probability': 1.0}]},
-            ret
+            {"date": "2019-01-1", "labels": [{"label": "foo", "probability": 1.0}]}, ret
         )
         task = w.train(sleep=0)
         await task
         ret = task.result()
-        self.assertIsNone(ret['output'])
+        self.assertIsNone(ret["output"])
         meta = w.get_metadata()
         self.assertIn("description", meta)
         self.assertIn("id", meta)
@@ -185,8 +174,7 @@ class TestV2Model(base.TestCase):
 
     @mock.patch("deepaas.model.v2.wrapper.ModelWrapper._setup_cleanup")
     @test_utils.unittest_run_loop
-    async def test_model_with_not_implemented_attributes_and_wrapper(self,
-                                                                     m_clean):
+    async def test_model_with_not_implemented_attributes_and_wrapper(self, m_clean):
         w = v2_wrapper.ModelWrapper("foo", object(), self.app)
 
         # NOTE(aloga): Cannot use assertRaises here directly, as testtools
@@ -214,7 +202,7 @@ class TestV2Model(base.TestCase):
             self.assertIsInstance(val, fields.Field)
 
     @mock.patch("deepaas.model.v2.wrapper.ModelWrapper._setup_cleanup")
-    @mock.patch('deepaas.model.loading.get_available_models')
+    @mock.patch("deepaas.model.loading.get_available_models")
     async def test_loading_ok(self, mock_loading, m_clean):
         mock_loading.return_value = {uuid.uuid4().hex: "bar"}
         deepaas.model.v2.register_models(self.app)
@@ -223,7 +211,7 @@ class TestV2Model(base.TestCase):
             self.assertIsInstance(m, v2_wrapper.ModelWrapper)
 
     @mock.patch("deepaas.model.v2.wrapper.ModelWrapper._setup_cleanup")
-    @mock.patch('deepaas.model.loading.get_available_models')
+    @mock.patch("deepaas.model.loading.get_available_models")
     async def test_loading_ok_singleton(self, mock_loading, m_clean):
         mock_loading.return_value = {uuid.uuid4().hex: "bar"}
         deepaas.model.v2.register_models(self.app)
@@ -233,7 +221,7 @@ class TestV2Model(base.TestCase):
             self.assertIsInstance(m, v2_wrapper.ModelWrapper)
 
     @mock.patch("deepaas.model.v2.wrapper.ModelWrapper._setup_cleanup")
-    @mock.patch('deepaas.model.loading.get_available_models')
+    @mock.patch("deepaas.model.loading.get_available_models")
     async def test_loading_error(self, mock_loading, m_clean):
         mock_loading.return_value = {}
         deepaas.model.v2.register_models(self.app)

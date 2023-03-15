@@ -88,7 +88,7 @@ class TestModel(base.BaseModel):
             return self._logo
 
         encoded = base64.b64encode(self._logo)
-        b64_str = str(encoded, 'utf-8')
+        b64_str = str(encoded, "utf-8")
         b64_str = f"data:image/png;base64,{b64_str}"
 
         if kwargs.get("accept") == "text/plain":
@@ -117,45 +117,46 @@ class TestModel(base.BaseModel):
                 type="file",
             ),
             "parameter": fields.Int(
-                description="This is a parameter for prediction",
-                required=True
+                description="This is a parameter for prediction", required=True
             ),
             "parameter_three": fields.Str(
-                description=("This is a parameter that forces its value to "
-                             "be one of the choices declared in 'enum'"),
+                description=(
+                    "This is a parameter that forces its value to "
+                    "be one of the choices declared in 'enum'"
+                ),
                 enum=["foo", "bar"],
                 validate=validate.OneOf(["foo", "bar"]),
             ),
             "accept": fields.Str(
-                description=("Media type(s) that is/are acceptable for the "
-                             "response."),
-                validate=validate.OneOf(["application/json",
-                                         "text/plain",
-                                         "image/png"]),
+                description=(
+                    "Media type(s) that is/are acceptable for the " "response."
+                ),
+                validate=validate.OneOf(
+                    ["application/json", "text/plain", "image/png"]
+                ),
                 location="headers",
-            )
+            ),
         }
 
     def get_train_args(self):
         return {
             "sleep": fields.Int(
                 required=True,
-                descripton='This is a integer parameter, and it is '
-                           'a required one.'
+                descripton="This is a integer parameter, and it is " "a required one.",
             ),
-            "parameter_two": fields.Str(
-                description='This is a string parameter.'
-            ),
+            "parameter_two": fields.Str(description="This is a string parameter."),
         }
 
     def get_metadata(self):
         d = {
             "id": "0",
             "name": "deepaas-test",
-            "description": ("This is not a model at all, just a placeholder "
-                            "for testing the API functionality. If you are "
-                            "seeing this, it is because DEEPaaS could not "
-                            "load a valid model."),
+            "description": (
+                "This is not a model at all, just a placeholder "
+                "for testing the API functionality. If you are "
+                "seeing this, it is because DEEPaaS could not "
+                "load a valid model."
+            ),
             "author": "Alvaro Lopez Garcia",
             "version": "0.0.1",
             "url": "https://github.com/indigo-dc/DEEPaaS/",

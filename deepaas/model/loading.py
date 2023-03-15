@@ -38,7 +38,8 @@ def get_available_models(version):
               as the value.
     :rtype: dict
     """
-    mgr = stevedore.ExtensionManager(namespace=NAMESPACES.get(version),
-                                     propagate_map_exceptions=True)
+    mgr = stevedore.ExtensionManager(
+        namespace=NAMESPACES.get(version), propagate_map_exceptions=True
+    )
 
     return dict(mgr.map(lambda ext: (ext.entry_point.name, ext.plugin)))

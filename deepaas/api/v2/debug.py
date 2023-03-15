@@ -60,15 +60,17 @@ def setup_debug():
 
         logger = log.getLogger("deepaas").logger
         hdlr = logging.StreamHandler(DEBUG_STREAM)
-        hdlr.setFormatter(logging.Formatter(
-            '%(asctime)s - %(name)s - %(levelname)s - %(message)s')
+        hdlr.setFormatter(
+            logging.Formatter("%(asctime)s - %(name)s - %(levelname)s - %(message)s")
         )
         logger.addHandler(hdlr)
 
-        msg = ("\033[0;31;40m WARNING: Running API with debug endpoint! "
-               "This will provide ALL the output without any kind of "
-               "restriction in the /debug/ endpoint. Disable it whenever "
-               "you have finished debugging your application. \033[0m")
+        msg = (
+            "\033[0;31;40m WARNING: Running API with debug endpoint! "
+            "This will provide ALL the output without any kind of "
+            "restriction in the /debug/ endpoint. Disable it whenever "
+            "you have finished debugging your application. \033[0m"
+        )
         warnings.warn(msg, RuntimeWarning)
 
         sys.stdout = MultiOut(DEBUG_STREAM, sys.stdout)
@@ -94,8 +96,4 @@ async def get(request):
 
 
 def setup_routes(app):
-    app.router.add_get(
-        "/debug/",
-        get,
-        allow_head=False
-    )
+    app.router.add_get("/debug/", get, allow_head=False)

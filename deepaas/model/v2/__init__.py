@@ -47,8 +47,6 @@ def register_models(app):
     if not MODELS:
         LOG.info("No models found in V2, loading test model")
         MODELS["deepaas-test"] = wrapper.ModelWrapper(
-            "deepaas-test",
-            test.TestModel(),
-            app
+            "deepaas-test", test.TestModel(), app
         )
     MODELS_LOADED = True

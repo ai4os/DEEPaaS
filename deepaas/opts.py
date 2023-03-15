@@ -22,9 +22,5 @@ import deepaas.config
 
 def list_opts():
     return [
-        (
-            'DEFAULT',
-            itertools.chain(deepaas.cmd.run.cli_opts,
-                            deepaas.config.opts)
-        ),
+        ("DEFAULT", itertools.chain(deepaas.cmd.run.cli_opts, deepaas.config.opts)),
     ]

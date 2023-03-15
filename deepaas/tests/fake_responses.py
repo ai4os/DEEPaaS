@@ -15,102 +15,66 @@
 # under the License.
 
 deepaas_test_meta = {
-    'author': 'Alvaro Lopez Garcia',
-    'description': ('This is not a model at all, just a '
-                    'placeholder for testing the API '
-                    'functionality. If you are seeing this, it is '
-                    'because DEEPaaS could not load a valid model.'),
-    'id': '0',
-    'links': [
-        {
-            'href': '/v2/models/deepaas-test',
-            'rel': 'self'
-        }
-    ],
-    'name': 'deepaas-test',
-    'url': "https://github.com/indigo-dc/DEEPaaS/",
-    'license': "Apache 2.0",
-    'version': '0.0.1'
+    "author": "Alvaro Lopez Garcia",
+    "description": (
+        "This is not a model at all, just a "
+        "placeholder for testing the API "
+        "functionality. If you are seeing this, it is "
+        "because DEEPaaS could not load a valid model."
+    ),
+    "id": "0",
+    "links": [{"href": "/v2/models/deepaas-test", "rel": "self"}],
+    "name": "deepaas-test",
+    "url": "https://github.com/indigo-dc/DEEPaaS/",
+    "license": "Apache 2.0",
+    "version": "0.0.1",
 }
 
 models_meta = {
-    'models': [
+    "models": [
         deepaas_test_meta,
     ]
 }
 
 v2_version = {
-    'version': 'stable',
-    'id': 'v2',
-    'links': [
-        {
-            "rel": "self",
-            "type": "application/json",
-            "href": "/v2/"
-        },
+    "version": "stable",
+    "id": "v2",
+    "links": [
+        {"rel": "self", "type": "application/json", "href": "/v2/"},
     ],
 }
 
 all_versions = {
-    'versions': [
+    "versions": [
         v2_version,
     ],
-    'links': [
-        {
-            "rel": "help",
-            "type": "text/html",
-            "href": "/ui"
-        },
-        {
-            "rel": "describedby",
-            "type": "application/json",
-            "href": "/swagger.json"
-        },
-    ]
+    "links": [
+        {"rel": "help", "type": "text/html", "href": "/ui"},
+        {"rel": "describedby", "type": "application/json", "href": "/swagger.json"},
+    ],
 }
 
 versions = {
-    'versions': [
+    "versions": [
         v2_version,
     ],
-    'links': [
-        {
-            "rel": "help",
-            "type": "text/html",
-            "href": "/ui"
-        },
-        {
-            "rel": "describedby",
-            "type": "application/json",
-            "href": "/swagger.json"
-        },
-    ]
+    "links": [
+        {"rel": "help", "type": "text/html", "href": "/ui"},
+        {"rel": "describedby", "type": "application/json", "href": "/swagger.json"},
+    ],
 }
 
 empty_versions = {
-    'versions': [],
-    'links': [
-        {
-            "rel": "help",
-            "type": "text/html",
-            "href": "/ui"
-        },
-        {
-            "rel": "describedby",
-            "type": "application/json",
-            "href": "/swagger.json"
-        },
-    ]
+    "versions": [],
+    "links": [
+        {"rel": "help", "type": "text/html", "href": "/ui"},
+        {"rel": "describedby", "type": "application/json", "href": "/swagger.json"},
+    ],
 }
 
 deepaas_test_predict = {
-    'date': '2019-01-1',
-    'labels': [
-        {'label': 'foo', 'probability': 1.0}
-    ]
+    "date": "2019-01-1",
+    "labels": [{"label": "foo", "probability": 1.0}],
 }
 
-deepaas_test_train = {
-    'status': 'running',
-    'uuid': '2ad53089edfb4521af081c45df16bed5'
-}
+deepaas_test_train = {"status": "running", "uuid": "2ad53089edfb4521af081c45df16bed5"}

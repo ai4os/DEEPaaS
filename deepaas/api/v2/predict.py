@@ -70,10 +70,10 @@ def _get_handler(model_name, model_obj):
             task = self.model_obj.predict(**args)
             await task
 
-            ret = task.result()['output']
+            ret = task.result()["output"]
 
             if isinstance(ret, model.v2.wrapper.ReturnedFile):
-                ret = open(ret.filename, 'rb')
+                ret = open(ret.filename, "rb")
 
             accept = args.get("accept", "application/json")
             if accept not in ["application/json", "*/*"]:
@@ -100,7 +100,4 @@ def setup_routes(app, enable=True):
             hdlr = _get_handler(model_name, model_obj)
         else:
             hdlr = utils.NotEnabledHandler()
-        app.router.add_post(
-            "/models/%s/predict/" % model_name,
-            hdlr.post
-        )
+        app.router.add_post("/models/%s/predict/" % model_name, hdlr.post)

@@ -26,41 +26,51 @@ from deepaas.model import loading
 from deepaas.model.v2.wrapper import UploadedFile
 
 cli_opts = [
-    cfg.StrOpt('model-name',
-               help="""
+    cfg.StrOpt(
+        "model-name",
+        help="""
 Add the name of the model from which you want
 to obtain the prediction.
 If there are multiple models installed and youd don't
 specify the name of the one you want to use the program will fail.
 If there is only one model installed, that will be used
 to make the prediction.
-"""),
-    cfg.StrOpt('input-file',
-               short="i",
-               help="""
+""",
+    ),
+    cfg.StrOpt(
+        "input-file",
+        short="i",
+        help="""
 Set local input file to predict.
-"""),
-    cfg.StrOpt('content-type',
-               default='application/json',
-               short='ct',
-               help="""
+""",
+    ),
+    cfg.StrOpt(
+        "content-type",
+        default="application/json",
+        short="ct",
+        help="""
 Especify the content type of the output file. The selected
 option must be available in the model used.
 (by default application/json).
-"""),
-    cfg.StrOpt('output',
-               short="o",
-               help="""
+""",
+    ),
+    cfg.StrOpt(
+        "output",
+        short="o",
+        help="""
 Save the result to a local file.
-"""),
-    cfg.BoolOpt('url',
-                short='u',
-                default=False,
-                help="""
+""",
+    ),
+    cfg.BoolOpt(
+        "url",
+        short="u",
+        default=False,
+        help="""
 Run as input file an URL.
 If this option is set to True, we can use the URL
 of an image as an input file.
-"""),
+""",
+    ),
 ]
 
 CONF = cfg.CONF
@@ -78,36 +88,37 @@ def get_model_name():
         model_obj = models.get(model_name)
         if model_obj is None:
             sys.stderr.write(
-                "ERROR: The model {} is not available.\n".format(model_name))
+                "ERROR: The model {} is not available.\n".format(model_name)
+            )
             sys.exit(1)
         return model_name, model_obj
     elif len(models) == 1:
         return models.popitem()
     else:
         sys.stderr.write(
-            'ERROR: There are several models available ({}) '
-            'you have to choose one.\n'.format(list(models.keys())))
+            "ERROR: There are several models available ({}) "
+            "you have to choose one.\n".format(list(models.keys()))
+        )
         sys.exit(1)
 
 
 def prediction(input_file, file_type, content_type):
-
     model_name, model_obj = get_model_name()
     predict_data = model_obj.predict_data
     predict_url = model_obj.predict_url
 
     if file_type is True:
-        input_data = {'urls': [input_file], 'accept': content_type}
+        input_data = {"urls": [input_file], "accept": content_type}
         output_pred = predict_url(input_data)
     else:
         content_type_in, fileEncoding = mimetypes.guess_type(input_file)
-        file = UploadedFile(name=input_file,
-                            filename=input_file,
-                            content_type=content_type_in)
-        input_data = {'files': [file], 'accept': content_type}
+        file = UploadedFile(
+            name=input_file, filename=input_file, content_type=content_type_in
+        )
+        input_data = {"files": [file], "accept": content_type}
         output_pred = predict_data(input_data)
 
-    return (output_pred)
+    return output_pred
 
 
 def main():
@@ -119,26 +130,23 @@ def main():
 
     # Checking required argument
     if input_file is None:
-        sys.stderr.write(
-            "ERROR: Option input_file is required.\n")
+        sys.stderr.write("ERROR: Option input_file is required.\n")
         sys.exit(1)
 
     if output is None:
-        sys.stderr.write(
-            "ERROR: Option output is required.\n")
+        sys.stderr.write("ERROR: Option output is required.\n")
         sys.exit(1)
 
     output_pred = prediction(input_file, file_type, content_type)
     extension = mimetypes.guess_extension(content_type)
     if extension is None or output_pred is None:
-        sys.stderr.write(
-            "ERROR: Content type {} not valid.\n".format(content_type))
+        sys.stderr.write("ERROR: Content type {} not valid.\n".format(content_type))
         sys.exit(1)
     if extension == ".json":
         name_image = os.path.splitext(os.path.basename(input_file))[0]
         out_file_name = "out_" + name_image
         f = open(out_file_name + ".json", "w+")
-        f.write(repr(output_pred) + '\n')
+        f.write(repr(output_pred) + "\n")
         f.close()
         if not os.path.exists(output):  # Create path if does not exist
             os.makedirs(output)
@@ -151,7 +159,7 @@ def main():
             os.makedirs(output)
         shutil.copy(output_path_image, output)
 
-    print("Output saved at {}" .format(dir_name))
+    print("Output saved at {}".format(dir_name))
 
 
 if __name__ == "__main__":

@@ -37,13 +37,13 @@ logging.register_options(CONF)
 def test_loading_ok_with_missing_schema():
     class Fake(object):
         response_schema = None
+
     response = predict._get_model_response("deepaas-test", Fake)
     assert response is responses.Prediction
 
 
 class TestApiV2(base.TestCase):
     async def get_application(self):
-
         app = web.Application(debug=True)
         app.middlewares.append(web.normalize_path_middleware())
 
@@ -81,8 +81,7 @@ class TestApiV2(base.TestCase):
         ret = await self.client.put("/v2/models/%s/train" % uuid.uuid4().hex)
         self.assertEqual(404, ret.status)
 
-        ret = await self.client.post("/v2/models/%s/predict" %
-                                     uuid.uuid4().hex)
+        ret = await self.client.post("/v2/models/%s/predict" % uuid.uuid4().hex)
         self.assertEqual(404, ret.status)
 
         ret = await self.client.get("/v2/models/%s" % uuid.uuid4().hex)
@@ -94,10 +93,10 @@ class TestApiV2(base.TestCase):
         print(json)
         self.assertDictEqual(
             {
-                'parameter': ['Missing data for required field.'],
-                'data': ['Missing data for required field.']
+                "parameter": ["Missing data for required field."],
+                "data": ["Missing data for required field."],
             },
-            json
+            json,
         )
         self.assertEqual(422, ret.status)
 
@@ -105,16 +104,16 @@ class TestApiV2(base.TestCase):
         f = six.BytesIO(b"foo")
         ret = await self.client.post(
             "/v2/models/deepaas-test/predict/",
-            data={"data": (f, "foo.txt"),
-                  "parameter": 1}
+            data={"data": (f, "foo.txt"), "parameter": 1},
         )
         json = await ret.json()
         self.assertEqual(200, ret.status)
         self.assertDictEqual(fake_responses.deepaas_test_predict, json)
 
     async def test_train(self):
-        ret = await self.client.post("/v2/models/deepaas-test/train/",
-                                     data={"sleep": 0})
+        ret = await self.client.post(
+            "/v2/models/deepaas-test/train/", data={"sleep": 0}
+        )
         self.assertEqual(200, ret.status)
         json = await ret.json()
         json.pop("date")

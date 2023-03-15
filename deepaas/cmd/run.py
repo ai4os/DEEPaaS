@@ -27,22 +27,26 @@ from deepaas.cmd import _shutdown
 from deepaas import config
 
 cli_opts = [
-    cfg.StrOpt('listen-ip',
-               default='127.0.0.1',
-               help="""
+    cfg.StrOpt(
+        "listen-ip",
+        default="127.0.0.1",
+        help="""
 IP address on which the DEEPaaS API will listen.
 
 The DEEPaaS API service listens on this IP address for incoming
 requests.
-"""),
-    cfg.PortOpt('listen-port',
-                default=5000,
-                help="""
+""",
+    ),
+    cfg.PortOpt(
+        "listen-port",
+        default=5000,
+        help="""
 Port on which the DEEPaaS API will listen.
 
 The DEEPaaS API service listens on this port number for incoming
 requests.
-"""),
+""",
+    ),
 ]
 
 CONF = cfg.CONF
