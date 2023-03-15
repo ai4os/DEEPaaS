@@ -70,7 +70,7 @@ class TestV2Model(base.TestCase):
         self.assertRaises(NotImplementedError, m.get_train_args)
 
     @mock.patch("deepaas.model.v2.wrapper.ModelWrapper._setup_cleanup")
-    def test_bad_schema(self, m_clean):
+    async def test_bad_schema(self, m_clean):
         class Model(object):
             schema = []
 
@@ -82,7 +82,7 @@ class TestV2Model(base.TestCase):
         )
 
     @mock.patch("deepaas.model.v2.wrapper.ModelWrapper._setup_cleanup")
-    def test_validate_no_schema(self, m_clean):
+    async def test_validate_no_schema(self, m_clean):
         class Model(object):
             schema = None
 
@@ -94,7 +94,7 @@ class TestV2Model(base.TestCase):
         )
 
     @mock.patch("deepaas.model.v2.wrapper.ModelWrapper._setup_cleanup")
-    def test_invalid_schema(self, m_clean):
+    async def test_invalid_schema(self, m_clean):
         class Model(object):
             schema = object()
 
@@ -106,7 +106,7 @@ class TestV2Model(base.TestCase):
         )
 
     @mock.patch("deepaas.model.v2.wrapper.ModelWrapper._setup_cleanup")
-    def test_marshmallow_schema(self, m_clean):
+    async def test_marshmallow_schema(self, m_clean):
         class Schema(marshmallow.Schema):
             foo = m_fields.Str()
 
@@ -123,7 +123,7 @@ class TestV2Model(base.TestCase):
         )
 
     @mock.patch("deepaas.model.v2.wrapper.ModelWrapper._setup_cleanup")
-    def test_dict_schema(self, m_clean):
+    async def test_dict_schema(self, m_clean):
         class Model(object):
             schema = {
                 "foo": m_fields.Str()
@@ -215,7 +215,7 @@ class TestV2Model(base.TestCase):
 
     @mock.patch("deepaas.model.v2.wrapper.ModelWrapper._setup_cleanup")
     @mock.patch('deepaas.model.loading.get_available_models')
-    def test_loading_ok(self, mock_loading, m_clean):
+    async def test_loading_ok(self, mock_loading, m_clean):
         mock_loading.return_value = {uuid.uuid4().hex: "bar"}
         deepaas.model.v2.register_models(self.app)
         mock_loading.assert_called()
@@ -224,7 +224,7 @@ class TestV2Model(base.TestCase):
 
     @mock.patch("deepaas.model.v2.wrapper.ModelWrapper._setup_cleanup")
     @mock.patch('deepaas.model.loading.get_available_models')
-    def test_loading_ok_singleton(self, mock_loading, m_clean):
+    async def test_loading_ok_singleton(self, mock_loading, m_clean):
         mock_loading.return_value = {uuid.uuid4().hex: "bar"}
         deepaas.model.v2.register_models(self.app)
         deepaas.model.v2.register_models(self.app)
@@ -234,7 +234,7 @@ class TestV2Model(base.TestCase):
 
     @mock.patch("deepaas.model.v2.wrapper.ModelWrapper._setup_cleanup")
     @mock.patch('deepaas.model.loading.get_available_models')
-    def test_loading_error(self, mock_loading, m_clean):
+    async def test_loading_error(self, mock_loading, m_clean):
         mock_loading.return_value = {}
         deepaas.model.v2.register_models(self.app)
         mock_loading.assert_called()

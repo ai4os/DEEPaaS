@@ -46,8 +46,6 @@ class TestCase(testtools.TestCase, aiohttp.test_utils.AioHTTPTestCase):
 
         super(TestCase, self).setUp()
 
-        self.assertEqual(self.app.debug, True)
-
         test_timeout = os.environ.get('TESTR_TEST_TIMEOUT', 0)
         try:
             test_timeout = int(test_timeout)
@@ -65,6 +63,12 @@ class TestCase(testtools.TestCase, aiohttp.test_utils.AioHTTPTestCase):
         if os.environ.get('TESTR_STDERR_CAPTURE') in _TRUE_VALUES:
             stderr = self.useFixture(fixtures.StringStream('stderr')).stream
             self.useFixture(fixtures.MonkeyPatch('sys.stderr', stderr))
+
+    async def asyncSetUp(self):
+        """Run before each test method to initialize test environment."""
+
+        await super(TestCase, self).asyncSetUp()
+        self.assertEqual(self.app.debug, True)
 
     def flags(self, **kw):
         """Override flag variables for a test."""

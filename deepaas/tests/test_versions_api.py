@@ -15,7 +15,6 @@
 # under the License.
 
 
-from aiohttp import test_utils
 from aiohttp import web
 import aiohttp_apispec
 
@@ -42,13 +41,11 @@ class TestApiVersions(base.TestCase):
 
         return app
 
-    @test_utils.unittest_run_loop
     async def test_get_no_versions(self):
         ret = await self.client.get("/")
         self.assertEqual(200, ret.status)
         self.assertDictEqual(fake_responses.empty_versions, await ret.json())
 
-    @test_utils.unittest_run_loop
     async def test_v2_version(self):
         versions.register_version("stable", v2.get_version)
         ret = await self.client.get("/")
