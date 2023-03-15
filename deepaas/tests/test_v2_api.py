@@ -14,12 +14,12 @@
 # License for the specific language governing permissions and limitations
 # under the License.
 
-import unittest
 import uuid
 
-from aiohttp import test_utils
 from aiohttp import web
 import six
+from oslo_config import cfg
+from oslo_log import log as logging
 
 import deepaas
 from deepaas.api import v2
@@ -30,13 +30,15 @@ import deepaas.model.v2
 from deepaas.tests import base
 from deepaas.tests import fake_responses
 
+CONF = cfg.CONF
+logging.register_options(CONF)
 
-class TestModelResponse(base.TestCase):
-    def test_loading_ok_with_missing_schema(self):
-        class Fake(object):
-            response_schema = None
-        response = predict._get_model_response("deepaas-test", Fake)
-        self.assertIs(response, responses.Prediction)
+
+def test_loading_ok_with_missing_schema():
+    class Fake(object):
+        response_schema = None
+    response = predict._get_model_response("deepaas-test", Fake)
+    assert response is responses.Prediction
 
 
 class TestApiV2(base.TestCase):
@@ -62,7 +64,6 @@ class TestApiV2(base.TestCase):
     def assert_ok(self, response):
         self.assertIn(response.status, [200, 201])
 
-    @test_utils.unittest_run_loop
     async def test_not_found(self):
         ret = await self.client.get("/v2/models/%s" % uuid.uuid4().hex)
         self.assertEqual(404, ret.status)
@@ -76,7 +77,6 @@ class TestApiV2(base.TestCase):
         ret = await self.client.delete("/v2/models/%s" % uuid.uuid4().hex)
         self.assertEqual(404, ret.status)
 
-    @test_utils.unittest_run_loop
     async def test_model_not_found(self):
         ret = await self.client.put("/v2/models/%s/train" % uuid.uuid4().hex)
         self.assertEqual(404, ret.status)
@@ -88,7 +88,6 @@ class TestApiV2(base.TestCase):
         ret = await self.client.get("/v2/models/%s" % uuid.uuid4().hex)
         self.assertEqual(404, ret.status)
 
-    @test_utils.unittest_run_loop
     async def test_predict_no_parameters(self):
         ret = await self.client.post("/v2/models/deepaas-test/predict/")
         json = await ret.json()
@@ -102,8 +101,6 @@ class TestApiV2(base.TestCase):
         )
         self.assertEqual(422, ret.status)
 
-    @unittest.skip("Spurious failure due to to asyncio closed loop")
-    @test_utils.unittest_run_loop
     async def test_predict_data(self):
         f = six.BytesIO(b"foo")
         ret = await self.client.post(
@@ -115,8 +112,6 @@ class TestApiV2(base.TestCase):
         self.assertEqual(200, ret.status)
         self.assertDictEqual(fake_responses.deepaas_test_predict, json)
 
-    @unittest.skip("Spurious failure due to to asyncio closed loop")
-    @test_utils.unittest_run_loop
     async def test_train(self):
         ret = await self.client.post("/v2/models/deepaas-test/train/",
                                      data={"sleep": 0})
@@ -125,7 +120,6 @@ class TestApiV2(base.TestCase):
         json.pop("date")
         self.assertDictEqual(fake_responses.deepaas_test_train, json)
 
-    @test_utils.unittest_run_loop
     async def test_get_metadata(self):
         meta = fake_responses.models_meta
 
@@ -137,7 +131,6 @@ class TestApiV2(base.TestCase):
         self.assert_ok(ret)
         self.assertDictEqual(meta["models"][0], await ret.json())
 
-    @test_utils.unittest_run_loop
     async def test_bad_metods_metadata(self):
         for i in (self.client.post, self.client.put, self.client.delete):
             ret = await i("/v2/models/")
