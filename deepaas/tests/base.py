@@ -28,7 +28,7 @@ CONF = cfg.CONF
 logging.register_options(CONF)
 
 
-_TRUE_VALUES = ('True', 'true', '1', 'yes')
+_TRUE_VALUES = ("True", "true", "1", "yes")
 
 
 class TestCase(testtools.TestCase, aiohttp.test_utils.AioHTTPTestCase):
@@ -46,7 +46,7 @@ class TestCase(testtools.TestCase, aiohttp.test_utils.AioHTTPTestCase):
 
         super(TestCase, self).setUp()
 
-        test_timeout = os.environ.get('TESTR_TEST_TIMEOUT', 0)
+        test_timeout = os.environ.get("TESTR_TEST_TIMEOUT", 0)
         try:
             test_timeout = int(test_timeout)
         except ValueError:
@@ -57,12 +57,12 @@ class TestCase(testtools.TestCase, aiohttp.test_utils.AioHTTPTestCase):
 
         self.useFixture(config_fixture.Config(CONF))
 
-        if os.environ.get('TESTR_STDOUT_CAPTURE') in _TRUE_VALUES:
-            stdout = self.useFixture(fixtures.StringStream('stdout')).stream
-            self.useFixture(fixtures.MonkeyPatch('sys.stdout', stdout))
-        if os.environ.get('TESTR_STDERR_CAPTURE') in _TRUE_VALUES:
-            stderr = self.useFixture(fixtures.StringStream('stderr')).stream
-            self.useFixture(fixtures.MonkeyPatch('sys.stderr', stderr))
+        if os.environ.get("TESTR_STDOUT_CAPTURE") in _TRUE_VALUES:
+            stdout = self.useFixture(fixtures.StringStream("stdout")).stream
+            self.useFixture(fixtures.MonkeyPatch("sys.stdout", stdout))
+        if os.environ.get("TESTR_STDERR_CAPTURE") in _TRUE_VALUES:
+            stderr = self.useFixture(fixtures.StringStream("stderr")).stream
+            self.useFixture(fixtures.MonkeyPatch("sys.stderr", stderr))
 
     async def asyncSetUp(self):
         """Run before each test method to initialize test environment."""
@@ -72,6 +72,6 @@ class TestCase(testtools.TestCase, aiohttp.test_utils.AioHTTPTestCase):
 
     def flags(self, **kw):
         """Override flag variables for a test."""
-        group = kw.pop('group', None)
+        group = kw.pop("group", None)
         for k, v in kw.items():
             CONF.set_override(k, v, group)

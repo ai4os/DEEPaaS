@@ -16,7 +16,7 @@
 
 import pbr.version
 
-version_info = pbr.version.VersionInfo('deepaas')
+version_info = pbr.version.VersionInfo("deepaas")
 
 version_string = version_info.version_string()
 release_string = version_info.release_string()

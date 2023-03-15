@@ -19,7 +19,6 @@ from aiohttp import web
 
 class NotEnabledHandler(object):
     def __getattr__(self, attr):
-
         async def f(*args, **kwargs):
             raise web.HTTPPaymentRequired()
 

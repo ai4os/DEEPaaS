@@ -37,10 +37,9 @@ LOG = log.getLogger(__name__)
 CONF = cfg.CONF
 
 
-UploadedFile = collections.namedtuple("UploadedFile", ("name",
-                                                       "filename",
-                                                       "content_type",
-                                                       "original_filename"))
+UploadedFile = collections.namedtuple(
+    "UploadedFile", ("name", "filename", "content_type", "original_filename")
+)
 """Class to hold uploaded field metadata when passed to model's methods
 
 .. py:attribute:: name
@@ -60,10 +59,9 @@ UploadedFile = collections.namedtuple("UploadedFile", ("name",
    Filename of the original file being uploaded.
 """
 
-ReturnedFile = collections.namedtuple("ReturnedFile", ("name",
-                                                       "filename",
-                                                       "content_type",
-                                                       "original_filename"))
+ReturnedFile = collections.namedtuple(
+    "ReturnedFile", ("name", "filename", "content_type", "original_filename")
+)
 """Class to pass the files returned from predict in a pickable way
 
 .. py:attribute:: name
@@ -101,6 +99,7 @@ class ModelWrapper(object):
     :raises HTTPInternalServerError: in case that a model has defined
         a response schema that is not JSON schema valid (DRAFT 4)
     """
+
     def __init__(self, name, model_obj, app=None):
         self.name = name
         self.model_obj = model_obj
@@ -119,15 +118,13 @@ class ModelWrapper(object):
         if isinstance(schema, dict):
             try:
                 schema = marshmallow.Schema.from_dict(
-                    schema,
-                    name="ModelPredictionResponse"
+                    schema, name="ModelPredictionResponse"
                 )
                 self.has_schema = True
             except Exception as e:
                 LOG.exception(e)
                 raise web.HTTPInternalServerError(
-                    reason=("Model defined schema is invalid, "
-                            "check server logs.")
+                    reason=("Model defined schema is invalid, " "check server logs.")
                 )
         elif schema is not None:
             try:
@@ -135,8 +132,7 @@ class ModelWrapper(object):
                     self.has_schema = True
             except TypeError:
                 raise web.HTTPInternalServerError(
-                    reason=("Model defined schema is invalid, "
-                            "check server logs.")
+                    reason=("Model defined schema is invalid, " "check server logs.")
                 )
         else:
             self.has_schema = False
@@ -161,17 +157,16 @@ class ModelWrapper(object):
             yield
         except AttributeError:
             raise web.HTTPNotImplemented(
-                reason=("Not implemented by underlying model (loaded '%s')" %
-                        name)
+                reason=("Not implemented by underlying model (loaded '%s')" % name)
             )
         except NotImplementedError:
             raise web.HTTPNotImplemented(
-                reason=("Model '%s' does not implement this functionality" %
-                        name)
+                reason=("Model '%s' does not implement this functionality" % name)
             )
         except Exception as e:
-            LOG.error("An exception has happened when calling method on "
-                      "'%s' model." % name)
+            LOG.error(
+                "An exception has happened when calling method on " "'%s' model." % name
+            )
             LOG.exception(e)
             if isinstance(e, web.HTTPException):
                 raise e
@@ -190,8 +185,10 @@ class ModelWrapper(object):
         """
         if self.has_schema is not True:
             raise web.HTTPInternalServerError(
-                reason=("Trying to validate against a schema, but I do not "
-                        "have one defined")
+                reason=(
+                    "Trying to validate against a schema, but I do not "
+                    "have one defined"
+                )
             )
 
         try:
@@ -224,16 +221,16 @@ class ModelWrapper(object):
             d = {
                 "id": "0",
                 "name": self.name,
-                "description": ("Could not load description from "
-                                "underlying model (loaded '%s')" % self.name),
+                "description": (
+                    "Could not load description from "
+                    "underlying model (loaded '%s')" % self.name
+                ),
             }
         return d
 
     def _run_in_pool(self, func, *args, **kwargs):
         fn = functools.partial(func, *args, **kwargs)
-        ret = self._loop.create_task(
-            self._executor.apply(fn)
-        )
+        ret = self._loop.create_task(self._executor.apply(fn))
         return ret
 
     async def warm(self):
@@ -292,7 +289,7 @@ class ModelWrapper(object):
                     name=val.name,
                     filename=name,
                     content_type=val.content_type,
-                    original_filename=val.filename
+                    original_filename=val.filename,
                 )
                 kwargs[key] = aux
                 # FIXME(aloga); cleanup of tmpfile here
@@ -314,9 +311,7 @@ class ModelWrapper(object):
         """
 
         with self._catch_error():
-            return self._run_in_pool(
-                self.model_obj.train, *args, **kwargs
-            )
+            return self._run_in_pool(self.model_obj.train, *args, **kwargs)
 
     def get_train_args(self):
         """Add training arguments into the training parser.
@@ -354,6 +349,7 @@ class NonDaemonProcess(multiprocessing.context.SpawnProcess):
     [2] https://github.com/tensorflow/tensorflow/issues/5448
     #issuecomment-258934405
     """
+
     @property
     def daemon(self):
         return False
@@ -379,7 +375,7 @@ class CancellablePool(object):
         self._change = asyncio.Event()
 
     def _new_pool(self):
-        return NonDaemonPool(1, context=multiprocessing.get_context('spawn'))
+        return NonDaemonPool(1, context=multiprocessing.get_context("spawn"))
 
     async def apply(self, fn, *args):
         """
@@ -397,8 +393,7 @@ class CancellablePool(object):
         fut = loop.create_future()
 
         def _on_done(obj):
-            ret = {'output': obj,
-                   'finish_date': str(datetime.datetime.now())}
+            ret = {"output": obj, "finish_date": str(datetime.datetime.now())}
             loop.call_soon_threadsafe(fut.set_result, ret)
 
         def _on_err(err):
@@ -414,8 +409,7 @@ class CancellablePool(object):
             try:
                 pool._pool[0].kill()
             except AttributeError:
-                os.kill(pool._pool[0].pid,
-                        signal.SIGKILL)
+                os.kill(pool._pool[0].pid, signal.SIGKILL)
             pool.terminate()
             usable_pool = self._new_pool()
         finally:

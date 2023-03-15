@@ -33,7 +33,7 @@ class TestRun(base.TestCase):
     def test_run(self, m_get_app, m_run_app, m_handle_signals):
         m = mock.MagicMock()
         m_get_app.return_value = m
-        with mock.patch.object(sys, 'argv', ["deepaas-run"]):
+        with mock.patch.object(sys, "argv", ["deepaas-run"]):
             run.main()
         m_get_app.assert_called_once()
         m_run_app.assert_called_with(
@@ -53,7 +53,7 @@ class TestRun(base.TestCase):
         port = 1234
         self.flags(listen_ip=ip)
         self.flags(listen_port=port)
-        with mock.patch.object(sys, 'argv', ["deepaas-run"]):
+        with mock.patch.object(sys, "argv", ["deepaas-run"]):
             run.main()
         m_get_app.assert_called_once()
         m_run_app.assert_called_with(
@@ -71,9 +71,8 @@ class TestExecute(base.TestCase):
         out_file = "deepaas/tests/out_test/"
         self.flags(input_file=in_file)
         self.flags(output=out_file)
-        m_out_pred.return_value = [{
-            'value1': {'pred': 1}, 'value2': {'pred': 0.9}}]
-        with mock.patch.object(sys, 'argv', ["deepaas-predict"]):
+        m_out_pred.return_value = [{"value1": {"pred": 1}, "value2": {"pred": 0.9}}]
+        with mock.patch.object(sys, "argv", ["deepaas-predict"]):
             execute.main()
 
     @mock.patch("deepaas.cmd.execute.prediction")
@@ -83,9 +82,8 @@ class TestExecute(base.TestCase):
         self.flags(input_file=in_file)
         self.flags(output=out_file)
         self.flags(url=True)
-        m_out_pred.return_value = [{
-            'value1': {'pred': 1}, 'value2': {'pred': 0.9}}]
-        with mock.patch.object(sys, 'argv', ["deepaas-predict"]):
+        m_out_pred.return_value = [{"value1": {"pred": 1}, "value2": {"pred": 0.9}}]
+        with mock.patch.object(sys, "argv", ["deepaas-predict"]):
             execute.main()
 
     @mock.patch("deepaas.cmd.execute.prediction")
@@ -100,21 +98,17 @@ class TestExecute(base.TestCase):
         if os.path.exists(output_dir):
             shutil.rmtree(output_dir)
         os.mkdir(output_dir)
-        out_json = [{
-            'value1': {'pred': 1}, 'value2': {'pred': 0.9}}]
-        f_json = open(output_dir + 'output' + ".json", "w+")
-        f_json.write(repr(out_json) + '\n')
+        out_json = [{"value1": {"pred": 1}, "value2": {"pred": 0.9}}]
+        f_json = open(output_dir + "output" + ".json", "w+")
+        f_json.write(repr(out_json) + "\n")
         f_json.close
-        url = ('https://storage.googleapis.com/'
-               'tfjs-models/assets/posenet/frisbee.jpg')
+        url = "https://storage.googleapis.com/" "tfjs-models/assets/posenet/frisbee.jpg"
         urllib.request.urlretrieve(url, "example_image.jpg")
         shutil.move(f_json.name, output_dir)
         shutil.move("example_image.jpg", output_dir)
-        f = shutil.make_archive(base_name=output_dir,
-                                format='zip',
-                                root_dir=output_dir)
-        m_out_pred.return_value = open(f, 'rb')
-        with mock.patch.object(sys, 'argv', ["deepaas-predict"]):
+        f = shutil.make_archive(base_name=output_dir, format="zip", root_dir=output_dir)
+        m_out_pred.return_value = open(f, "rb")
+        with mock.patch.object(sys, "argv", ["deepaas-predict"]):
             execute.main()
         shutil.rmtree(output_dir)
         os.remove(output_dir + ".zip")

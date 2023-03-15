@@ -52,27 +52,28 @@ API_DESCRIPTION = (
 ) + LINKS
 
 
-async def get_app(swagger=True, doc="/ui", prefix="",
-                  static_path="/static/swagger", base_path="",
-                  enable_train=True, enable_predict=True):
+async def get_app(
+    swagger=True,
+    doc="/ui",
+    prefix="",
+    static_path="/static/swagger",
+    base_path="",
+    enable_train=True,
+    enable_predict=True,
+):
     """Get the main app."""
     global APP
 
     if APP:
         return APP
 
-    APP = web.Application(debug=CONF.debug,
-                          client_max_size=CONF.client_max_size
-                          )
+    APP = web.Application(debug=CONF.debug, client_max_size=CONF.client_max_size)
 
     APP.middlewares.append(web.normalize_path_middleware())
 
     model.register_v2_models(APP)
 
-    v2app = v2.get_app(
-        enable_train=enable_train,
-        enable_predict=enable_predict
-    )
+    v2app = v2.get_app(enable_train=enable_train, enable_predict=enable_predict)
     APP.add_subapp("/v2", v2app)
     versions.register_version("stable", v2.get_version)
 

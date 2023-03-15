@@ -38,12 +38,7 @@ def get_app(enable_train=True, enable_predict=True):
 
     v2_debug.setup_debug()
 
-    APP.router.add_get(
-        '/',
-        get_version,
-        name="v2",
-        allow_head=False
-    )
+    APP.router.add_get("/", get_version, name="v2", allow_head=False)
     v2_debug.setup_routes(APP)
     v2_model.setup_routes(APP)
     v2_train.setup_routes(APP, enable=enable_train)
@@ -72,7 +67,7 @@ async def get_version(request):
                 "type": "application/json",
                 "href": "%s" % root,
             }
-        ]
+        ],
     }
 
     return web.json_response(version)

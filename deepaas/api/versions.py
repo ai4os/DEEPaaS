@@ -25,9 +25,8 @@ app = web.Application()
 routes = web.RouteTableDef()
 
 
-@routes.view('/')
+@routes.view("/")
 class Versions(web.View):
-
     versions = {}
 
     def __init__(self, *args, **kwargs):
@@ -45,18 +44,11 @@ class Versions(web.View):
             resp = await info(self.request)
             versions.append(json.loads(resp.body))
 
-        response = {
-            "versions": versions,
-            "links": []
-        }
+        response = {"versions": versions, "links": []}
         # But here we use the global app coming in the request
         doc = self.request.app.router.named_resources().get("swagger.docs")
         if doc:
-            doc = {
-                "rel": "help",
-                "type": "text/html",
-                "href": "%s" % doc.url_for()
-            }
+            doc = {"rel": "help", "type": "text/html", "href": "%s" % doc.url_for()}
             response["links"].append(doc)
 
         spec = self.request.app.router.named_resources().get("swagger.spec")

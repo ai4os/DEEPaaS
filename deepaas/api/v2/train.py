@@ -64,18 +64,17 @@ def _get_handler(model_name, model_obj):  # noqa
                 else:
                     ret["status"] = "done"
                     ret["result"] = training["task"].result()
-                    end = datetime.strptime(ret["result"]["finish_date"],
-                                            '%Y-%m-%d %H:%M:%S.%f')
-                    start = datetime.strptime(ret["date"],
-                                              '%Y-%m-%d %H:%M:%S.%f')
+                    end = datetime.strptime(
+                        ret["result"]["finish_date"], "%Y-%m-%d %H:%M:%S.%f"
+                    )
+                    start = datetime.strptime(ret["date"], "%Y-%m-%d %H:%M:%S.%f")
                     ret["result"]["duration"] = str(end - start)
             else:
                 ret["status"] = "running"
             return ret
 
         @aiohttp_apispec.docs(
-            tags=["models"],
-            summary="Retrain model with available data"
+            tags=["models"], summary="Retrain model with available data"
         )
         @aiohttp_apispec.querystring_schema(args)
         @aiohttpparser.parser.use_args(args)
@@ -90,10 +89,7 @@ def _get_handler(model_name, model_obj):  # noqa
             ret = self.build_train_response(uuid_, self._trainings[uuid_])
             return web.json_response(ret)
 
-        @aiohttp_apispec.docs(
-            tags=["models"],
-            summary="Cancel a running training"
-        )
+        @aiohttp_apispec.docs(tags=["models"], summary="Cancel a running training")
         async def delete(self, request):
             uuid_ = request.match_info["uuid"]
             training = self._trainings.pop(uuid_, None)
@@ -109,8 +105,7 @@ def _get_handler(model_name, model_obj):  # noqa
             return web.json_response(ret)
 
         @aiohttp_apispec.docs(
-            tags=["models"],
-            summary="Get a list of trainings (running or completed)"
+            tags=["models"], summary="Get a list of trainings (running or completed)"
         )
         @aiohttp_apispec.response_schema(responses.TrainingList(), 200)
         async def index(self, request):
@@ -122,10 +117,7 @@ def _get_handler(model_name, model_obj):  # noqa
 
             return web.json_response(ret)
 
-        @aiohttp_apispec.docs(
-            tags=["models"],
-            summary="Get status of a training"
-        )
+        @aiohttp_apispec.docs(tags=["models"], summary="Get status of a training")
         @aiohttp_apispec.response_schema(responses.Training(), 200)
         async def get(self, request):
             uuid_ = request.match_info["uuid"]
@@ -147,21 +139,11 @@ def setup_routes(app, enable=True):
             hdlr = _get_handler(model_name, model_obj)
         else:
             hdlr = utils.NotEnabledHandler()
-        app.router.add_post(
-            "/models/%s/train/" % model_name,
-            hdlr.post
+        app.router.add_post("/models/%s/train/" % model_name, hdlr.post)
+        app.router.add_get(
+            "/models/%s/train/" % model_name, hdlr.index, allow_head=False
         )
         app.router.add_get(
-            "/models/%s/train/" % model_name,
-            hdlr.index,
-            allow_head=False
+            "/models/%s/train/{uuid}" % model_name, hdlr.get, allow_head=False
         )
-        app.router.add_get(
-            "/models/%s/train/{uuid}" % model_name,
-            hdlr.get,
-            allow_head=False
-        )
-        app.router.add_delete(
-            "/models/%s/train/{uuid}" % model_name,
-            hdlr.delete
-        )
+        app.router.add_delete("/models/%s/train/{uuid}" % model_name, hdlr.delete)
