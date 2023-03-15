@@ -23,7 +23,7 @@ pipeline {
 
         stage('Style analysis') {
             steps {
-                ToxEnvRun('pep8')
+                ToxEnvRun('flake8')
             }
             post {
                 always {
