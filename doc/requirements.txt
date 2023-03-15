@@ -1,0 +1,4 @@
+sphinx>=4.0.2
+sphinx_rtd_theme
+recommonmark
+reno>=2.5.0
