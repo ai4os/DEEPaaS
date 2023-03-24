@@ -146,7 +146,7 @@ class TestV2Model(base.TestCase):
         self.assertEqual("Alvaro Lopez Garcia", meta["author"])
         pargs = m.get_predict_args()
         targs = m.get_train_args()
-        for arg, val in itertools.chain(pargs.items(), targs.items()):
+        for _arg, val in itertools.chain(pargs.items(), targs.items()):
             self.assertIsInstance(val, fields.Field)
 
     @mock.patch("deepaas.model.v2.wrapper.ModelWrapper._setup_cleanup")
@@ -169,7 +169,7 @@ class TestV2Model(base.TestCase):
         self.assertIn("name", meta)
         pargs = w.get_predict_args()
         targs = w.get_train_args()
-        for arg, val in itertools.chain(pargs.items(), targs.items()):
+        for _arg, val in itertools.chain(pargs.items(), targs.items()):
             self.assertIsInstance(val, fields.Field)
 
     @mock.patch("deepaas.model.v2.wrapper.ModelWrapper._setup_cleanup")
@@ -198,7 +198,7 @@ class TestV2Model(base.TestCase):
         self.assertIn("name", meta)
         pargs = w.get_predict_args()
         targs = w.get_train_args()
-        for arg, val in itertools.chain(pargs.items(), targs.items()):
+        for _arg, val in itertools.chain(pargs.items(), targs.items()):
             self.assertIsInstance(val, fields.Field)
 
     @mock.patch("deepaas.model.v2.wrapper.ModelWrapper._setup_cleanup")
