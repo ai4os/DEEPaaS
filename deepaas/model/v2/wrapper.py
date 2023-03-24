@@ -361,7 +361,7 @@ class NonDaemonProcess(multiprocessing.context.SpawnProcess):
 
 class NonDaemonPool(multiprocessing.pool.Pool):
     # Based on https://stackoverflow.com/questions/6974695/
-    def Process(self, *args, **kwds):
+    def Process(self, *args, **kwds):  # noqa
         proc = super(NonDaemonPool, self).Process(*args, **kwds)
         proc.__class__ = NonDaemonProcess
 
