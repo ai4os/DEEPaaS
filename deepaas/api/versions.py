@@ -40,7 +40,7 @@ class Versions(web.View):
     @aiohttp_apispec.response_schema(responses.Failure(), 400)
     async def get(self):
         versions = []
-        for ver, info in self.versions.items():
+        for _ver, info in self.versions.items():
             resp = await info(self.request)
             versions.append(json.loads(resp.body))
 
