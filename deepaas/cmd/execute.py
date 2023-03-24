@@ -111,7 +111,7 @@ def prediction(input_file, file_type, content_type):
         input_data = {"urls": [input_file], "accept": content_type}
         output_pred = predict_url(input_data)
     else:
-        content_type_in, fileEncoding = mimetypes.guess_type(input_file)
+        content_type_in, file_encoding = mimetypes.guess_type(input_file)
         file = UploadedFile(
             name=input_file, filename=input_file, content_type=content_type_in
         )
