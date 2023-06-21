@@ -42,7 +42,7 @@ Specify whether DEEPaaS should provide a predict endpoint (default: True).
     ),
     cfg.BoolOpt(
         "debug-endpoint",
-        default="false",
+        default=False,
         help="""
 Enable debug endpoint. If set we will provide all the information that you
 print to the standard output and error (i.e. stdout and stderr) through the
