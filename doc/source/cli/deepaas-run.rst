@@ -21,6 +21,14 @@ Options
    If set to true, the logging level will be set to DEBUG instead of the
    default INFO level.
 
+.. option:: --predict-endpoint
+
+   Specify whether DEEPaaS should provide a train endpoint (default: True).
+
+.. option:: --train-endpoint
+
+   Specify whether DEEPaaS should provide a train endpoint (default: True).
+
 .. option:: --debug-endpoint
 
    Enable debug endpoint. If set we will provide all the information that you
