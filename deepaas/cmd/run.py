@@ -91,7 +91,11 @@ def main():
 
     log.info("Starting DEEPaaS version %s", deepaas.__version__)
 
-    app = api.get_app(doc="/ui")
+    app = api.get_app(
+        doc="/ui",
+        enable_train=CONF.train_endpoint,
+        enable_predict=CONF.predict_endpoint,
+    )
     web.run_app(
         app,
         host=CONF.listen_ip,
