@@ -54,6 +54,7 @@ API_DESCRIPTION = (
 
 async def get_app(
     swagger=True,
+    enable_doc=True,
     doc="/ui",
     prefix="",
     static_path="/static/swagger",
@@ -101,7 +102,7 @@ async def get_app(
             basePath=base_path,
             version=deepaas.__version__,
             url="/swagger.json",
-            swagger_path=doc if doc else None,
+            swagger_path=doc if enable_doc else None,
             prefix=prefix,
             static_path=static_path,
             in_place=True,
