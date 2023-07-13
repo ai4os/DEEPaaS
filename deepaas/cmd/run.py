@@ -92,7 +92,7 @@ def main():
     log.info("Starting DEEPaaS version %s", deepaas.__version__)
 
     app = api.get_app(
-        doc="/ui",
+        enable_doc=CONF.doc_endpoint,
         enable_train=CONF.train_endpoint,
         enable_predict=CONF.predict_endpoint,
     )

@@ -137,6 +137,33 @@ class TestApiV2NoPredict(base.TestCase):
         self.assertDictEqual(meta["models"][0], await ret.json())
 
 
+class TestApiV2NoDoc(base.TestCase):
+    async def get_application(self):
+        app = web.Application(debug=True)
+        app.middlewares.append(web.normalize_path_middleware())
+
+        deepaas.model.v2.register_models(app)
+
+        v2app = v2.get_app(enable_doc=False)
+        app.add_subapp("/v2", v2app)
+
+        return app
+
+    def setUp(self):
+        super(TestApiV2NoDoc, self).setUp()
+
+        self.maxDiff = None
+
+        self.flags(debug=True)
+
+    def assert_ok(self, response):
+        self.assertIn(response.status, [200, 201])
+
+    async def test_not_found(self):
+        ret = await self.client.get("/ui")
+        self.assertEqual(404, ret.status)
+
+
 class TestApiV2(base.TestCase):
     async def get_application(self):
         app = web.Application(debug=True)
