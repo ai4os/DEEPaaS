@@ -61,6 +61,7 @@ FIELD_TYPE_CONVERTERS = {
     fields.UUID: str,
 }
 
+
 # Helper function to get subdictionary from dict_one based on keys in dict_two
 def _get_subdict(dict_one, dict_two):
     """Function to get subdictionary from dict_one based on keys in dict_two
@@ -82,27 +83,25 @@ def _fields_to_dict(fields_in):
     dict_out = {}
 
     for key, val in fields_in.items():
-        # initialise param with no 'default', type 'str' (!), empty 'help'
-        param = {'default': None,
-                 'type': str,
-                 'help': ''}
+        # initialise param with no "default", type "str" (!), empty "help"
+        param = {"default": None, "type": str, "help": ""}
 
-        # infer 'type'
-        # see FIELD_TYPE_CONVERTERS for converting 
+        # infer "type"
+        # see FIELD_TYPE_CONVERTERS for converting
         # mashmallow field types to python types
         val_type = type(val)
         if val_type in FIELD_TYPE_CONVERTERS:
-           param['type'] = FIELD_TYPE_CONVERTERS[val_type]
+            param["type"] = FIELD_TYPE_CONVERTERS[val_type]
 
-        if key == 'files' or key == 'urls':
-            param['type'] = str
+        if key == "files" or key == "urls":
+            param["type"] = str
 
-        # infer 'required'
+        # infer "required"
         try:
             val_req = val.required
         except Exception:
             val_req = False
-        param['required'] = val_req
+        param["required"] = val_req
 
         # infer 'default'
         # if the field is not required, there must be default value
@@ -110,17 +109,16 @@ def _fields_to_dict(fields_in):
             param["default"] = val.missing
 
         # infer 'help'
-        val_help = val.metadata['description']
+        val_help = val.metadata["description"]
         # argparse hates % sign:
-        if '%' in val_help:
+        if "%" in val_help:
             # replace single occurancies of '%' with '%%'
-            # since '%%' is accepted by argparse
-            val_help = re.sub(r'(?<!%)%(?!%)', r'%%', val_help)
+            # since "%%"" is accepted by argparse
+            val_help = re.sub(r"(?<!%)%(?!%)", r"%%", val_help)
 
-        if 'enum' in val.metadata.keys():
-            val_help = "{}. Choices: {}".format(val_help,
-                                                val.metadata['enum'])
-        param['help'] = val_help
+        if "enum" in val.metadata.keys():
+            val_help = f"{val_help}. Choices: {val.metadata['enum']}"
+        param["help"] = val_help
 
         dict_out[key] = param
 
@@ -388,10 +386,10 @@ def main():
         # so far, one needs to sync manually the structures
         start = datetime.now()
         ret = {
-            "date":   str(start),
-            "args":   train_vars,
+            "date": str(start),
+            "args": train_vars,
             "status": "done",
-            "uuid":   uuid.uuid4().hex,
+            "uuid": uuid.uuid4().hex,
             "result": {},
         }
         task = model_obj.train(**train_vars)
