@@ -26,8 +26,10 @@ import re
 import shutil
 import sys
 import tempfile
-import time
+import uuid
 
+from datetime import datetime
+from marshmallow import fields
 from oslo_config import cfg
 from oslo_log import log
 
@@ -38,6 +40,26 @@ from deepaas.model.v2 import wrapper as v2_wrapper
 
 debug_cli = False
 
+# Not all types are covered! If not listed, the type is 'str'
+# see https://marshmallow.readthedocs.io/en/stable/marshmallow.fields.html
+FIELD_TYPE_CONVERTERS = {
+    fields.Bool: bool,
+    fields.Boolean: bool,
+    fields.Date: str,
+    fields.DateTime: str,
+    fields.Dict: dict,
+    fields.Email: str,
+    fields.Float: float,
+    fields.Int: int,
+    fields.Integer: int,
+    fields.List: list,
+    fields.Str: str,
+    fields.String: str,
+    fields.Time: str,
+    fields.URL: str,
+    fields.Url: str,
+    fields.UUID: str,
+}
 
 # Helper function to get subdictionary from dict_one based on keys in dict_two
 def _get_subdict(dict_one, dict_two):
@@ -55,35 +77,53 @@ def _fields_to_dict(fields_in):
     """Function to convert mashmallow fields to dict()
     :param fields_in: mashmallow fields
     :return: python dictionary
-    """
 
+    """
     dict_out = {}
 
     for key, val in fields_in.items():
-        param = {}
-        param["default"] = val.missing
-        param["type"] = type(val.missing)
-        if key == "files" or key == "urls":
-            param["type"] = str
+        # initialise param with no 'default', type 'str' (!), empty 'help'
+        param = {'default': None,
+                 'type': str,
+                 'help': ''}
 
-        val_help = val.metadata["description"]
-        # argparse hates % sign:
-        if "%" in val_help:
-            # replace single occurancies of '%' with '%%'
-            # since '%%' is accepted by argparse
-            val_help = re.sub(r"(?<!%)%(?!%)", r"%%", val_help)
+        # infer 'type'
+        # see FIELD_TYPE_CONVERTERS for converting 
+        # mashmallow field types to python types
+        val_type = type(val)
+        if val_type in FIELD_TYPE_CONVERTERS:
+           param['type'] = FIELD_TYPE_CONVERTERS[val_type]
 
-        if "enum" in val.metadata.keys():
-            val_help = "{}. Choices: {}".format(val_help, val.metadata["enum"])
-        param["help"] = val_help
+        if key == 'files' or key == 'urls':
+            param['type'] = str
 
+        # infer 'required'
         try:
             val_req = val.required
         except Exception:
             val_req = False
-        param["required"] = val_req
+        param['required'] = val_req
+
+        # infer 'default'
+        # if the field is not required, there must be default value
+        if not val_req:
+            param["default"] = val.missing
+
+        # infer 'help'
+        val_help = val.metadata['description']
+        # argparse hates % sign:
+        if '%' in val_help:
+            # replace single occurancies of '%' with '%%'
+            # since '%%' is accepted by argparse
+            val_help = re.sub(r'(?<!%)%(?!%)', r'%%', val_help)
+
+        if 'enum' in val.metadata.keys():
+            val_help = "{}. Choices: {}".format(val_help,
+                                                val.metadata['enum'])
+        param['help'] = val_help
 
         dict_out[key] = param
+
     return dict_out
 
 
@@ -344,15 +384,27 @@ def main():
 
     elif CONF.methods.name == "train":
         train_vars = _get_subdict(conf_vars, train_args)
-        start = time.time()
+        # structure of ret{} copied from api.v2.train.build_train_response !!!
+        # so far, one needs to sync manually the structures
+        start = datetime.now()
+        ret = {
+            "date":   str(start),
+            "args":   train_vars,
+            "status": "done",
+            "uuid":   uuid.uuid4().hex,
+            "result": {},
+        }
         task = model_obj.train(**train_vars)
-        LOG.info("[INFO] Elapsed time:  %s", str(time.time() - start))
+        end = datetime.now()
+        ret["result"]["finish_date"] = str(end)
+        ret["result"]["duration"] = str(end - start)
         # we assume that train always returns JSON
-        results_json = json.dumps(task)
+        ret["result"]["output"] = task
+        results_json = json.dumps(ret)
+        LOG.info("[INFO] Elapsed time:  %s", str(end - start))
         LOG.debug("[DEBUG, train, Output]: {}".format(results_json))
         if CONF.deepaas_method_output:
             _store_output(results_json, CONF.deepaas_method_output)
-
         return results_json
 
     else:
