@@ -37,6 +37,7 @@ extensions = ['sphinx.ext.autodoc',
               'oslo_config.sphinxconfiggen',
               'oslo_config.sphinxext',
               "reno.sphinxext",
+              "recommonmark",
 ]
 
 # Add any paths that contain templates here, relative to this directory.

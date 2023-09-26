@@ -136,7 +136,7 @@ Before you submit a pull request, check that it meets these guidelines:
 
 Tox uses `py.test` under the hood, hence it supports the same syntax for selecting tests.
 
-For further information please consult the `pytest usage docs`_.
+For further information please consult the [pytest usage docs](https://docs.pytest.org/en/latest/usage.html#specifying-tests-selecting-tests).
 
 To run a particular test class with tox::
 
