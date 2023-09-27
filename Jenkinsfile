@@ -35,12 +35,12 @@ pipeline {
                 ToxEnvRun('cover')
                 ToxEnvRun('cobertura')
             }
-            post {
-                success {
-                    HTMLReport('cover', 'index.html', 'coverage.py report')
-                    CoberturaReport('**/coverage.xml')
-                }
-            }
+            // post {
+            //     success {
+            //         HTMLReport('cover', 'index.html', 'coverage.py report')
+            //         CoberturaReport('**/coverage.xml')
+            //     }
+            // }
         }
 
         stage('Dependency check') {
@@ -49,46 +49,46 @@ pipeline {
             }
         }
 
-        stage('DockerHub delivery') {
-            when {
-                anyOf {
-                    branch 'master'
-                    buildingTag()
-                }
-            }
-            agent {
-                label 'docker-build'
-            }
-            steps {
-                checkout scm
-                script {
-                    dockerhub_image_id = DockerBuild(dockerhub_repo,
-                                                     tag: env.BRANCH_NAME)
-                }
-            }
-            post {
-                success {
-                    DockerPush(dockerhub_image_id)
-                }
-                failure {
-                    DockerClean()
-                }
-                always {
-                    cleanWs()
-                }
-            }
-        }
+        // stage('DockerHub delivery') {
+        //     when {
+        //         anyOf {
+        //             branch 'master'
+        //             buildingTag()
+        //         }
+        //     }
+        //     agent {
+        //         label 'docker-build'
+        //     }
+        //     steps {
+        //         checkout scm
+        //         script {
+        //             dockerhub_image_id = DockerBuild(dockerhub_repo,
+        //                                              tag: env.BRANCH_NAME)
+        //         }
+        //     }
+        //     post {
+        //         success {
+        //             DockerPush(dockerhub_image_id)
+        //         }
+        //         failure {
+        //             DockerClean()
+        //         }
+        //         always {
+        //             cleanWs()
+        //         }
+        //     }
+        // }
 
-        stage('PyPI delivery') {
-            when {
-                anyOf {
-                    buildingTag()
-                }
-            }
-            steps {
-                PyPIDeploy('deepaas', 'indigobot-pypi')
-            }
-        }
+        // stage('PyPI delivery') {
+        //     when {
+        //         anyOf {
+        //             buildingTag()
+        //         }
+        //     }
+        //     steps {
+        //         PyPIDeploy('deepaas', 'indigobot-pypi')
+        //     }
+        // }
 
     }
 }
