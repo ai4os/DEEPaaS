@@ -4,7 +4,7 @@
 
 pipeline {
     agent {
-        label 'python3.10'
+        label 'python3.8'
     }
 
     environment {
