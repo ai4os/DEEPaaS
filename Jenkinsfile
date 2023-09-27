@@ -4,9 +4,7 @@
 
 pipeline {
     agent {
-        dockerfile {
-            filename 'Dockerfile.CI'
-        }
+        label 'python3.10'
     }
 
     environment {
