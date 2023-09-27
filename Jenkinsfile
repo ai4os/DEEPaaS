@@ -35,12 +35,6 @@ pipeline {
                 ToxEnvRun('cover')
                 ToxEnvRun('cobertura')
             }
-            post {
-                success {
-                    HTMLReport('cover', 'index.html', 'coverage.py report')
-                    CoberturaReport('**/coverage.xml')
-                }
-            }
         }
 
         stage('Dependency check') {
