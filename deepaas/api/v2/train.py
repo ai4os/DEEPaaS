@@ -15,6 +15,7 @@
 # under the License.
 
 import asyncio
+import collections
 from datetime import datetime
 import uuid
 
@@ -30,6 +31,23 @@ from deepaas import model
 
 LOG = log.getLogger("deepaas.api.v2.train")
 
+UploadedFileInfo = collections.namedtuple(
+    "UploadedFileInfo", ("name", "content_type", "original_filename")
+)
+"""Class to pass the file info returned from build_train_response
+
+.. py:attribute:: name
+
+   Name of the argument where this file is being sent.
+
+.. py:attribute:: content_type
+
+   Content-type of the uploaded file
+
+.. py:attribute:: original_filename
+
+   Filename of the original file being uploaded.
+"""
 
 def _get_handler(model_name, model_obj):  # noqa
     args = webargs.core.dict2schema(model_obj.get_train_args())
@@ -53,6 +71,15 @@ def _get_handler(model_name, model_obj):  # noqa
             ret["date"] = training["date"]
             ret["args"] = training["args"]
             ret["uuid"] = uuid
+
+            for (key, val) in ret["args"].items():
+                if isinstance(val, web.FileField):
+                    aux = UploadedFileInfo(
+                        name=val.name,
+                        content_type=val.content_type,
+                        original_filename=val.filename,
+                    )
+                    ret['args'][key] = aux
 
             if training["task"].cancelled():
                 ret["status"] = "cancelled"
