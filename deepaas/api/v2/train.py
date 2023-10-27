@@ -49,6 +49,7 @@ UploadedFileInfo = collections.namedtuple(
    Filename of the original file being uploaded.
 """
 
+
 def _get_handler(model_name, model_obj):  # noqa
     args = webargs.core.dict2schema(model_obj.get_train_args())
     args.opts.ordered = True
@@ -72,14 +73,14 @@ def _get_handler(model_name, model_obj):  # noqa
             ret["args"] = training["args"]
             ret["uuid"] = uuid
 
-            for (key, val) in ret["args"].items():
+            for key, val in ret["args"].items():
                 if isinstance(val, web.FileField):
                     aux = UploadedFileInfo(
                         name=val.name,
                         content_type=val.content_type,
                         original_filename=val.filename,
                     )
-                    ret['args'][key] = aux
+                    ret["args"][key] = aux
 
             if training["task"].cancelled():
                 ret["status"] = "cancelled"
