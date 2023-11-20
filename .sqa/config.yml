@@ -1,0 +1,27 @@
+sqa_criteria:
+  qc_style:
+    repos:
+      deepaas:
+        container: DEEPaaS-testing
+        tox:
+          tox_file: 'tox.ini'
+          testenv: 
+            - flake8
+            - black
+            - pip-missing-reqs
+  qc_security:
+    repos:
+      deepaas:
+        container: DEEPaaS-testing
+        tox:
+          tox_file: 'tox.ini'
+          testenv:
+            - bandit
+  # qc_doc:
+  #   repos:
+  #     deepaas:
+  #       container: DEEPaaS-testing
+  #       tox:
+  #         tox_file: 'tox.ini'
+  #         testenv:
+  #           - docs
