@@ -4,7 +4,7 @@
 
 pipeline {
     agent {
-        label 'python3.8'
+        docker { image 'indigodatacloud/ci-images:python3.10' }
     }
 
     environment {
