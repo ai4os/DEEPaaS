@@ -49,7 +49,7 @@ all_versions = {
         v2_version,
     ],
     "links": [
-        {"rel": "help", "type": "text/html", "href": "/ui"},
+        {"rel": "help", "type": "text/html", "href": "/api"},
         {"rel": "describedby", "type": "application/json", "href": "/swagger.json"},
     ],
 }
@@ -59,7 +59,7 @@ versions = {
         v2_version,
     ],
     "links": [
-        {"rel": "help", "type": "text/html", "href": "/ui"},
+        {"rel": "help", "type": "text/html", "href": "/api"},
         {"rel": "describedby", "type": "application/json", "href": "/swagger.json"},
     ],
 }
@@ -67,7 +67,7 @@ versions = {
 empty_versions = {
     "versions": [],
     "links": [
-        {"rel": "help", "type": "text/html", "href": "/ui"},
+        {"rel": "help", "type": "text/html", "href": "/api"},
         {"rel": "describedby", "type": "application/json", "href": "/swagger.json"},
     ],
 }

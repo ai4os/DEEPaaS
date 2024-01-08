@@ -55,7 +55,7 @@ API_DESCRIPTION = (
 async def get_app(
     swagger=True,
     enable_doc=True,
-    doc="/ui",
+    doc="/api",
     prefix="",
     static_path="/static/swagger",
     base_path="",
