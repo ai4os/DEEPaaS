@@ -34,7 +34,7 @@ class TestApiVersions(base.TestCase):
         versions.Versions.versions = {}
 
         aiohttp_apispec.setup_aiohttp_apispec(
-            app=app, url="/swagger.json", swagger_path="/ui"
+            app=app, url="/swagger.json", swagger_path="/api"
         )
 
         return app

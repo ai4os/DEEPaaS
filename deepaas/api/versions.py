@@ -63,6 +63,12 @@ class Versions(web.View):
         return web.json_response(response)
 
 
+@routes.get("/ui")
+async def redirect_ui(request):
+    doc_url = request.app.router.named_resources().get("swagger.docs").url_for()
+    return web.HTTPFound(doc_url)
+
+
 def register_version(version, func):
     # NOTE(aloga): we could use a @classmethod on Versions, but it fails
     # with a TypeError: 'classmethod' object is not callable since the function

@@ -55,7 +55,7 @@ provide logging information about the API itself.
         default=True,
         help="""
 Enable documentation endpoint. If set we will provide the documentation
-through the "/ui" endpoint. Default is to provide this information.
+through the "/api" endpoint. Default is to provide this information.
 """,
     ),
     cfg.IntOpt(

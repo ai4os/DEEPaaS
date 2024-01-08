@@ -83,7 +83,7 @@ def main():
 
     base = "http://{}:{}".format(CONF.listen_ip, CONF.listen_port)
     spec = "{}/swagger.json".format(base)
-    docs = "{}/ui".format(base)
+    docs = "{}/api".format(base)
     v2 = "{}/v2".format(base)
 
     print(INTRO)

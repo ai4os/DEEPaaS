@@ -160,7 +160,7 @@ class TestApiV2NoDoc(base.TestCase):
         self.assertIn(response.status, [200, 201])
 
     async def test_not_found(self):
-        ret = await self.client.get("/ui")
+        ret = await self.client.get("/api")
         self.assertEqual(404, ret.status)
 
 
