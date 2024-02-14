@@ -114,6 +114,10 @@ command::
 
 ## Contributor Guidelines
 
+### Commit messages
+
+We use [conventional title and messages](https://www.conventionalcommits.org/) for commits and pull requests.
+
 ### Pull Request Guidelines
 
 Before you submit a pull request, check that it meets these guidelines:
