@@ -51,6 +51,9 @@ API_DESCRIPTION = (
     "API and the underlying model."
 ) + LINKS
 
+async def list_models():
+
+    LOG.info("Serving loaded V2 models: %s", list(model.V2_MODELS.keys()))
 
 async def get_app(
     swagger=True,
@@ -61,6 +64,7 @@ async def get_app(
     base_path="",
     enable_train=True,
     enable_predict=True,
+    model_name=None
 ):
     """Get the main app."""
     global APP
@@ -72,7 +76,7 @@ async def get_app(
 
     APP.middlewares.append(web.normalize_path_middleware())
 
-    model.register_v2_models(APP)
+    model.register_v2_models(APP, model_name)
 
     v2app = v2.get_app(enable_train=enable_train, enable_predict=enable_predict)
     APP.add_subapp("/v2", v2app)
@@ -80,7 +84,7 @@ async def get_app(
 
     APP.add_routes(versions.routes)
 
-    LOG.info("Serving loaded V2 models: %s", list(model.V2_MODELS.keys()))
+    # LOG.info("Serving loaded V2 models: %s", list(model.V2_MODELS.keys()))
 
     if CONF.warm:
         for _, m in model.V2_MODELS.items():

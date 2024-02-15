@@ -1,0 +1,364 @@
+CHANGES
+=======
+
+* Style: Change swagger URL from /ui to /api
+* #144 - formatted code by black
+* #114 - fixed FileField json serialization error in train response
+
+2.2.0
+-----
+
+* Allow to disable doc endpoint
+* Fix debug-enpoint that should be False
+* Implement options to enable/disable train/predict endpoints
+* fix: comment breaking Jenkins stages
+* fix: use Jenkins \`python3.8\` agent
+* Update Python version in tox envs and GH actions
+* [docs] Resolve some warnings in the docs
+* [cli] Improve PEP8 in cli.py
+* [cli] Updated cli.py to account for "required" params and to updated returned structure
+* Update RTD theme version
+* Do not use shallow clones for RTD
+* Update RTD conf
+* Update python action to latest version
+* update the docs
+* Add publish GH action
+* flake8: include and fix flake8-bugbear
+* flake8: test and fix pep8 naming
+* Update tox version and remove shared envs
+* Fix document build
+* Rename test env
+* Run CI only on pull request
+* Install package deps for testing
+* Use allowlist instead of whitelist
+* Add py37 env again
+* Remove pytest-mock dependency
+* Run CI in GH actions
+* Make code black
+* Fix tests in Py>=3.8
+* Remove OpenWhisk integration from API
+* Revamp tox.ini configuration
+* Automatically generate Changelog file using PBR
+
+2.1.0
+-----
+
+* Remove bandit check
+* Include mkdir in whitelist externals
+* Remove JIRA Notification
+* pep8: remove unittest.mock error H216
+* Rely on tox to check deps
+* Remove metrics gathering stage
+* Mark OpenWhisk as deprecated, and fix error on OpenWhisk and aiohttp integration
+* Fix test error
+* Update hacking requirement
+* Relax Python >=3.7 dependency to Python >= 3.6
+* Fix: do not use warnings statement
+* Use custom Dockerfile for CI work
+
+2.0.0
+-----
+
+* Include example of marshalling of complex predictions
+* Make Python >= 3.7 a requirement
+* Fix broken multiprocessing API in some Python versions
+* Include RTD configuration file and bump Sphinx version
+* Fix typo in console message
+* fix compatibility docs
+* Remove fallback argument loading
+* Drop and remove V1 API
+* Include changelog file
+* Move from 'release/1.4.0' to tag '1.4.0'
+* Add functools.wraps warning to docs
+
+1.3.0
+-----
+
+* Release notes for 1.3.0
+* Adds deepaas-cli command to use API methods from the command line
+* Decouple ModelWrapper from api
+
+1.2.1
+-----
+
+* Unify train and predict pools to fix GPU OOM
+* add original\_filename in UploadedFile(), set defaults to None for compatibility
+
+1.2.0
+-----
+
+* Include missing release notes
+* Pin webargs version <6.0.0
+* Revert "test: Fix unit testing failing due to new aiohttp version"
+* OpenWhisk: set debut as configured by the user
+* OpenWhisk: set client\_max\_size also on OpenWhisk proxy
+* test: Fix unit testing failing due to new aiohttp version
+* improve docs
+* Add deepaas-execute command
+
+1.1.1
+-----
+
+* Remove non ASCII character from README
+* use spawn for training pool
+
+1.1.0
+-----
+
+* Remove vendorized aiohttp-apispec
+* fix unit tests
+* fix pep8
+* add training\_args, training\_output and training\_duration to the train\_response
+* remove misleading headers from the UI
+
+1.0.1
+-----
+
+* Fix failining unit test on cover env
+* Set basePath on swagger.json when serving under OpenWhisk
+* Return doc and swagger links on /
+* Temporary vendorize aiohttp-apispec
+* Changed typo in CONTRIBUTING.md
+* Update documentation
+* Fix cancellation of trainings
+
+1.0.0
+-----
+
+
+1.0.0.rc4
+---------
+
+* Limit installation to Py3 versions
+* Use release/1.4.0 of jenkins library to handle Python3 PyPI delivery
+* Enable OWASP check
+* Require pbr>=5.3.0
+* Remove accented vowels from README
+
+1.0.0.rc1
+---------
+
+* Use release as version in docs (#69)
+* Move Swagger web UI to /ui rather than /docs
+* fix default content type management
+* Homogenize route declaration indentation
+* Remove HEAD methods from GET routes
+* debug: do not print debug marker is debug endpoint is not enabled
+* Support for different response content types
+* wsk: return 200 whenever we have a response from the app
+* wsk: handle empty bodies in responses
+* Add swagger.json on OpenWhisk functions
+* Fix pep8 errors on Py3.6
+* Jenkins: bump Python version to 3.6
+* Disable unit test due to spurious failure
+* testing: use shared fake responses
+* wsk: add proxy testing
+* Fix V2 models unittest
+* Fix pep8 errors
+* wsk: add wsk\_args to all handlers
+* fix catch\_error docs
+* wsk: disable trainings on OpenWhisk
+* Move options to correct place
+* wsk: fix OpenWhisk and aiohttp integration
+* Use trailing slashes when defining endpoints
+* wsk: return an aiohttp.web.Response on OpenWhisk proxy
+* Remove empty return
+* wsk: await the get\_app async function
+* update error docs
+* order user args
+* add warm option to cli
+* add client-max-size to cli
+* fix client filesize limit
+* typo fix
+* update to new UploadedFile method
+* Fix error on PyPI metadata generation
+* Fix pep8 errors
+* Fix V1 file passing
+* Include citation information
+* Update documentation logo and style
+* Add correct support email address
+* add python version requirement
+* Include rich API info metadata
+* Fix typo ¡n class name and unittests
+* Fix pep8 errors and add correct doc links
+* Add 204 response if debug endpoint is not enabled
+* Return /debug responses as text/plain
+* Fix documentation
+* Allow loading arguments using the old way
+* Fix "AssertionError: group argument must be None for now" errors
+* Add banner to startup
+* Improve documentation
+* Document passing file arguments
+* Remove trainings at all fro API
+* Simply setup\_routes functions
+* Run training and prediction as tasks
+* Use asyncio in ModelWrapper and adapt API
+* Move model wrapper into its own module
+* Remove \_call\_method helper method and use a decorator
+* test model: add example of argument with valid choices
+* Drop Flask in favour of aiohttp
+* Drop Python 2 support
+* doc: update CLI man pages
+* Add debug endpoint
+* Disable reloading when running as debug
+* V2: Initial version of the new API
+* Include upgrade notes in documentation
+* Do the plumbing for loading different V2 and V1 models
+* Disable loading of V1 version and add CLI option
+* Add V2 skeleton, following V1 API but on separate modules
+* Add a version endpoint at the root URL
+* Refactor API namespaces loading, using Flask blueprints
+* Use release\_string as version, as it includes VCS tags
+* tox: Include testing for Py3.7
+* Change documentation theme
+* Update paper.md
+* Fix DOI in JOSS paper
+* Fix bibiography entry in JOSS paper
+* fix parsers overwrite (#62)
+* Correct bibliography with correct entries and add missing DOI items
+* Update README
+* Adjust tox.ini settings and environments
+* Install netifaces from APT repo
+
+0.5.2
+-----
+
+* Fix documentation build error
+
+0.5.1
+-----
+
+* Fix test args parser
+* Fix test arguments
+* docs fix
+* fix style
+* update docs and docstrs
+
+0.5.0
+-----
+
+* Prepare 0.5.0 release
+* Bump gevent dependency version
+* add get\_train/test\_args docstrings
+* add test\_args functionality
+
+0.4.1
+-----
+
+* Update requirements.txt for Werkzeug>=0.15.0
+* Update version on Dockerfile
+
+0.4.0
+-----
+
+* Update Dockerfile for Docker container creation
+* Add unit tests for cmd module
+* Rename "openwisk" to "openwhisk" module
+* tox: remove Python 3.5 testing
+* Handle SIGTERM signal explicitly
+* Remove leftover debug print statement
+* Migrate to jenkins library 1.3.5 (fix in DockerClean)
+* Set new Jenkins badge URL
+* Set PyPI delivery only on new release
+* Move to version 1.3.4
+* Move to 1.3.3
+* fixing typos
+* Add initial version of paper for Journal of Open Source Software
+* Comment out OWASP stage
+* Move to pipeline==1.3.1
+* Align with 1.0.0 version of pipeline library
+
+0.3.0
+-----
+
+* Set absolute path to HTMLreport
+* Disable Swagger documentation for OpenWhisk
+* Add support to run DEEPaaS as an OpenWhisk Docker action
+* Point to correct documentation
+* Fix typo on documentation
+
+0.2.0
+-----
+
+* Add missing release notes
+* get\_train\_args() docs
+* Initial support for passing down training arguments
+* Add WP2 main contacts as watchers of JIRA issues
+* Use indigo-dc.deepaas Ansible role
+* Add badge for Jenkins build status
+
+0.1.2
+-----
+
+* setup.cfg: fix classifiers
+* docs: fix document generation on Read the Docs
+
+0.1.1
+-----
+
+* tox: create environment for checking dependencies
+* Include release notes in documentation
+* Add initial documentation using Sphinx
+* Generate configuration file through tox
+* Improve versioning information within package
+* Update README with documentation on DEEPaaS usage
+* Update setup.cfg file
+* Add PYPI delivery
+* Add link to dockerhub image
+* Fix: dockerhub\_image\_id variable interpolation
+
+0.1.0
+-----
+
+* Fix: image\_id to dockerhub\_image\_id
+* Add correct Dockerfile version
+* Add OWASP dependency check
+* Move Jenkinsfile's tox environments to tox.ini
+* Create JIRA issue on new builds
+* Provider requirements as a list
+* Add a Makefile to quickly run DEEPaaS
+* Add unit testing for new model wrapper and base classes
+* Define a base class for all models
+* Migrate from testr to stest and adjust Python supported versions
+* Start using logging
+* tests: use oslo\_config.fixture in the unit tests
+* Computes SLOC data (#9)
+* Switch to shared libraries (#8)
+* Indent fix
+* Move Dockerfile to repository's root path
+* Fix double underscore typo
+* Add credentials for pushing the image to DockerHub
+* Add docker image build step
+* Add Dockerfile to codebase
+* Fix Jenkinsfile indentation
+* Generate Cobertura report
+* Get and publish code coverage
+* Parse flake8 logs
+* Test flake8 from different stage
+* Separate stage for checkout code
+* jenkins: added code style stage
+* Allow uploading files as well as pointing to URLs
+* Rework model loading
+* Allow loading different models
+* Allow configuring IP and port where we should listen
+* tests: add cmd testing
+* testing: fix package name
+* Add some boilerplate README text
+* Add initial unit testing
+* Add initial unit testing plumbing
+* Ignore editor files
+* Separate model loading into its own module
+* Add werkzeug as an explicit dependency
+* Fix pep8 errors
+* Naive model loading
+* Fix data upload and argument parsing
+* Update response model
+* Add initial loading plumbing
+* Return model metatada
+* Allow uploading files and URLs in the POST request
+* Split API and namespaces into separate files
+* add python shebang
+* Add initial code skeleton
+* add tox with initial pep8
+* Add community and informative files
+* Initial commit
