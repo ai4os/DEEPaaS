@@ -21,17 +21,6 @@ Compatibility
 
 The DEEPaaS API works with Python 3.5.3 or higher.
 
-Upgrading from V1 of the API
-############################
-
-The DEEPaaS API provides two different API versions: V1 and V2.
-V1 was the initial API version, supported in releases under ``1.0.0`` and
-compatible with Python 2.7+ and Python 3.
-Starting with the ``1.0.0`` release V2 is the only version supported and
-requires Python 3.5.3 or higher.
-Please, read carefully the :ref:`upgrade-notes` before upgrading to a newer
-version.
-
 Installation and upgrade documentation
 --------------------------------------
 

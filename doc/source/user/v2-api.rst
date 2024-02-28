@@ -3,16 +3,6 @@
 Integrating a model into the V2 API (CURRENT)
 =============================================
 
-
-.. important::
-   V2 of the API (starting on release ``1.0.0``) is the default, supported
-   version. It is backwards incompatible with the V1 version.
-
-.. note::
-   The current version of the DEEPaaS API is V2. The first release supporting this
-   API version was ``1.0.0``. Please do not be confused with the ``deepaas``
-   `release` (i.e. ``0.5.2``, ``1.0.0``) and the DEEPaaS API version (V1 or V2).
-
 If you want to see an example of a module integrated with deepaas, where those
 methods are actually implemented, please head over to the
 `deephdc demo app <https://github.com/deephdc/demo_app>`__.
