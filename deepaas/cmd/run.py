@@ -47,13 +47,13 @@ The DEEPaaS API service listens on this port number for incoming
 requests.
 """,
     ),
-    cfg.StrOpt(
-        "model-name",
-        default=None,
-        help="""
-Model which will be selected to load into the DEEPaaS API.
-""",
-    ),
+#    cfg.StrOpt(
+#        "model-name",
+#        default=None,
+#        help="""
+#Model which will be selected to load into the DEEPaaS API.
+#""",
+#    ),
     
 ]
 
@@ -103,7 +103,7 @@ def main():
         enable_doc=CONF.doc_endpoint,
         enable_train=CONF.train_endpoint,
         enable_predict=CONF.predict_endpoint,
-        model_name=CONF.model_name
+    #    model_name=CONF.model_name
     )
     web.run_app(
         app,

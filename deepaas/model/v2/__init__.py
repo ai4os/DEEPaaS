@@ -32,7 +32,7 @@ MODELS_LOADED = False
 # Adding the possibility of introducing the model you want to register in case you have tried to load several models. 
 # If more than one model is introduced and the user doesn't select only one to load, an error is raised and all models are
 # unloaded.
-def register_models(app, selected_model=None):
+def register_models(app):#, selected_model=None):
     global MODELS
     global MODELS_LOADED
 
@@ -41,14 +41,6 @@ def register_models(app, selected_model=None):
             "Loading several models at once",
             DeprecationWarning
         )
-        if selected_model is None:
-            MODELS.clear()
-            sys.stderr.write(
-                "ERROR: Tried to load several models when only one is allowed to be loaded at a time.\n"
-                "Please indicate which one you would like to load or load a single model. \n"
-                "All models have been unloaded. \n"
-            )
-            sys.exit(1)
     
     if MODELS_LOADED:
         return
@@ -65,18 +57,6 @@ def register_models(app, selected_model=None):
             DeprecationWarning
         )
 
-        if selected_model in MODELS.keys():
-            loaded_model = MODELS[selected_model]
-            MODELS.clear()
-            MODELS[selected_model] =  loaded_model
-        else:
-            MODELS.clear()
-            sys.stderr.write(
-                "ERROR: Tried to load several models when only one is allowed to be loaded at a time.\n"
-                "Please indicate which one you would like to load or load a single model. \n"
-                "All models have been unloaded. \n"
-            )
-            sys.exit(1)
 
     if MODELS:
         MODELS_LOADED = True

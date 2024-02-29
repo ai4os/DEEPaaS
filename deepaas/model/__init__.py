@@ -19,11 +19,11 @@ from deepaas.model import v2
 V2_MODELS = v2.MODELS
 
 
-def register_v2_models(app, selected_model=None):
+def register_v2_models(app):#, selected_model=None):
     """Register V2 models.
 
     This method has to be called before the API is spawned, so that we
     can look up the correct entry points and load the defined models.
     """
 
-    return v2.register_models(app, selected_model)
+    return v2.register_models(app)#, selected_model)
