@@ -10,20 +10,20 @@ Synopsis
 Description
 ===========
 
-:program:`deepaas-cli` Command line interface (CLI) to DEEPaaS models 
+:program:`deepaas-cli` Command line interface (CLI) to DEEPaaS models
     that are loaded through the ``deepaas.v2.models`` entrypoint API.
-    One gets access to the same get_metadata, warm, predict, and train 
+    One gets access to the same get_metadata, warm, predict, and train
     methods with all corresponding options as with DEEPaaS REST API.
-    To get available for the method options, one has to call 
+    To get available for the method options, one has to call
     ``deepaas-cli <method> --help``.
     Additional parameters are provided:
-    ``--deepaas_method_output`` is to store the output in a pre-defined 
-    by a user file; 
-    ``--deepaas_with_multiprocessing`` is to activate multiprocessing 
+    ``--deepaas_method_output`` is to store the output in a pre-defined
+    by a user file;
+    ``--deepaas_with_multiprocessing`` is to activate multiprocessing
     support, default is True.
-    oslo_log package is used for logging information, which provides 
+    oslo_log package is used for logging information, which provides
     additional options for the script.
-    If several models are available for loading, one has to provide 
+    If several models are available for loading, one has to provide
     which one to load via DEEPAAS_V2_MODEL environment setting.
 
 Options
@@ -42,21 +42,31 @@ Options
 
    Calls predict() method. The output can be stored via
    --deepaas_method_output.
-   
+
 .. option:: train
 
    Calls train() method. The output can be stored via
    --deepaas_method_output.
 
-.. option:: --deepaas_method_output 
+.. option:: --deepaas_method_output
 
-   To save the results to a local file, if needed. Available for 
+   To save the results to a local file, if needed. Available for
    get_metadata, predict, train methods.
 
-.. option:: --deepaas_with_multiprocessing 
+.. option:: --deepaas_with_multiprocessing
 
    To activate multiprocessing support, default is True.
-  
+
+.. option:: --model-name MODEL_NAME
+
+    Specify the model to be used. If not specified, DEEPaaS will serve all the models
+    that are available. If specified, DEEPaaS will serve only the specified model. You
+    can also use the DEEPAAS_V2_MODEL environment variable.
+
+    WARNING: Serving multiple models is deprecated and will be removed in the future,
+    therefore it is strongly suggested that you specify the model you want to or that
+    you ensure that only one model is available.
+
 Files
 =====
 

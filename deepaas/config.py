@@ -15,6 +15,7 @@
 # under the License.
 
 import logging
+import os
 import warnings
 
 from oslo_config import cfg
@@ -85,6 +86,19 @@ file size limit will be enforced.
 Pre-warm the modules (eg. load models, do preliminary checks, etc). You might
 want to disable this option if DEEPaaS is loading more than one module because
 you risk getting out of memory errors.
+""",
+    ),
+    cfg.StrOpt(
+        "model-name",
+        default=os.environ.get("DEEPAAS_V2_MODEL", ""),
+        help="""
+Specify the model to be used. If not specified, DEEPaaS will serve all the models that
+are available. If specified, DEEPaaS will serve only the specified model. You can also
+use the DEEPAAS_V2_MODEL environment variable.
+
+WARNING: Serving multiple models is deprecated and will be removed in the future,
+         therefore it is strongly suggested that you specify the model you want to
+         or that you ensure that only one model is available.
 """,
     ),
 ]

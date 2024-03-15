@@ -15,6 +15,12 @@ loaded to offer the model functionality through the API. This allows you to
 offer several models using a single DEEPaaS instance, by defining different
 entry points for the different models.
 
+.. warning::
+   Serving multiple models is marked as deprecated, and will be removed in a
+   future major version of the API. Please ensure that you start using the `model-name`
+   configuration option in your configuration file or the `--model-name` command line
+   option as soon as possible.
+
 .. _Setuptools: https://setuptools.readthedocs.io/en/latest/setuptools.html
 
 When the DEEPaaS API is spawned it will look for the ``deepaas.v2.model``

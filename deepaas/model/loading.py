@@ -14,11 +14,35 @@
 # License for the specific language governing permissions and limitations
 # under the License.
 
+from deepaas import exceptions
+
 import stevedore
 
 NAMESPACES = {
     "v2": "deepaas.v2.model",
 }
+
+
+def get_model_by_name(name, version):
+    """Get a model by its name.
+
+    :param name: The name of the model.
+    :type name: str
+    :param version: The version of the model.
+    :type version: str
+
+    :returns: The model.
+    :rtype: object
+    """
+    mgr = stevedore.NamedExtensionManager(
+        namespace=NAMESPACES.get(version),
+        names=[name],
+    )
+    if name not in mgr.names():
+        raise exceptions.ModuleNotFoundError(
+            "Model '%s' not found in namespace '%s'" % (name, NAMESPACES.get(version))
+        )
+    return mgr[name].plugin
 
 
 def get_available_model_names(version):
