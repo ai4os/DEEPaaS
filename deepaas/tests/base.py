@@ -32,7 +32,6 @@ _TRUE_VALUES = ("True", "true", "1", "yes")
 
 
 class TestCase(testtools.TestCase, aiohttp.test_utils.AioHTTPTestCase):
-
     """Base unit test class."""
 
     async def get_application(self):
