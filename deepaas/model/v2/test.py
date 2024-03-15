@@ -111,30 +111,37 @@ class TestModel(base.BaseModel):
     def get_predict_args(self):
         return {
             "data": fields.Field(
-                description="Data file to perform inference.",
+                metadata={
+                    "description": "Data file to perform inference.",
+                    "location": "form",
+                    "type": "file",
+                },
                 required=True,
-                location="form",
-                type="file",
             ),
             "parameter": fields.Int(
-                description="This is a parameter for prediction", required=True
+                metadata={"description": "This is a parameter for prediction"},
+                required=True,
             ),
             "parameter_three": fields.Str(
-                description=(
-                    "This is a parameter that forces its value to "
-                    "be one of the choices declared in 'enum'"
-                ),
-                enum=["foo", "bar"],
+                metadata={
+                    "description": (
+                        "This is a parameter that forces its value to "
+                        "be one of the choices declared in 'enum'"
+                    ),
+                    "enum": ["foo", "bar"],
+                },
                 validate=validate.OneOf(["foo", "bar"]),
             ),
             "accept": fields.Str(
-                description=(
-                    "Media type(s) that is/are acceptable for the " "response."
-                ),
+                metadata={
+                    "description": (
+                        "Media type(s) that is/are acceptable for the " "response."
+                    ),
+                    "location": "headers",
+                },
                 validate=validate.OneOf(
                     ["application/json", "text/plain", "image/png"]
                 ),
-                location="headers",
             ),
         }
 
@@ -142,9 +149,15 @@ class TestModel(base.BaseModel):
         return {
             "sleep": fields.Int(
                 required=True,
-                descripton="This is a integer parameter, and it is " "a required one.",
+                metadata={
+                    "descripton": (
+                        "This is a integer parameter, and it is " "a required one."
+                    ),
+                },
             ),
-            "parameter_two": fields.Str(description="This is a string parameter."),
+            "parameter_two": fields.Str(
+                metadata={"description": "This is a string parameter."}
+            ),
         }
 
     def get_metadata(self):
