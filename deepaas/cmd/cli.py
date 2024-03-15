@@ -34,9 +34,11 @@ from oslo_config import cfg
 from oslo_log import log
 
 # from deepaas import config
+from deepass import config
 from deepaas.model import loading
 from deepaas.model.v2 import wrapper as v2_wrapper
 
+CONF = config.CONF
 
 debug_cli = False
 
@@ -152,15 +154,14 @@ def _get_model_name(model_name=None):
         sys.stderr.write(
             "[ERROR]: There are several models available ({}).\n"
             "You have to choose one and set it in the DEEPAAS_V2_MODEL "
-            "environment setting.\n".format(list(models.keys()))
+            "environment variable or using the --mode-name option"
+            ".\n".format(list(models.keys()))
         )
         sys.exit(1)
 
 
 # Get the model name
-model_name = None
-if "DEEPAAS_V2_MODEL" in os.environ:
-    model_name = os.environ["DEEPAAS_V2_MODEL"]
+model_name = CONF.model_name
 
 model_name, model_obj = _get_model_name(model_name)
 

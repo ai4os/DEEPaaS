@@ -18,11 +18,15 @@ import warnings
 
 from oslo_log import log
 
+from deepaas import config
+from deepaas import exceptions
 from deepaas.model import loading
 from deepaas.model.v2 import test
 from deepaas.model.v2 import wrapper
 
 LOG = log.getLogger(__name__)
+
+CONF = config.CONF
 
 # Model registry
 MODELS = {}
@@ -37,10 +41,26 @@ def register_models(app):
         return
 
     try:
-        for name, model in loading.get_available_models("v2").items():
-            MODELS[name] = wrapper.ModelWrapper(name, model, app)
+        if CONF.model_name:
+            MODELS[CONF.model_name] = wrapper.ModelWrapper(
+                CONF.model_name,
+                loading.get_model_by_name(CONF.model_name, "v2"),
+                app,
+            )
+        else:
+            for name, model in loading.get_available_models("v2").items():
+                MODELS[name] = wrapper.ModelWrapper(name, model, app)
+    except exceptions.ModuleNotFoundError:
+        LOG.error("Model not found: %s", CONF.model_name)
+        raise
     except Exception as e:
+        # We do not raise here, as we have not yet removed the deprecated loading of the
+        # test module... but we should remove it as soon as the code below is deprecated
         LOG.warning("Error loading models: %s", e)
+        warnings.warn(
+            "Error loading models, using test model. This will be deprecated soon.",
+            DeprecationWarning,
+        )
 
     if MODELS:
         if len(MODELS) > 1:

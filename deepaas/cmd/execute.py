@@ -27,17 +27,6 @@ from deepaas.model.v2.wrapper import UploadedFile
 
 cli_opts = [
     cfg.StrOpt(
-        "model-name",
-        help="""
-Add the name of the model from which you want
-to obtain the prediction.
-If there are multiple models installed and youd don't
-specify the name of the one you want to use the program will fail.
-If there is only one model installed, that will be used
-to make the prediction.
-""",
-    ),
-    cfg.StrOpt(
         "input-file",
         short="i",
         help="""
