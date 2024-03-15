@@ -16,7 +16,6 @@
 
 from aiohttp import web
 import aiohttp_apispec
-import marshmallow
 from webargs import aiohttpparser
 import webargs.core
 
@@ -39,9 +38,7 @@ def _get_handler(model_name, model_obj):
     accept = aux.get("accept", None)
     if accept:
         accept.validate.choices.append("*/*")
-        # If no default value use first possible choice:
-        if isinstance(accept.missing, marshmallow.utils._Missing):
-            accept.missing = accept.validate.choices[0]
+        accept.load_default = accept.validate.choices[0]
         accept.location = "headers"
 
     handler_args = webargs.core.dict2schema(aux)
