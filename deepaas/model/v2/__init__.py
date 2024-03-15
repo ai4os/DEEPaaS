@@ -43,6 +43,12 @@ def register_models(app):
         LOG.warning("Error loading models: %s", e)
 
     if MODELS:
+        if len(MODELS) > 1:
+            # Loading several models will be deprecated in the future
+            warn_msg = "Loading several models is deprecated."
+            warnings.warn(warn_msg, DeprecationWarning)
+            LOG.warning(warn_msg)
+
         MODELS_LOADED = True
         return
 

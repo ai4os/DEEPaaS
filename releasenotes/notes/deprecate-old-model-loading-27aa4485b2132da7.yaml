@@ -5,3 +5,4 @@ prelude: >
 deprecations:
   - Loading the default deepaas-test model if no models are available is now
     marked as deprecated and will be removed in the next major version.
+  - Loading several models is now marked as deprecated.
