@@ -1,0 +1,7 @@
+---
+prelude: >
+    Model loading is being refactored, so that only a single model will be
+    available for serving.
+deprecations:
+  - Loading the default deepaas-test model if no models are available is now
+    marked as deprecated and will be removed in the next major version.

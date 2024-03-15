@@ -14,6 +14,8 @@
 # License for the specific language governing permissions and limitations
 # under the License.
 
+import warnings
+
 from oslo_log import log
 
 from deepaas.model import loading
@@ -45,7 +47,15 @@ def register_models(app):
         return
 
     if not MODELS:
+        # Raise deprecation warning
+        warn_msg = (
+            "Using the built-in test model is deprecated, if you are testing the "
+            "API, please use the demo_app instead. "
+            "Check https://github.com/deephdc/demo_app for more information.",
+        )
+        warnings.warn(warn_msg, DeprecationWarning)
         LOG.info("No models found in V2, loading test model")
+        LOG.warning(warn_msg)
         MODELS["deepaas-test"] = wrapper.ModelWrapper(
             "deepaas-test", test.TestModel(), app
         )
