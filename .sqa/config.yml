@@ -3,25 +3,27 @@ sqa_criteria:
     repos:
       deepaas:
         container: DEEPaaS-testing
-        tox:
-          tox_file: 'tox.ini'
-          testenv: 
-            - flake8
-            - black
-            - pip-missing-reqs
+        commands:
+            - git config --global --add safe.directory /deepaas-testing
+            - tox -e flake8
+            - tox -e black
+            - tox -e pip-missing-reqs
+
   qc_security:
     repos:
       deepaas:
         container: DEEPaaS-testing
-        tox:
-          tox_file: 'tox.ini'
-          testenv:
-            - bandit
-  # qc_doc:
-  #   repos:
-  #     deepaas:
-  #       container: DEEPaaS-testing
-  #       tox:
-  #         tox_file: 'tox.ini'
-  #         testenv:
-  #           - docs
+        commands:
+            - git config --global --add safe.directory /deepaas-testing
+            - tox -e bandit
+
+  qc_doc:
+    repos:
+      deepaas:
+        container: DEEPaaS-testing
+        commands:
+            - git config --global --add safe.directory /deepaas-testing
+            - pip install .
+            - pip install -r doc/requirements.txt
+            - sphinx-build -W --keep-going -b html -j auto doc/source doc/build/html
+            - tox -e pypi
