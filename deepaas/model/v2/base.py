@@ -38,8 +38,8 @@ class BaseModel(object):
     define the schema that all the prediction responses will follow, therefore:
     - If this attribute is set we will validate them against it.
     - If it is not set (i.e. ``schema = None``), the model's response will
-      be converted into a string and the response will have the following
-      form::
+    be converted into a string and the response will have the following
+    form::
 
           {
               "status": "OK",
@@ -124,7 +124,7 @@ class BaseModel(object):
 
         If you want to integrate with the deephdc platform you should
         provide at least an [``name``, ``author``, ``author-email``,
-         ``license``]. You can nevertheless set them to ``None``
+        ``license``]. You can nevertheless set them to ``None``
         if you don't feel like providing the information.
 
         The schema that we are following is the following::
@@ -207,7 +207,7 @@ class BaseModel(object):
             the training hyper-parameters
 
         :return: You can return any Python object that is JSON parseable
-        (eg. dict, string, float).
+            (eg. dict, string, float).
         """
         raise NotImplementedError()
 
