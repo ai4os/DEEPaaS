@@ -1,9 +1,9 @@
 .. _predict:
 
 DEEPaaS API as a command line action
-==================================
+====================================
 
-Support for execution from the command line for DEEPaaS. In your Dockerfile, 
+Support for execution from the command line for DEEPaaS. In your Dockerfile,
 you must ensure that you execute `` deepaas-predict`` in one of the following ways:
 
 Basic form of execution.

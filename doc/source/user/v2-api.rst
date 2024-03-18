@@ -5,7 +5,7 @@ Integrating a model into the V2 API (CURRENT)
 
 If you want to see an example of a module integrated with deepaas, where those
 methods are actually implemented, please head over to the
-`deephdc demo app <https://github.com/deephdc/demo_app>`__.
+`deephdc demo app <https://github.com/deephdc/demo_app>`_.
 
 Defining what to load
 ---------------------
@@ -52,9 +52,10 @@ from the ``package_name.module.Class`` class, meaning that an object of
 ``Class`` will be created and used as entry point. This also means that
 ``Class`` objects should provide the :ref:`model-api` as described below.
 
+.. _model-api:
+
 Entry point (model) API
 -----------------------
-.. _model-api:
 
 Regardless on the way you implement your entry point (i.e. as a module or as an
 object), you should expose the following functions or methods:
@@ -66,6 +67,7 @@ Your model entry point must implement a ``get_medatata`` function that will
 return some basic metadata information about your model, as follows:
 
 .. autofunction:: deepaas.model.v2.base.BaseModel.get_metadata
+   :no-index:
 
 Warming a model
 ###############
@@ -79,6 +81,7 @@ use. This way, your model will be ready whenever a first prediction is done,
 reducint the waiting time.
 
 .. autofunction:: deepaas.model.v2.base.BaseModel.warm
+   :no-index:
 
 Training
 ########
@@ -88,11 +91,13 @@ specify the training arguments to be defined (and published through the API)
 with the ``get_train_args`` function, as follows:
 
 .. autofunction:: deepaas.model.v2.base.BaseModel.get_train_args
+   :no-index:
 
 Then, you must implement the training function (named ``train``) that will
 receive the defined arguments as keyword arguments:
 
 .. autofunction:: deepaas.model.v2.base.BaseModel.train
+   :no-index:
 
 Prediction and inference
 ########################
@@ -102,6 +107,7 @@ as for the training, you can specify the prediction arguments to be defined,
 (and published through the API) with the ``get_predict_args`` as follows:
 
 .. autofunction:: deepaas.model.v2.base.BaseModel.get_predict_args
+   :no-index:
 
 Do not forget to add an input argument to hold your data. If you want to upload
 files for inference to the API, you should use a ``webargs.fields.Field``
@@ -136,11 +142,13 @@ of the file arguments you declare. You can open and read the file stored in the
 ``filename`` attribute.
 
 .. autoclass:: deepaas.model.v2.wrapper.UploadedFile
+   :no-index:
 
 Then you should define the ``predict`` function as indicated below. You will
 receive all the arguments that have been parsed as keyword arguments:
 
 .. autofunction:: deepaas.model.v2.base.BaseModel.predict
+   :no-index:
 
 By default, the return values from these two functions will be casted into a
 string, and will be returned in the following JSON response::
@@ -155,85 +163,10 @@ This way the API exposed will be richer and it will be easier for developers to
 build applications against your API, as they will be able to discover the
 response schemas from your endpoints.
 
-In order to define a custom response, the ``response`` attribute is used:
+In order to define a custom response, the ``schema`` attribute is used:
 
-.. autodata:: deepaas.model.v2.base.BaseModel.response
-
-    Must contain a valid schema for the model's predictions or None.
-
-    A valid schema is either a ``marshmallow.Schema`` subclass or a dictionary
-    schema that can be converted into a schema.
-
-    In order to provide a consistent API specification we use this attribute to
-    define the schema that all the prediction responses will follow, therefore:
-    - If this attribute is set we will validate them against it.
-    - If it is not set (i.e. ``schema = None``), the model's response will
-      be converted into a string and the response will have the following
-      form::
-
-          {
-              "status": "OK",
-              "predictions": "<model response as string>"
-          }
-
-    As previously stated, there are two ways of defining an schema here. If our
-    response have the following form::
-
-        {
-            "status": "OK",
-            "predictions": [
-                {
-                    "label": "foo",
-                    "probability": 1.0,
-                },
-                {
-                    "label": "bar",
-                    "probability": 0.5,
-                },
-            ]
-        }
-
-    We should define or schema as schema as follows:
-
-
-    - Using a schema dictionary. This is the most straightforward way. In order
-      to do so, you must use the ``marshmallow`` Python module, as follows::
-
-        from marshmallow import fields
-
-        schema = {
-            "status": fields.Str(
-                        description="Model predictions",
-                        required=True
-            ),
-            "predictions": fields.List(
-                fields.Nested(
-                    {
-                        "label": fields.Str(required=True),
-                        "probability": fields.Float(required=True),
-                    },
-                )
-            )
-        }
-
-    - Using a ``marshmallow.Schema`` subclass. Note that the schema *must* be
-      the class that you have created, not an object::
-
-        import marshmallow
-        from marshmallow import fields
-
-        class Prediction(marshmallow.Schema):
-            label = fields.Str(required=True)
-            probability = fields.Float(required=True)
-
-        class Response(marshmallow.Schema):
-            status = fields.Str(
-                description="Model predictions",
-                required=True
-            )
-            predictions = fields.List(fields.Nested(Prediction))
-
-        schema = Response
+.. autodata:: deepaas.model.v2.base.BaseModel.schema
+   :no-index:
 
 Returning different content types
 *********************************
@@ -249,9 +182,9 @@ types that you are able to return as follows::
                                  validate=validate.OneOf(['application/zip', 'image/png', 'application/json']))
          }
 
-Find `here <https://www.iana.org/assignments/media-types/media-types.xhtml>`_ a comprehensive list of possible
-content types. Then the predict function will have to return the raw bytes of a file according to the user selection.
-For example::
+Find `in this link <https://www.iana.org/assignments/media-types/media-types.xhtml>`_ a
+comprehensive list of possible content types. Then the predict function will have to
+return the raw bytes of a file according to the user selection.  For example::
 
 
     def predict(**args):

@@ -126,7 +126,7 @@ html_static_path = ['_static']
 
 # Add any paths that contain "extra" files, such as .htaccess or
 # robots.txt.
-html_extra_path = ['_extra']
+# html_extra_path = ['_extra']
 
 # If not '', a 'Last updated on:' timestamp is inserted at every page bottom,
 # using the given strftime format.
