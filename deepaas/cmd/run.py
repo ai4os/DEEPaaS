@@ -47,6 +47,17 @@ The DEEPaaS API service listens on this port number for incoming
 requests.
 """,
     ),
+    # Allow to define base path for the API
+    cfg.StrOpt(
+        "base-path",
+        default="",
+        help="""
+Base path for the API. This is useful when the API is served behind a
+reverse proxy that is not at the root of the domain. For example, if
+the API is served at https://example.com/deepaas, then the base path
+should be set to /deepaas. Defaults to the root of the domain.
+""",
+    ),
 ]
 
 CONF = cfg.CONF
@@ -95,6 +106,7 @@ def main():
         enable_doc=CONF.doc_endpoint,
         enable_train=CONF.train_endpoint,
         enable_predict=CONF.predict_endpoint,
+        base_path=CONF.base_path,
     )
     web.run_app(
         app,
