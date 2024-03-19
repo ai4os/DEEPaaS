@@ -7,6 +7,7 @@
 [![Build Status](https://jenkins.indigo-datacloud.eu/buildStatus/icon?job=Pipeline-as-code%2FDEEPaaS%2Fmaster)](https://jenkins.indigo-datacloud.eu/job/Pipeline-as-code/job/DEEPaaS/job/master/)
 [![DOI](https://joss.theoj.org/papers/10.21105/joss.01517/status.svg)](https://doi.org/10.21105/joss.01517)
 
+<img src="https://raw.githubusercontent.com/ai4os/.github/ai4os/profile/horizontal-transparent.png" width=200 alt="AI4EOSC logo"/>
 <img src="https://marketplace.deep-hybrid-datacloud.eu/images/logo-deep.png" width=200 alt="DEEP-Hybrid-DataCloud logo"/>
 
 DEEP as a Service API (DEEPaaS API) is a REST API built on
