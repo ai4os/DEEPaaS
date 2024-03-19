@@ -164,6 +164,59 @@ class TestApiV2NoDoc(base.TestCase):
         self.assertEqual(404, ret.status)
 
 
+class TestApiV2CusomBasePath(base.TestCase):
+    async def get_application(self):
+        app = web.Application(debug=True)
+        app.middlewares.append(web.normalize_path_middleware())
+
+        deepaas.model.v2.register_models(app)
+
+        v2app = v2.get_app(base_path="/custom")
+        app.add_subapp("/v2", v2app)
+
+        return app
+
+    def setUp(self):
+        super(TestApiV2CusomBasePath, self).setUp()
+
+        self.maxDiff = None
+
+        self.flags(debug=True)
+
+    def assert_ok(self, response):
+        self.assertIn(response.status, [200, 201])
+
+    async def test_predict_data(self):
+        f = six.BytesIO(b"foo")
+        ret = await self.client.post(
+            "/custom/v2/models/deepaas-test/predict/",
+            data={"data": (f, "foo.txt"), "parameter": 1},
+        )
+        json = await ret.json()
+        self.assertEqual(200, ret.status)
+        self.assertDictEqual(fake_responses.deepaas_test_predict, json)
+
+    async def test_train(self):
+        ret = await self.client.post(
+            "/custom/v2/models/deepaas-test/train/", data={"sleep": 0}
+        )
+        self.assertEqual(200, ret.status)
+        json = await ret.json()
+        json.pop("date")
+        self.assertDictEqual(fake_responses.deepaas_test_train, json)
+
+    async def test_get_metadata(self):
+        meta = fake_responses.models_meta
+
+        ret = await self.client.get("/custom/v2/models/")
+        self.assert_ok(ret)
+        self.assertDictEqual(meta, await ret.json())
+
+        ret = await self.client.get("/custom/v2/models/deepaas-test/")
+        self.assert_ok(ret)
+        self.assertDictEqual(meta["models"][0], await ret.json())
+
+
 class TestApiV2(base.TestCase):
     async def get_application(self):
         app = web.Application(debug=True)
