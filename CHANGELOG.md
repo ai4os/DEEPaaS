@@ -1,5 +1,12 @@
 # Changelog
 
+## [2.3.1](https://github.com/ai4os/DEEPaaS/compare/v2.3.0...v2.3.1) (2024-03-26)
+
+
+### Miscellaneous Chores
+
+* release 2.3.1 ([#147](https://github.com/ai4os/DEEPaaS/issues/147)) ([ea9fa64](https://github.com/ai4os/DEEPaaS/commit/ea9fa64a0a7254f94ce06836163ac8664c75d38d))
+
 ## [2.3.0](https://github.com/ai4os/DEEPaaS/compare/2.2.0...v2.3.0) (2024-03-25)
 
 
