@@ -33,8 +33,7 @@ from marshmallow import fields
 from oslo_config import cfg
 from oslo_log import log
 
-# from deepaas import config
-from deepass import config
+from deepaas import config
 from deepaas.model import loading
 from deepaas.model.v2 import wrapper as v2_wrapper
 

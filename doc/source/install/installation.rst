@@ -7,7 +7,7 @@ The recommended way to install the DEEPaaS API is with ``pip``:
 
 .. code-block:: console
 
-   pip install deepass
+   pip install deepaas
 
 This way you will ensure that the stable version is fetched from pip, rather
 than development or unstable version
