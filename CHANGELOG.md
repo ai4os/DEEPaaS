@@ -1,5 +1,12 @@
 # Changelog
 
+## [2.3.2](https://github.com/ai4os/DEEPaaS/compare/v2.3.1...v2.3.2) (2024-04-23)
+
+
+### Bug Fixes
+
+* typo in import ([#149](https://github.com/ai4os/DEEPaaS/issues/149)) ([2c381dd](https://github.com/ai4os/DEEPaaS/commit/2c381dd1163a71e68cc5e38d4d8a98b85755813d))
+
 ## [2.3.1](https://github.com/ai4os/DEEPaaS/compare/v2.3.0...v2.3.1) (2024-03-26)
 
 
