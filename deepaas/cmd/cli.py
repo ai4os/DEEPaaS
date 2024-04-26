@@ -110,7 +110,7 @@ def _fields_to_dict(fields_in):
             param["default"] = val.missing
 
         # infer 'help'
-        val_help = val.metadata["description"]
+        val_help = val.metadata.get("description", "No help available")
         # argparse hates % sign:
         if "%" in val_help:
             # replace single occurancies of '%' with '%%'
