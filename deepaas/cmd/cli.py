@@ -110,7 +110,7 @@ def _fields_to_dict(fields_in):
             param["default"] = val.missing
 
         # infer 'help'
-        val_help = val.metadata["description"]
+        val_help = val.metadata.get("description", "")
         # argparse hates % sign:
         if "%" in val_help:
             # replace single occurancies of '%' with '%%'
@@ -118,7 +118,7 @@ def _fields_to_dict(fields_in):
             val_help = re.sub(r"(?<!%)%(?!%)", r"%%", val_help)
 
         if "enum" in val.metadata.keys():
-            val_help = f"{val_help}. Choices: {val.metadata['enum']}"
+            val_help = f"{val_help} \n Choices: {val.metadata['enum']}"
         param["help"] = val_help
 
         dict_out[key] = param
