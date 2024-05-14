@@ -119,12 +119,14 @@ def _fields_to_dict(fields_in):
         if "enum" in val.metadata.keys():
             val_help += f"\nChoices: {val.metadata['enum']}"
 
+        val_help += f"\nType: {param['type'].__name__}"
         if val_type is fields.Field:
-            val_help += "\nType: FILEPATH"
+            val_help += " (filepath)"
 
         if val_req:
             val_help += "\n*Required*"
 
+        val_help = val_help.lstrip('\n') # remove escape when no description found
         param["help"] = val_help
 
         dict_out[key] = param
