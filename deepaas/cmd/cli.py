@@ -95,9 +95,6 @@ def _fields_to_dict(fields_in):
         if val_type in FIELD_TYPE_CONVERTERS:
             param["type"] = FIELD_TYPE_CONVERTERS[val_type]
 
-        if key == "files" or key == "urls":
-            param["type"] = str
-
         # infer "required"
         try:
             val_req = val.required
