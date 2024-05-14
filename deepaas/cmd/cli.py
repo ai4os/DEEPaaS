@@ -17,6 +17,7 @@
 
 
 # import asyncio
+import argparse
 import deepaas
 import json
 import mimetypes
@@ -116,7 +117,11 @@ def _fields_to_dict(fields_in):
             val_help = re.sub(r"(?<!%)%(?!%)", r"%%", val_help)
 
         if "enum" in val.metadata.keys():
-            val_help = f"{val_help} \n Choices: {val.metadata['enum']}"
+            val_help += f"\nChoices: {val.metadata['enum']}"
+
+        if val_type is fields.Field:
+            val_help += "\nType: FILEPATH"
+
         param["help"] = val_help
 
         dict_out[key] = param
@@ -178,7 +183,6 @@ model_name, model_obj = _get_model_name(model_name)
 # model_obj = v2_wrapper.ModelWrapper(name=model_name,
 #                                    model_obj=model_obj)
 
-
 # Once we know the model name,
 # we get arguments for predict and train as dictionaries
 predict_args = _fields_to_dict(model_obj.get_predict_args())
@@ -194,22 +198,30 @@ def _add_methods(subparsers):
     """Function to add argparse subparsers via SubCommandOpt (see below)
     for DEEPaaS methods get_metadata, warm, predict, train
     """
+    # Use RawTextHelpFormatter to allow for line breaks in argparse help messages.
+    def help_formatter(prog):
+        return argparse.RawTextHelpFormatter(prog, max_help_position=10)
 
     # in case no method requested, we return get_metadata(). check main()
     subparsers.required = False
 
     get_metadata_parser = subparsers.add_parser(  # noqa: F841
-        "get_metadata", help="get_metadata method"
+        "get_metadata",
+        help="get_metadata method",
+        formatter_class=help_formatter,
     )
 
     get_warm_parser = subparsers.add_parser(  # noqa: F841
         "warm",
         help="warm method, e.g. to " "prepare the model for execution",
+        formatter_class=help_formatter,
     )
 
     # get predict arguments configured
     predict_parser = subparsers.add_parser(
-        "predict", help="predict method, use " "predict --help for the full list"
+        "predict",
+        help="predict method, use " "predict --help for the full list",
+        formatter_class=help_formatter,
     )
 
     for key, val in predict_args.items():
@@ -222,7 +234,9 @@ def _add_methods(subparsers):
         )
     # get train arguments configured
     train_parser = subparsers.add_parser(
-        "train", help="train method, use " "train --help for the full list"
+        "train",
+        help="train method, use " "train --help for the full list",
+        formatter_class=help_formatter,
     )
 
     for key, val in train_args.items():
