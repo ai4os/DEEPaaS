@@ -122,6 +122,9 @@ def _fields_to_dict(fields_in):
         if val_type is fields.Field:
             val_help += "\nType: FILEPATH"
 
+        if val_req:
+            val_help += "\n*Required*"
+
         param["help"] = val_help
 
         dict_out[key] = param
