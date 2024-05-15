@@ -4,7 +4,7 @@
 [![GitHub release](https://img.shields.io/github/release/indigo-dc/DEEPaaS.svg)](https://github.com/indigo-dc/DEEPaaS/releases)
 [![PyPI](https://img.shields.io/pypi/v/deepaas.svg)](https://pypi.python.org/pypi/deepaas)
 [![Python versions](https://img.shields.io/pypi/pyversions/deepaas.svg)](https://pypi.python.org/pypi/deepaas)
-[![Build Status](https://jenkins.indigo-datacloud.eu/buildStatus/icon?job=Pipeline-as-code%2FDEEPaaS%2Fmaster)](https://jenkins.indigo-datacloud.eu/job/Pipeline-as-code/job/DEEPaaS/job/master/)
+[![Build Status](https://jenkins.services.ai4os.eu/job/AI4OS/job/DEEPaaS/job/master/badge/icon)](https://jenkins.services.ai4os.eu/job/AI4OS/job/DEEPaaS/job/master/)
 [![DOI](https://joss.theoj.org/papers/10.21105/joss.01517/status.svg)](https://doi.org/10.21105/joss.01517)
 
 <img src="https://raw.githubusercontent.com/ai4os/.github/ai4os/profile/horizontal-transparent.png" width=200 alt="AI4EOSC logo"/>
