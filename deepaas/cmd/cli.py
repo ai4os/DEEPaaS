@@ -94,35 +94,18 @@ def _fields_to_dict(fields_in):
         # initialise param with no "default", type "str" (!), empty "help"
         param = {"default": None, "type": str, "help": ""}
 
-        # infer "type"
-        # see FIELD_TYPE_CONVERTERS for converting
-        # mashmallow field types to python types
-        val_type = type(val)
-        if val_type in FIELD_TYPE_CONVERTERS:
-            param["type"] = FIELD_TYPE_CONVERTERS[val_type]
-
-        # infer "required"
-        try:
-            val_req = val.required
-        except Exception:
-            val_req = False
-        param["required"] = val_req
-
-        # infer 'default'
-        # if the field is not required, there must be default value
-        if not val_req:
-            param["default"] = val.missing
-
-        # infer 'help'
+        # Initialize help string
         val_help = val.metadata.get("description", "")
-        # argparse hates % sign:
         if "%" in val_help:
+            # argparse hates % sign:
             # replace single occurancies of '%' with '%%'
             # since "%%"" is accepted by argparse
             val_help = re.sub(r"(?<!%)%(?!%)", r"%%", val_help)
 
-        if "enum" in val.metadata.keys():
-            val_help += f"\nChoices: {val.metadata['enum']}"
+        # Infer "type"
+        val_type = type(val)
+        if val_type in FIELD_TYPE_CONVERTERS:
+            param["type"] = FIELD_TYPE_CONVERTERS[val_type]
 
         if val_type is fields.List:
             val_help += '\nType: list, enclosed as string: "[...]"'
@@ -130,12 +113,20 @@ def _fields_to_dict(fields_in):
             val_help += '\nType: dict, enclosed as string: "{...}"'
         else:
             val_help += f"\nType: {param['type'].__name__}"
-
         if val_type is fields.Field:
             val_help += " (filepath)"
 
-        if val_req:
+        # Infer "required"
+        param["required"] = val.required
+        if not val.required:
+            param["default"] = val.missing
+            val_help += f"\nDefault: {val.missing}"
+        else:
             val_help += "\n*Required*"
+
+        # Add choices to help message
+        if "enum" in val.metadata.keys():
+            val_help += f"\nChoices: {val.metadata['enum']}"
 
         val_help = val_help.lstrip('\n') # remove escape when no description found
         param["help"] = val_help
