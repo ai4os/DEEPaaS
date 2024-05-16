@@ -18,6 +18,7 @@
 
 # import asyncio
 import argparse
+import ast
 import deepaas
 import json
 import mimetypes
@@ -44,17 +45,21 @@ debug_cli = False
 
 # Not all types are covered! If not listed, the type is 'str'
 # see https://marshmallow.readthedocs.io/en/stable/marshmallow.fields.html
+
+# Passing lists or dicts with argparse is not straight forward, so we use pass them as
+# string and parse them with `ast.literal_eval`
+# ref: https://stackoverflow.com/questions/7625786/type-dict-in-argparse-add-argument
 FIELD_TYPE_CONVERTERS = {
     fields.Bool: bool,
     fields.Boolean: bool,
     fields.Date: str,
     fields.DateTime: str,
-    fields.Dict: dict,
+    fields.Dict: ast.literal_eval,
     fields.Email: str,
     fields.Float: float,
     fields.Int: int,
     fields.Integer: int,
-    fields.List: list,
+    fields.List: ast.literal_eval,
     fields.Str: str,
     fields.String: str,
     fields.Time: str,
@@ -119,7 +124,13 @@ def _fields_to_dict(fields_in):
         if "enum" in val.metadata.keys():
             val_help += f"\nChoices: {val.metadata['enum']}"
 
-        val_help += f"\nType: {param['type'].__name__}"
+        if val_type is fields.List:
+            val_help += '\nType: list, enclosed as string: "[...]"'
+        elif val_type is fields.Dict:
+            val_help += '\nType: dict, enclosed as string: "{...}"'
+        else:
+            val_help += f"\nType: {param['type'].__name__}"
+
         if val_type is fields.Field:
             val_help += " (filepath)"
 
