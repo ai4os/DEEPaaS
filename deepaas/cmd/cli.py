@@ -49,9 +49,17 @@ debug_cli = False
 # Passing lists or dicts with argparse is not straight forward, so we use pass them as
 # string and parse them with `ast.literal_eval`
 # ref: https://stackoverflow.com/questions/7625786/type-dict-in-argparse-add-argument
+# We follow a similar approach with bools
+# ref: https://stackoverflow.com/a/59579733/18471590
+# ref: https://stackoverflow.com/questions/715417/converting-from-a-string-to-boolean-in-python/18472142#18472142
+
+def str2bool(v):
+  return v.lower() in ("yes", "true", "t", "1")
+
+
 FIELD_TYPE_CONVERTERS = {
-    fields.Bool: bool,
-    fields.Boolean: bool,
+    fields.Bool: str2bool,
+    fields.Boolean: str2bool,
     fields.Date: str,
     fields.DateTime: str,
     fields.Dict: ast.literal_eval,
@@ -111,6 +119,8 @@ def _fields_to_dict(fields_in):
             val_help += '\nType: list, enclosed as string: "[...]"'
         elif val_type is fields.Dict:
             val_help += '\nType: dict, enclosed as string: "{...}"'
+        elif val_type in [fields.Bool, fields.Boolean]:
+            val_help += '\nType: bool'
         else:
             val_help += f"\nType: {param['type'].__name__}"
         if val_type is fields.Field:
