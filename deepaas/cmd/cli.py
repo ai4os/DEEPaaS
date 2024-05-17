@@ -51,10 +51,11 @@ debug_cli = False
 # ref: https://stackoverflow.com/questions/7625786/type-dict-in-argparse-add-argument
 # We follow a similar approach with bools
 # ref: https://stackoverflow.com/a/59579733/18471590
-# ref: https://stackoverflow.com/questions/715417/converting-from-a-string-to-boolean-in-python/18472142#18472142
+# ref: https://stackoverflow.com/questions/715417/converting-from-a-string-to-boolean-in-python/18472142#18472142  # noqa
+
 
 def str2bool(v):
-  return v.lower() in ("yes", "true", "t", "1")
+    return v.lower() in ("yes", "true", "t", "1")
 
 
 FIELD_TYPE_CONVERTERS = {
@@ -138,7 +139,7 @@ def _fields_to_dict(fields_in):
         if "enum" in val.metadata.keys():
             val_help += f"\nChoices: {val.metadata['enum']}"
 
-        val_help = val_help.lstrip('\n') # remove escape when no description found
+        val_help = val_help.lstrip('\n')  # remove escape when no description found
         param["help"] = val_help
 
         dict_out[key] = param
@@ -209,6 +210,7 @@ train_args = _fields_to_dict(model_obj.get_train_args())
 file_args = {}
 file_args['predict'] = _get_file_args(model_obj.get_predict_args())
 file_args['train'] = _get_file_args(model_obj.get_train_args())
+
 
 # Function to add later these arguments to CONF via SubCommandOpt
 def _add_methods(subparsers):
