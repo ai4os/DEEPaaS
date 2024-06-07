@@ -1,0 +1,50 @@
+cff-version: 1.2.0
+title: DEEPaaS
+message: ' A REST API to serve machine learning and deep learning models '
+type: software
+authors:
+  - given-names: Álvaro
+    family-names: López García
+    email: aloga@ifca.unican.es
+    affiliation: 'IFCA, CSIC-UC'
+    orcid: 'https://orcid.org/0000-0002-0013-4602'
+identifiers:
+  - type: doi
+    value: 10.5281/zenodo.1544377
+    description: Zenodo record
+  - type: doi
+    value: 10.21105/joss.01517
+    description: Journal publication
+repository-code: 'https://github.com/ai4os/DEEPaaS/'
+abstract: >-
+  DEEP as a Service API (DEEPaaS API) is a REST API built on
+  aiohttp that allows to provide easy access to machine
+  learning, deep learning and artificial intelligence
+  models. By using the DEEPaaS API users can easily run a
+  REST API in front of their model, thus accessing its
+  functionality via HTTP calls. DEEPaaS API leverages the
+  OpenAPI specification.
+keywords:
+  - http
+  - http 
+  - data science 
+  - machine learning 
+  - deep learning
+  - neural network 
+  - REST api
+  - aiohttp 
+  - artificial intelligence
+  - neural networks 
+license: Apache-2.0
+preferred-citation:
+  authors:
+  - given-names: Álvaro
+    family-names: López García
+    email: aloga@ifca.unican.es
+    affiliation: 'IFCA, CSIC-UC'
+    orcid: 'https://orcid.org/0000-0002-0013-4602'
+  title: "DEEPaaS API: a REST API for Machine Learning and Deep Learning models"
+  type: article
+  year: 2019
+  journal: "Journal of Open Source Software"
+  doi: 10.21105/joss.01517
