@@ -33,11 +33,12 @@ sys.path.insert(0, os.path.abspath('./'))
 # Add any Sphinx extension module names here, as strings. They can be
 # extensions coming with Sphinx (named 'sphinx.ext.*') or your custom ones.
 
-extensions = ['sphinx.ext.autodoc',
-              'oslo_config.sphinxconfiggen',
-              'oslo_config.sphinxext',
-              "reno.sphinxext",
-              "recommonmark",
+extensions = [
+    'sphinx.ext.autodoc',
+    'oslo_config.sphinxconfiggen',
+    'oslo_config.sphinxext',
+    "reno.sphinxext",
+    "recommonmark",
 ]
 
 # Add any paths that contain templates here, relative to this directory.
@@ -49,7 +50,7 @@ sample_config_basename = '_static/deepaas'
 todo_include_todos = True
 
 source_parsers = {
-   '.md': 'recommonmark.parser.CommonMarkParser',
+    '.md': 'recommonmark.parser.CommonMarkParser',
 }
 
 # The suffix of source filenames.
@@ -59,9 +60,12 @@ source_suffix = ['.rst', '.md']
 master_doc = 'index'
 
 # General information about the project.
-project = u'DEEP-Hybrid-DataCloud'
-copyright = u'2017-present, <a href="https://deep-hybrid-datacloud.eu">DEEP-Hybrid-DataCloud</a> consortium'
-author = u"DEEP-Hybrid-DataCloud consortium"
+project = 'Ai4EOSC'
+copyright = (
+    '2017-2022, DEEP-Hybrid-DataCloud consortium'
+    '2022-present, AI4EOSC Consortium'
+)
+author = u"AI4EOSC consortium"
 
 # The version info for the project you're documenting, acts as replacement for
 # |version| and |release|, also used in various other places throughout the
@@ -102,7 +106,7 @@ man_pages = [
 ]
 
 # If true, show URL addresses after external links.
-#man_show_urls = False
+# man_show_urls = False
 
 # -- Options for HTML output --------------------------------------------------
 
@@ -139,26 +143,25 @@ html_use_smartypants = False
 
 # Custom sidebar templates, maps document names to template names.
 html_sidebars = {
-#    'index':    ['sidebar.html', 'sourcelink.html', 'searchbox.html'],
-#    '**':       ['sidebar.html', 'localtoc.html', 'relations.html',
-#                 'sourcelink.html', 'searchbox.html'],
-    'index':       ['about.html', 'navigation.html', 'relations.html',
-                 'sourcelink.html', 'searchbox.html', 'sidebarfooter.html'],
+    'index': [
+        'about.html', 'navigation.html', 'relations.html',
+        'sourcelink.html', 'searchbox.html', 'sidebarfooter.html'
+    ],
 }
 
 
 # Additional templates that should be rendered to pages, maps page names to
 # template names.
-#html_additional_pages = {}
+# html_additional_pages = {}
 
 # If false, no module index is generated.
-#html_domain_indices = True
+# html_domain_indices = True
 
 # If false, no index is generated.
-#html_use_index = True
+# html_use_index = True
 
 # If true, the index is split into individual pages for each letter.
-#html_split_index = False
+# html_split_index = False
 
 # If true, links to the reST sources are added to the pages.
 html_show_sourcelink = False
@@ -172,24 +175,24 @@ html_show_copyright = True
 # If true, an OpenSearch description file will be output, and all pages will
 # contain a <link> tag referring to it.  The value of this option must be the
 # base URL from which the finished HTML is served.
-#html_use_opensearch = ''
+# html_use_opensearch = ''
 
 # This is the file name suffix for HTML files (e.g. ".xhtml").
-#html_file_suffix = None
+# html_file_suffix = None
 
 # Language to be used for generating the HTML full-text search index.
 # Sphinx supports the following languages:
 #   'da', 'de', 'en', 'es', 'fi', 'fr', 'hu', 'it', 'ja'
 #   'nl', 'no', 'pt', 'ro', 'ru', 'sv', 'tr'
-#html_search_language = 'en'
+# html_search_language = 'en'
 
 # A dictionary with options for the search language support, empty by default.
 # Now only 'ja' uses this config value
-#html_search_options = {'type': 'default'}
+# html_search_options = {'type': 'default'}
 
 # The name of a javascript file (relative to the configuration directory) that
 # implements a search results scorer. If empty, the default will be used.
-#html_search_scorer = 'scorer.js'
+# html_search_scorer = 'scorer.js'
 
 # Output file base name for HTML help builder.
 htmlhelp_basename = 'DEEPaaSdoc'
@@ -200,8 +203,7 @@ htmlhelp_basename = 'DEEPaaSdoc'
 # (source start file, target name, title, author, documentclass
 # [howto/manual]).
 latex_documents = [
-    ('index', 'deepaas.tex', u'DEEPaaS Documentation',
-     author, 'manual'),
+    ('index', 'deepaas.tex', u'DEEPaaS Documentation', author, 'manual'),
 ]
 
 # The name of an image file (relative to this directory) to place at the top of
@@ -210,16 +212,16 @@ latex_logo = "_static/logo.png"
 
 # For "manual" documents, if this is true, then toplevel headings are parts,
 # not chapters.
-#latex_use_parts = False
+# latex_use_parts = False
 
 # If true, show page references after internal links.
-#latex_show_pagerefs = False
+# latex_show_pagerefs = False
 
 # If true, show URL addresses after external links.
-#latex_show_urls = False
+# latex_show_urls = False
 
 # Documents to append as an appendix to all manuals.
-#latex_appendices = []
+# latex_appendices = []
 
 # If false, no module index is generated.
-#latex_domain_indices = True
+# latex_domain_indices = True
