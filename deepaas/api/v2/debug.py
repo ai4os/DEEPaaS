@@ -71,7 +71,7 @@ def setup_debug():
             "restriction in the /debug/ endpoint. Disable it whenever "
             "you have finished debugging your application. \033[0m"
         )
-        warnings.warn(msg, RuntimeWarning)
+        warnings.warn(msg, RuntimeWarning, stacklevel=2)
 
         sys.stdout = MultiOut(DEBUG_STREAM, sys.stdout)
         sys.stderr = MultiOut(DEBUG_STREAM, sys.stderr)
