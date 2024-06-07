@@ -18,6 +18,7 @@ import mimetypes
 import os
 import shutil
 import sys
+import warnings
 
 from oslo_config import cfg
 from oslo_log import log
@@ -111,6 +112,14 @@ def prediction(input_file, file_type, content_type):
 
 
 def main():
+    msg = (
+        "\033[0;31;40mWARNING: This command is deprectated, please use "
+        "deepaas-cli instead. \n"
+        "WARNING: This command will be removed in the next major release. \033[0m"
+    )
+    warnings.warn(msg, DeprecationWarning, stacklevel=2)
+    sys.stderr.write(msg + "\n")
+
     cfg.CONF(sys.argv[1:])
     input_file = CONF.input_file
     content_type = CONF.content_type
