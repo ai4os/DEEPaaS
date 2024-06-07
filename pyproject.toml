@@ -40,7 +40,6 @@ classifiers = [
 
 [tool.poetry.scripts]
 deepaas-run = "deepaas.cmd.run:main"
-deepaas-predict = "deepaas.cmd.execute:main"
 deepaas-cli = "deepaas.cmd.cli:main"
 
 [tool.poetry.plugins] # Optional super table 
