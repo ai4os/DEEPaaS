@@ -75,6 +75,6 @@ class TestCase(testtools.TestCase, aiohttp.test_utils.AioHTTPTestCase):
         for k, v in kw.items():
             CONF.set_override(k, v, group)
 
-    def runTest(self):
+    def runTest(self):  # noqa(N802)
         """This is due to https://github.com/pytest-dev/pytest/issues/12263"""
         pass
