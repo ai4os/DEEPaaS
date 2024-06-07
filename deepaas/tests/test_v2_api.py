@@ -14,10 +14,10 @@
 # License for the specific language governing permissions and limitations
 # under the License.
 
+import io
 import uuid
 
 from aiohttp import web
-import six
 from oslo_config import cfg
 from oslo_log import log as logging
 
@@ -69,7 +69,7 @@ class TestApiV2NoTrain(base.TestCase):
         self.assertEqual(404, ret.status)
 
     async def test_predict_data(self):
-        f = six.BytesIO(b"foo")
+        f = io.BytesIO(b"foo")
         ret = await self.client.post(
             "/v2/models/deepaas-test/predict/",
             data={"data": (f, "foo.txt"), "parameter": 1},
@@ -187,7 +187,7 @@ class TestApiV2CusomBasePath(base.TestCase):
         self.assertIn(response.status, [200, 201])
 
     async def test_predict_data(self):
-        f = six.BytesIO(b"foo")
+        f = io.BytesIO(b"foo")
         ret = await self.client.post(
             "/custom/v2/models/deepaas-test/predict/",
             data={"data": (f, "foo.txt"), "parameter": 1},
@@ -276,7 +276,7 @@ class TestApiV2(base.TestCase):
         self.assertEqual(422, ret.status)
 
     async def test_predict_data(self):
-        f = six.BytesIO(b"foo")
+        f = io.BytesIO(b"foo")
         ret = await self.client.post(
             "/v2/models/deepaas-test/predict/",
             data={"data": (f, "foo.txt"), "parameter": 1},
