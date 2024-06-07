@@ -1,4 +1,4 @@
 ---
-deprecations:
+upgrade: 
   - |
-    The command ``deepaas-predict`` is now deprecated, please use ``deepaas-cli`` instead.
+    The command ``deepaas-predict`` has been removed, please use ``deepaas-cli`` instead.

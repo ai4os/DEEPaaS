@@ -6,5 +6,4 @@ Available commands
    :maxdepth: 1
 
    deepaas-cli
-   deepaas-predict
    deepaas-run
