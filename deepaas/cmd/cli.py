@@ -227,7 +227,6 @@ cli_opts = [
     cfg.StrOpt(
         "deepaas_method_output",
         help="Define an output file, if needed",
-        deprecated_name="deepaas_model_output",
     ),
     cfg.BoolOpt(
         "deepaas_with_multiprocessing",
