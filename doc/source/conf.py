@@ -19,7 +19,7 @@
 import os
 import sys
 
-from deepaas import version
+import deepaas
 
 # If extensions (or modules to document with autodoc) are in another directory,
 # add these directories to sys.path here. If the directory is relative to the
@@ -68,9 +68,9 @@ author = u"DEEP-Hybrid-DataCloud consortium"
 # built documents.
 #
 # The full version, including alpha/beta/rc tags.
-release = version.release_string
+release = deepaas.__version__
 # The short X.Y version.
-version = version.release_string
+version = deepaas.__version__
 
 # A list of glob-style patterns that should be excluded when looking for
 # source files. They are matched against the source file names relative to the

@@ -14,6 +14,4 @@
 # License for the specific language governing permissions and limitations
 # under the License.
 
-from deepaas import version
-
-__version__ = version.release_string
+__version__ = "2.3.2"
