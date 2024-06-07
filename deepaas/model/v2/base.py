@@ -16,11 +16,8 @@
 
 import abc
 
-import six
 
-
-@six.add_metaclass(abc.ABCMeta)
-class BaseModel(object):
+class BaseModel(object, metaclass=abc.ABCMeta):
     """Base class for all models to be used with DEEPaaS.
 
     Note that it is not needed for DEEPaaS to inherit from this abstract base
