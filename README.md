@@ -7,7 +7,9 @@
 [![PyPI](https://img.shields.io/pypi/v/deepaas.svg)](https://pypi.python.org/pypi/deepaas)
 [![Python versions](https://img.shields.io/pypi/pyversions/deepaas.svg)](https://pypi.python.org/pypi/deepaas)
 [![Build Status](https://jenkins.services.ai4os.eu/job/AI4OS/job/DEEPaaS/job/master/badge/icon)](https://jenkins.services.ai4os.eu/job/AI4OS/job/DEEPaaS/job/master/)
+[![Documentation Status](https://readthedocs.org/projects/deepaas/badge/?version=latest)](https://deepaas.readthedocs.io/en/latest/)
 [![DOI](https://joss.theoj.org/papers/10.21105/joss.01517/status.svg)](https://doi.org/10.21105/joss.01517)
+[![Zenodo DOI](https://zenodo.org/badge/DOI/10.5281/zenodo.1544377.svg)](https://zenodo.org/doi/10.5281/zenodo.1544377)
 
 <img src="https://raw.githubusercontent.com/ai4os/.github/ai4os/profile/horizontal-transparent.png" width=200 alt="AI4EOSC logo"/>
 <img src="https://marketplace.deep-hybrid-datacloud.eu/images/logo-deep.png" width=200 alt="DEEP-Hybrid-DataCloud logo"/>
