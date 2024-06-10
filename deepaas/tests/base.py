@@ -34,8 +34,8 @@ _TRUE_VALUES = ("True", "true", "1", "yes")
 class TestCase(testtools.TestCase, aiohttp.test_utils.AioHTTPTestCase):
     """Base unit test class."""
 
-    async def get_application(self):
-        app = web.Application(debug=True)
+    def get_application(self):
+        app = web.Application()
         app.middlewares.append(web.normalize_path_middleware())
 
         return app
