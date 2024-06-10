@@ -116,7 +116,7 @@ def parse_args(argv, default_config_files=None):
     cfg.CONF(
         argv[1:],
         project="deepaas",
-        version=deepaas.__version__,
+        version=deepaas.extract_version(),
         default_config_files=default_config_files,
     )
 
