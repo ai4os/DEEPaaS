@@ -21,3 +21,7 @@ class ModuleNotFoundError(Exception):
 
 class NoModelsAvailable(Exception):
     """No models are available in the system."""
+
+
+class MultipleModelsFound(Exception):
+    """Multiple models found."""

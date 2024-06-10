@@ -11,24 +11,21 @@ Defining what to load
 ---------------------
 
 The DEEPaaS API uses Python's `Setuptools`_ entry points that are dynamically
-loaded to offer the model functionality through the API. This allows you to
-offer several models using a single DEEPaaS instance, by defining different
-entry points for the different models.
-
-.. warning::
-   Serving multiple models is marked as deprecated, and will be removed in a
-   future major version of the API. Please ensure that you start using the `model-name`
-   configuration option in your configuration file or the `--model-name` command line
-   option as soon as possible.
+loaded to offer the model functionality through the API. This allows you to have more
+than one model installed in your system, and choose which one to serve via the
+`model-name` configuration option in your configuration file or the `--model-name`
+command line option.
 
 .. _Setuptools: https://setuptools.readthedocs.io/en/latest/setuptools.html
 
 When the DEEPaaS API is spawned it will look for the ``deepaas.v2.model``
-entrypoint namespace, loading and adding the names found into the API
-namespace. In order to define your entry points, your module should leverage
-setuptools and be ready to be installed in the system. Then, in order to define
-your entry points, you should add the following to your ``setup.cfg``
-configuration file:
+entrypoint namespace and the configured `model-name`. If there are more than one
+model available you need to specify it via the option. If there is only one model, that
+one will be served.
+
+In order to define your entry points, your module should leverage setuptools and be
+ready to be installed in the system. Then, in order to define your entry points, you
+should add the following to your ``setup.cfg`` configuration file:
 
 .. code-block:: ini
 

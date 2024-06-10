@@ -42,10 +42,21 @@ async def application():
 @pytest.fixture
 async def mocks(monkeypatch):
     monkeypatch.setattr(v2_wrapper.ModelWrapper, "_setup_cleanup", lambda x: None)
+    model_name = uuid.uuid4().hex
     monkeypatch.setattr(
         deepaas.model.loading,
         "get_available_models",
-        lambda x: {uuid.uuid4().hex: "bar"},
+        lambda x: {model_name: "foo"},
+    )
+    monkeypatch.setattr(
+        deepaas.model.loading,
+        "get_available_model_names",
+        lambda x: [model_name],
+    )
+    monkeypatch.setattr(
+        deepaas.model.loading,
+        "get_model_by_name",
+        lambda x, y: fake_v2_model.TestModel,
     )
     monkeypatch.setattr(deepaas.model.v2, "MODELS_LOADED", False)
     monkeypatch.setattr(deepaas.model.v2, "MODELS", {})

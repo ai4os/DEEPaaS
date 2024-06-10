@@ -59,13 +59,8 @@ Options
 
 .. option:: --model-name MODEL_NAME
 
-    Specify the model to be used. If not specified, DEEPaaS will serve all the models
-    that are available. If specified, DEEPaaS will serve only the specified model. You
-    can also use the DEEPAAS_V2_MODEL environment variable.
-
-    WARNING: Serving multiple models is deprecated and will be removed in the future,
-    therefore it is strongly suggested that you specify the model you want to or that
-    you ensure that only one model is available.
+    Specify the model to be used. If not specified, DEEPaaS will fail if there are
+    more than only one models available.
 
 Files
 =====
