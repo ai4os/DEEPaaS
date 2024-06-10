@@ -19,14 +19,14 @@ import pathlib
 from aiohttp import web
 import aiohttp_apispec
 from oslo_config import cfg
-from oslo_log import log as logging
 
 import deepaas
 from deepaas.api import v2
 from deepaas.api import versions
+from deepaas import log
 from deepaas import model
 
-LOG = logging.getLogger(__name__)
+LOG = log.getLogger(__name__)
 
 APP = None
 

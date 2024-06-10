@@ -17,13 +17,13 @@
 from aiohttp import web
 import aiohttp_apispec
 from oslo_config import cfg
-from oslo_log import log
 
 from deepaas.api.v2 import debug as v2_debug
 from deepaas.api.v2 import models as v2_model
 from deepaas.api.v2 import predict as v2_predict
 from deepaas.api.v2 import responses
 from deepaas.api.v2 import train as v2_train
+from deepaas import log
 
 CONF = cfg.CONF
 LOG = log.getLogger("deepaas.api.v2")

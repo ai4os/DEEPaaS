@@ -49,7 +49,6 @@ deepaas = "deepaas.opts:list_opts"
 
 [tool.poetry.dependencies]
 python = "^3.10"
-"oslo.log" = "^6.0.0"
 "oslo.config" = "^9.4.0"
 stevedore = "^5.2.0"
 aiohttp = "^3.9.5"

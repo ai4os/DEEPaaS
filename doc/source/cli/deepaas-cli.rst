@@ -21,8 +21,6 @@ Description
     by a user file;
     ``--deepaas_with_multiprocessing`` is to activate multiprocessing
     support, default is True.
-    oslo_log package is used for logging information, which provides
-    additional options for the script.
     If several models are available for loading, one has to provide
     which one to load via DEEPAAS_V2_MODEL environment setting.
 

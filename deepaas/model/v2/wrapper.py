@@ -28,9 +28,9 @@ import tempfile
 
 from aiohttp import web
 import marshmallow
-
 from oslo_config import cfg
-from oslo_log import log
+
+from deepaas import log
 
 LOG = log.getLogger(__name__)
 

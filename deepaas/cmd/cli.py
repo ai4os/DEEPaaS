@@ -31,9 +31,9 @@ import uuid
 from datetime import datetime
 from marshmallow import fields
 from oslo_config import cfg
-from oslo_log import log
 
 from deepaas import config
+from deepaas import log
 from deepaas.model import loading
 from deepaas.model.v2 import wrapper as v2_wrapper
 
@@ -247,7 +247,7 @@ cli_opts = [
 CONF = cfg.CONF
 CONF.register_cli_opts(cli_opts)
 
-LOG = log.getLogger(__name__)
+LOG = log.get_logger(__name__)
 
 
 # store DEEPAAS_METHOD output in a file
@@ -273,14 +273,9 @@ def main():
     """Executes model's methods with corresponding parameters"""
 
     # we may add deepaas config, but then too many options...
-    # config.config_and_logging(sys.argv)
-
-    log.register_options(CONF)
-    log.set_defaults(default_log_levels=log.get_default_log_levels())
+    # config.setup(sys.argv)
 
     CONF(sys.argv[1:], project="deepaas", version=deepaas.extract_version())
-
-    log.setup(CONF, "deepaas-cli")
 
     LOG.info("[INFO, Method] {} was called.".format(CONF.methods.name))
 

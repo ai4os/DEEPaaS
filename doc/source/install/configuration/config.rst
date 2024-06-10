@@ -7,8 +7,3 @@ For a sample configuration file, refer to :doc:`sample`.
 
 .. show-options::
    deepaas
-
-Logging options
----------------
-.. show-options::
-   oslo.log

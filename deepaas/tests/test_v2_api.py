@@ -19,7 +19,6 @@ import uuid
 
 from aiohttp import web
 from oslo_config import cfg
-from oslo_log import log as logging
 import pytest
 
 import deepaas
@@ -33,7 +32,6 @@ from deepaas.tests import fake_responses
 from deepaas.tests import fake_v2_model
 
 CONF = cfg.CONF
-logging.register_options(CONF)
 
 
 def test_loading_ok_with_missing_schema():
