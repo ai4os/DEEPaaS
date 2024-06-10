@@ -17,3 +17,7 @@
 
 class ModuleNotFoundError(Exception):
     """Module not found error."""
+
+
+class NoModelsAvailable(Exception):
+    """No models are available in the system."""

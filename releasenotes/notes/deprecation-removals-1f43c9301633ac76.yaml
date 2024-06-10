@@ -1,0 +1,5 @@
+---
+upgrade:
+  - |
+    Removed deprecated loading of "deepaas-test" model. If you wish to develop
+    or debug your model, use the "demo-app" instead: https://github.com/ai4os-hub/ai4os-demo-app

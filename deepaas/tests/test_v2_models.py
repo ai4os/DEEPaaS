@@ -25,11 +25,12 @@ import mock
 from webargs import fields
 
 import deepaas
+from deepaas import exceptions
 import deepaas.model.v2
 from deepaas.model.v2 import base as v2_base
-from deepaas.model.v2 import test as v2_test
 from deepaas.model.v2 import wrapper as v2_wrapper
 from deepaas.tests import base
+from deepaas.tests import fake_v2_model
 
 
 class TestV2Model(base.TestCase):
@@ -131,7 +132,7 @@ class TestV2Model(base.TestCase):
         )
 
     def test_dummy_model(self):
-        m = v2_test.TestModel()
+        m = fake_v2_model.TestModel()
         pred = m.predict()
         pred.pop("data")
         self.assertDictEqual(
@@ -152,7 +153,7 @@ class TestV2Model(base.TestCase):
     @mock.patch("deepaas.model.v2.wrapper.ModelWrapper._setup_cleanup")
     @test_utils.unittest_run_loop
     async def test_dummy_model_with_wrapper(self, m_clean):
-        w = v2_wrapper.ModelWrapper("foo", v2_test.TestModel(), self.app)
+        w = v2_wrapper.ModelWrapper("foo", fake_v2_model.TestModel(), self.app)
         task = w.predict()
         await task
         ret = task.result()["output"]
@@ -203,30 +204,34 @@ class TestV2Model(base.TestCase):
 
     @mock.patch("deepaas.model.v2.wrapper.ModelWrapper._setup_cleanup")
     @mock.patch("deepaas.model.loading.get_available_models")
-    async def test_loading_ok(self, mock_loading, m_clean):
+    def test_loading_ok(self, mock_loading, m_clean):
+        app = self.get_application()
+
         mock_loading.return_value = {uuid.uuid4().hex: "bar"}
-        deepaas.model.v2.register_models(self.app)
+
+        deepaas.model.v2.register_models(app)
         mock_loading.assert_called()
         for m in deepaas.model.v2.MODELS.values():
             self.assertIsInstance(m, v2_wrapper.ModelWrapper)
 
     @mock.patch("deepaas.model.v2.wrapper.ModelWrapper._setup_cleanup")
     @mock.patch("deepaas.model.loading.get_available_models")
-    async def test_loading_ok_singleton(self, mock_loading, m_clean):
+    def test_loading_ok_singleton(self, mock_loading, m_clean):
+        app = self.get_application()
+
         mock_loading.return_value = {uuid.uuid4().hex: "bar"}
-        deepaas.model.v2.register_models(self.app)
-        deepaas.model.v2.register_models(self.app)
+        deepaas.model.v2.register_models(app)
+        deepaas.model.v2.register_models(app)
         mock_loading.assert_called_once()
         for m in deepaas.model.v2.MODELS.values():
             self.assertIsInstance(m, v2_wrapper.ModelWrapper)
 
     @mock.patch("deepaas.model.v2.wrapper.ModelWrapper._setup_cleanup")
     @mock.patch("deepaas.model.loading.get_available_models")
-    async def test_loading_error(self, mock_loading, m_clean):
+    def test_loading_error(self, mock_loading, m_clean):
+        app = self.get_application()
         mock_loading.return_value = {}
-        deepaas.model.v2.register_models(self.app)
+        self.assertRaises(
+            exceptions.NoModelsAvailable, deepaas.model.v2.register_models, app
+        )
         mock_loading.assert_called()
-        self.assertIn("deepaas-test", deepaas.model.v2.MODELS)
-        m = deepaas.model.v2.MODELS.pop("deepaas-test")
-        self.assertIsInstance(m, v2_wrapper.ModelWrapper)
-        self.assertIsInstance(m.model_obj, v2_test.TestModel)

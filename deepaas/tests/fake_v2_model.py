@@ -35,7 +35,6 @@ class TestModel(base.BaseModel):
 
     name = "deepaas-test"
 
-    # FIXME(aloga): document this
     schema = {
         "date": fields.Date(),
         "labels": fields.List(
@@ -135,7 +134,7 @@ class TestModel(base.BaseModel):
             "accept": fields.Str(
                 metadata={
                     "description": (
-                        "Media type(s) that is/are acceptable for the " "response."
+                        "Media type(s) that is/are acceptable for the response."
                     ),
                     "location": "headers",
                 },
@@ -151,7 +150,7 @@ class TestModel(base.BaseModel):
                 required=True,
                 metadata={
                     "descripton": (
-                        "This is a integer parameter, and it is " "a required one."
+                        "This is a integer parameter, and it is a required one."
                     ),
                 },
             ),
