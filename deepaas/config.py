@@ -14,16 +14,14 @@
 # License for the specific language governing permissions and limitations
 # under the License.
 
-import logging
 import os
 import warnings
 
 from oslo_config import cfg
-from oslo_log import log
 
 import deepaas
+from deepaas import log
 
-logging.captureWarnings(True)
 warnings.simplefilter("default", DeprecationWarning)
 
 opts = [
@@ -96,15 +94,34 @@ Specify the model to be used. If not specified, DEEPaaS will fail if there are
 more than only one models available.
 """,
     ),
+    cfg.BoolOpt(
+        "debug",
+        default=False,
+        help="""
+Enable debug mode in logging. This will provide more information about what
+is happening in the API. Default is to not provide this information.
+""",
+    ),
+    cfg.StrOpt(
+        "log-level",
+        default="INFO",
+        choices=["DEBUG", "INFO", "WARNING", "ERROR", "CRITICAL"],
+        help="""
+Specify the log level for the API. Default is INFO. Possible values are DEBUG,
+INFO, WARNING, ERROR, CRITICAL.
+""",
+    ),
+    cfg.StrOpt(
+        "log-file",
+        default="",
+        help="""
+Specify the log file to use. If not specified, logs will be sent to stdout.
+""",
+    ),
 ]
 
 CONF = cfg.CONF
 CONF.register_cli_opts(opts)
-
-
-def prepare_logging():
-    log.register_options(cfg.CONF)
-    log.set_defaults(default_log_levels=log.get_default_log_levels())
 
 
 def parse_args(argv, default_config_files=None):
@@ -116,7 +133,9 @@ def parse_args(argv, default_config_files=None):
     )
 
 
-def config_and_logging(argv, default_config_files=None):
-    prepare_logging()
+def setup(argv, default_config_files=None):
     parse_args(argv, default_config_files=default_config_files)
-    log.setup(cfg.CONF, "deepaas")
+
+    log_level = (CONF.debug and "DEBUG") or CONF.log_level
+
+    log.setup(log_level, CONF.log_file)

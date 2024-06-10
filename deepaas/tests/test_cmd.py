@@ -58,7 +58,7 @@ async def test_run_custom_ip_port(
     m_get_app, m_run_app, m_handle_signals, cfg_fixture, monkeypatch
 ):
 
-    monkeypatch.setattr(deepaas.config, "config_and_logging", lambda x: None)
+    monkeypatch.setattr(deepaas.config, "setup", lambda x: None)
     m = mock.MagicMock()
     m_get_app.return_value = m
     ip = "1.1.1.1"

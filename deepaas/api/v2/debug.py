@@ -23,7 +23,8 @@ import warnings
 from aiohttp import web
 import aiohttp_apispec
 from oslo_config import cfg
-from oslo_log import log
+
+from deepaas import log
 
 CONF = cfg.CONF
 

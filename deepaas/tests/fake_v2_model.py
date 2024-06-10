@@ -17,10 +17,10 @@
 import base64
 import time
 
-from oslo_log import log
 from webargs import fields
 from webargs import validate
 
+from deepaas import log
 from deepaas.model.v2 import base
 
 LOG = log.getLogger(__name__)

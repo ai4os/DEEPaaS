@@ -14,10 +14,9 @@
 # License for the specific language governing permissions and limitations
 # under the License.
 
-from oslo_log import log
-
 from deepaas import config
 from deepaas import exceptions
+from deepaas import log
 from deepaas.model import loading
 from deepaas.model.v2 import wrapper
 

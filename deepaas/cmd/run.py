@@ -20,10 +20,10 @@ import sys
 
 from aiohttp import web
 from oslo_config import cfg
-from oslo_log import log as oslo_log
 
 import deepaas
 from deepaas import api
+import deepaas.log
 from deepaas.cmd import _shutdown
 from deepaas import config
 
@@ -90,8 +90,8 @@ or you can use any of our endpoints.
 def main():
     _shutdown.handle_signals()
 
-    config.config_and_logging(sys.argv)
-    log = oslo_log.getLogger("deepaas")
+    config.setup(sys.argv)
+    log = deepaas.log.LOG
 
     base_path = CONF.base_path
 
