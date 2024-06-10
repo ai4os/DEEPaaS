@@ -100,7 +100,7 @@ def main():
     print(INTRO)
     print(BANNER.format(docs, spec, v2))
 
-    log.info("Starting DEEPaaS version %s", deepaas.__version__)
+    log.info("Starting DEEPaaS version %s", deepaas.extract_version())
 
     app = api.get_app(
         enable_doc=CONF.doc_endpoint,

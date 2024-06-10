@@ -279,7 +279,7 @@ def main():
     log.register_options(CONF)
     log.set_defaults(default_log_levels=log.get_default_log_levels())
 
-    CONF(sys.argv[1:], project="deepaas", version=deepaas.__version__)
+    CONF(sys.argv[1:], project="deepaas", version=deepaas.extract_version())
 
     log.setup(CONF, "deepaas-cli")
 

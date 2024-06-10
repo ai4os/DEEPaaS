@@ -72,7 +72,7 @@ author = u"AI4EOSC consortium"
 # built documents.
 #
 # The full version, including alpha/beta/rc tags.
-release = deepaas.__version__
+release = deepaas.extract_version()
 # The short X.Y version.
 version = deepaas.__version__
 
