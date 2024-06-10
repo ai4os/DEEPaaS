@@ -21,7 +21,6 @@ from oslo_log import log
 from deepaas import config
 from deepaas import exceptions
 from deepaas.model import loading
-from deepaas.model.v2 import test
 from deepaas.model.v2 import wrapper
 
 LOG = log.getLogger(__name__)
@@ -54,14 +53,8 @@ def register_models(app):
         LOG.error("Model not found: %s", CONF.model_name)
         raise
     except Exception as e:
-        # We do not raise here, as we have not yet removed the deprecated loading of the
-        # test module... but we should remove it as soon as the code below is deprecated
         LOG.warning("Error loading models: %s", e)
-        warnings.warn(
-            "Error loading models, using test model. This will be deprecated soon.",
-            DeprecationWarning,
-            stacklevel=2,
-        )
+        raise e
 
     if MODELS:
         if len(MODELS) > 1:
@@ -74,16 +67,6 @@ def register_models(app):
         return
 
     if not MODELS:
-        # Raise deprecation warning
-        warn_msg = (
-            "Using the built-in test model is deprecated, if you are testing the "
-            "API, please use the demo_app instead. "
-            "Check https://github.com/deephdc/demo_app for more information.",
-        )
-        warnings.warn(warn_msg, DeprecationWarning, stacklevel=2)
-        LOG.info("No models found in V2, loading test model")
-        LOG.warning(warn_msg)
-        MODELS["deepaas-test"] = wrapper.ModelWrapper(
-            "deepaas-test", test.TestModel(), app
-        )
+        LOG.error("No models found in V2, loading test model")
+        raise exceptions.NoModelsAvailable()
     MODELS_LOADED = True
