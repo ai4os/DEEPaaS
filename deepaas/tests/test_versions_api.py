@@ -17,36 +17,39 @@
 
 from aiohttp import web
 import aiohttp_apispec
+import pytest
 
 from deepaas.api import v2
 from deepaas.api import versions
-from deepaas.tests import base
 from deepaas.tests import fake_responses
 
 
-class TestApiVersions(base.TestCase):
-    async def get_application(self):
-        app = web.Application(debug=True)
-        app.add_routes(versions.routes)
+@pytest.fixture
+async def application():
+    app = web.Application()
+    app.add_routes(versions.routes)
 
-        app.add_subapp("/v2", v2.get_app())
+    app.add_subapp("/v2", v2.get_app())
 
-        versions.Versions.versions = {}
+    versions.Versions.versions = {}
 
-        aiohttp_apispec.setup_aiohttp_apispec(
-            app=app, url="/swagger.json", swagger_path="/api"
-        )
+    aiohttp_apispec.setup_aiohttp_apispec(
+        app=app, url="/swagger.json", swagger_path="/api"
+    )
 
-        return app
+    return app
 
-    async def test_get_no_versions(self):
-        ret = await self.client.get("/")
-        self.assertEqual(200, ret.status)
-        self.assertDictEqual(fake_responses.empty_versions, await ret.json())
 
-    async def test_v2_version(self):
-        versions.register_version("stable", v2.get_version)
-        ret = await self.client.get("/")
-        self.assertEqual(200, ret.status)
-        expect = fake_responses.versions
-        self.assertDictEqual(expect, await ret.json())
+async def test_get_no_versions(application, aiohttp_client):
+    client = await aiohttp_client(application)
+    ret = await client.get("/")
+    assert 200 == ret.status
+    assert fake_responses.empty_versions == await ret.json()
+
+
+async def test_v2_version(application, aiohttp_client):
+    versions.register_version("stable", v2.get_version)
+    client = await aiohttp_client(application)
+    ret = await client.get("/")
+    assert 200 == ret.status
+    assert fake_responses.versions == await ret.json()
