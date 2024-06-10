@@ -17,11 +17,10 @@
 import itertools
 import uuid
 
-from aiohttp import test_utils
 from aiohttp import web
 import marshmallow
 from marshmallow import fields as m_fields
-import mock
+import pytest
 from webargs import fields
 
 import deepaas
@@ -29,209 +28,212 @@ from deepaas import exceptions
 import deepaas.model.v2
 from deepaas.model.v2 import base as v2_base
 from deepaas.model.v2 import wrapper as v2_wrapper
-from deepaas.tests import base
 from deepaas.tests import fake_v2_model
 
 
-class TestV2Model(base.TestCase):
-    def setUp(self):
-        super(TestV2Model, self).setUp()
+@pytest.fixture
+async def application():
+    app = web.Application()
+    app.middlewares.append(web.normalize_path_middleware())
 
-        deepaas.model.v2.MODELS_LOADED = False
-        deepaas.model.v2.MODELS = {}
+    return app
 
-    def test_abc(self):
-        self.assertRaises(TypeError, v2_base.BaseModel)
 
-    def test_not_implemented(self):
-        class Model(v2_base.BaseModel):
-            def get_metadata(self):
-                super(Model, self).get_metadata()
+@pytest.fixture
+async def mocks(monkeypatch):
+    monkeypatch.setattr(v2_wrapper.ModelWrapper, "_setup_cleanup", lambda x: None)
+    monkeypatch.setattr(
+        deepaas.model.loading,
+        "get_available_models",
+        lambda x: {uuid.uuid4().hex: "bar"},
+    )
+    monkeypatch.setattr(deepaas.model.v2, "MODELS_LOADED", False)
+    monkeypatch.setattr(deepaas.model.v2, "MODELS", {})
 
-            def predict(self, **kwargs):
-                super(Model, self).predict(**kwargs)
 
-            def get_predict_args(self):
-                super(Model, self).get_predict_args()
+def test_abc():
+    with pytest.raises(TypeError):
+        v2_base.BaseModel()
 
-            def train(self, **kwargs):
-                super(Model, self).train(**kwargs)
 
-            def warm(self, **kwargs):
-                super(Model, self).train(**kwargs)
+def test_not_implemented():
+    class Model(v2_base.BaseModel):
+        def get_metadata(self):
+            super(Model, self).get_metadata()
 
-            def get_train_args(self):
-                super(Model, self).get_train_args()
+        def predict(self, **kwargs):
+            super(Model, self).predict(**kwargs)
 
-        m = Model()
-        self.assertRaises(NotImplementedError, m.get_metadata)
-        self.assertRaises(NotImplementedError, m.predict)
-        self.assertRaises(NotImplementedError, m.get_predict_args)
-        self.assertRaises(NotImplementedError, m.train)
-        self.assertRaises(NotImplementedError, m.get_train_args)
+        def get_predict_args(self):
+            super(Model, self).get_predict_args()
 
-    @mock.patch("deepaas.model.v2.wrapper.ModelWrapper._setup_cleanup")
-    async def test_bad_schema(self, m_clean):
-        class Model(object):
-            schema = []
+        def train(self, **kwargs):
+            super(Model, self).train(**kwargs)
 
-        self.assertRaises(
-            web.HTTPInternalServerError,
-            v2_wrapper.ModelWrapper,
-            "test",
-            Model(),
-            self.app,
-        )
+        def warm(self, **kwargs):
+            super(Model, self).train(**kwargs)
 
-    @mock.patch("deepaas.model.v2.wrapper.ModelWrapper._setup_cleanup")
-    async def test_validate_no_schema(self, m_clean):
-        class Model(object):
-            schema = None
+        def get_train_args(self):
+            super(Model, self).get_train_args()
 
-        wrapper = v2_wrapper.ModelWrapper("test", Model(), self.app)
-        self.assertRaises(web.HTTPInternalServerError, wrapper.validate_response, None)
+    m = Model()
 
-    @mock.patch("deepaas.model.v2.wrapper.ModelWrapper._setup_cleanup")
-    async def test_invalid_schema(self, m_clean):
-        class Model(object):
-            schema = object()
+    with pytest.raises(NotImplementedError):
+        m.get_metadata()
+    with pytest.raises(NotImplementedError):
+        m.predict()
+    with pytest.raises(NotImplementedError):
+        m.get_predict_args()
+    with pytest.raises(NotImplementedError):
+        m.train()
+    with pytest.raises(NotImplementedError):
+        m.get_train_args()
 
-        self.assertRaises(
-            web.HTTPInternalServerError,
-            v2_wrapper.ModelWrapper,
-            "test",
-            Model(),
-            self.app,
-        )
 
-    @mock.patch("deepaas.model.v2.wrapper.ModelWrapper._setup_cleanup")
-    async def test_marshmallow_schema(self, m_clean):
-        class Schema(marshmallow.Schema):
-            foo = m_fields.Str()
+async def test_bad_schema(application, mocks):
+    class Model(object):
+        schema = []
 
-        class Model(object):
-            schema = Schema
+    with pytest.raises(web.HTTPInternalServerError):
+        v2_wrapper.ModelWrapper("test", Model(), application)
 
-        wrapper = v2_wrapper.ModelWrapper("test", Model(), self.app)
 
-        self.assertTrue(wrapper.validate_response({"foo": "bar"}))
-        self.assertRaises(
-            web.HTTPInternalServerError, wrapper.validate_response, {"foo": 1.0}
-        )
+async def test_validate_no_schema(application, mocks):
+    class Model(object):
+        schema = None
 
-    @mock.patch("deepaas.model.v2.wrapper.ModelWrapper._setup_cleanup")
-    async def test_dict_schema(self, m_clean):
-        class Model(object):
-            schema = {"foo": m_fields.Str()}
+    with pytest.raises(web.HTTPInternalServerError):
+        wrapper = v2_wrapper.ModelWrapper("test", Model(), application)
+        wrapper.validate_response(None)
 
-        wrapper = v2_wrapper.ModelWrapper("test", Model(), self.app)
 
-        self.assertTrue(wrapper.validate_response({"foo": "bar"}))
-        self.assertRaises(
-            web.HTTPInternalServerError, wrapper.validate_response, {"foo": 1.0}
-        )
+async def test_invalid_schema(application, mocks):
+    class Model(object):
+        schema = object()
 
-    def test_dummy_model(self):
-        m = fake_v2_model.TestModel()
-        pred = m.predict()
-        pred.pop("data")
-        self.assertDictEqual(
-            {"date": "2019-01-1", "labels": [{"label": "foo", "probability": 1.0}]},
-            pred,
-        )
-        self.assertIsNone(m.train())
-        meta = m.get_metadata()
-        self.assertIn("description", meta)
-        self.assertIn("id", meta)
-        self.assertIn("name", meta)
-        self.assertEqual("Alvaro Lopez Garcia", meta["author"])
-        pargs = m.get_predict_args()
-        targs = m.get_train_args()
-        for _arg, val in itertools.chain(pargs.items(), targs.items()):
-            self.assertIsInstance(val, fields.Field)
+    with pytest.raises(web.HTTPInternalServerError):
+        v2_wrapper.ModelWrapper("test", Model(), application)
 
-    @mock.patch("deepaas.model.v2.wrapper.ModelWrapper._setup_cleanup")
-    @test_utils.unittest_run_loop
-    async def test_dummy_model_with_wrapper(self, m_clean):
-        w = v2_wrapper.ModelWrapper("foo", fake_v2_model.TestModel(), self.app)
-        task = w.predict()
-        await task
-        ret = task.result()["output"]
-        self.assertDictEqual(
-            {"date": "2019-01-1", "labels": [{"label": "foo", "probability": 1.0}]}, ret
-        )
-        task = w.train(sleep=0)
-        await task
-        ret = task.result()
-        self.assertIsNone(ret["output"])
-        meta = w.get_metadata()
-        self.assertIn("description", meta)
-        self.assertIn("id", meta)
-        self.assertIn("name", meta)
-        pargs = w.get_predict_args()
-        targs = w.get_train_args()
-        for _arg, val in itertools.chain(pargs.items(), targs.items()):
-            self.assertIsInstance(val, fields.Field)
 
-    @mock.patch("deepaas.model.v2.wrapper.ModelWrapper._setup_cleanup")
-    @test_utils.unittest_run_loop
-    async def test_model_with_not_implemented_attributes_and_wrapper(self, m_clean):
-        w = v2_wrapper.ModelWrapper("foo", object(), self.app)
+async def test_marshmallow_schema(application, mocks):
+    class Schema(marshmallow.Schema):
+        foo = m_fields.Str()
 
-        # NOTE(aloga): Cannot use assertRaises here directly, as testtools
-        # overrides this method, and their implementation makes impossible to
-        # use it a s context manager. Then, since we need to do async calls to
-        # the methods (they are coroutines) we cannot use assertRaises
-        # directly.
-        try:
-            await w.predict()
-        except Exception as e:
-            self.assertIsInstance(e, web.HTTPNotImplemented)
+    class Model(object):
+        schema = Schema
 
-        try:
-            await w.train()
-        except Exception as e:
-            self.assertIsInstance(e, web.HTTPNotImplemented)
+    wrapper = v2_wrapper.ModelWrapper("test", Model(), application)
 
-        meta = w.get_metadata()
-        self.assertIn("description", meta)
-        self.assertIn("id", meta)
-        self.assertIn("name", meta)
-        pargs = w.get_predict_args()
-        targs = w.get_train_args()
-        for _arg, val in itertools.chain(pargs.items(), targs.items()):
-            self.assertIsInstance(val, fields.Field)
+    assert wrapper.validate_response({"foo": "bar"})
+    with pytest.raises(web.HTTPInternalServerError):
+        wrapper.validate_response({"foo": 1.0})
 
-    @mock.patch("deepaas.model.v2.wrapper.ModelWrapper._setup_cleanup")
-    @mock.patch("deepaas.model.loading.get_available_models")
-    def test_loading_ok(self, mock_loading, m_clean):
-        app = self.get_application()
 
-        mock_loading.return_value = {uuid.uuid4().hex: "bar"}
+async def test_dict_schema(application, mocks):
+    class Model(object):
+        schema = {"foo": m_fields.Str()}
 
-        deepaas.model.v2.register_models(app)
-        mock_loading.assert_called()
-        for m in deepaas.model.v2.MODELS.values():
-            self.assertIsInstance(m, v2_wrapper.ModelWrapper)
+    wrapper = v2_wrapper.ModelWrapper("test", Model(), application)
 
-    @mock.patch("deepaas.model.v2.wrapper.ModelWrapper._setup_cleanup")
-    @mock.patch("deepaas.model.loading.get_available_models")
-    def test_loading_ok_singleton(self, mock_loading, m_clean):
-        app = self.get_application()
+    assert wrapper.validate_response({"foo": "bar"})
+    with pytest.raises(web.HTTPInternalServerError):
+        wrapper.validate_response({"foo": 1.0})
 
-        mock_loading.return_value = {uuid.uuid4().hex: "bar"}
-        deepaas.model.v2.register_models(app)
-        deepaas.model.v2.register_models(app)
-        mock_loading.assert_called_once()
-        for m in deepaas.model.v2.MODELS.values():
-            self.assertIsInstance(m, v2_wrapper.ModelWrapper)
 
-    @mock.patch("deepaas.model.v2.wrapper.ModelWrapper._setup_cleanup")
-    @mock.patch("deepaas.model.loading.get_available_models")
-    def test_loading_error(self, mock_loading, m_clean):
-        app = self.get_application()
-        mock_loading.return_value = {}
-        self.assertRaises(
-            exceptions.NoModelsAvailable, deepaas.model.v2.register_models, app
-        )
-        mock_loading.assert_called()
+@pytest.fixture
+def model():
+    return fake_v2_model.TestModel()
+
+
+async def test_dummy_model(model, mocks):
+    pred = model.predict()
+    pred.pop("data")
+    assert pred == {
+        "date": "2019-01-1",
+        "labels": [{"label": "foo", "probability": 1.0}],
+    }
+
+    assert model.train() is None
+
+    meta = model.get_metadata()
+    assert "description" in meta
+    assert "id" in meta
+    assert "name" in meta
+    assert "Alvaro Lopez Garcia" == meta["author"]
+
+    pargs = model.get_predict_args()
+    targs = model.get_train_args()
+    for _arg, val in itertools.chain(pargs.items(), targs.items()):
+        assert isinstance(val, fields.Field)
+
+
+async def test_dummy_model_with_wrapper(application, model, mocks):
+    w = v2_wrapper.ModelWrapper("foo", model, application)
+    task = w.predict()
+    await task
+    ret = task.result()["output"]
+    del ret["data"]
+    assert ret == {
+        "date": "2019-01-1",
+        "labels": [{"label": "foo", "probability": 1.0}],
+    }
+    task = w.train(sleep=0)
+    await task
+    ret = task.result()
+    assert ret["output"] is None
+    meta = w.get_metadata()
+    assert "description" in meta
+    assert "id" in meta
+    assert "name" in meta
+    pargs = w.get_predict_args()
+    targs = w.get_train_args()
+    for _arg, val in itertools.chain(pargs.items(), targs.items()):
+        print(val)
+        print(fields.Field)
+        assert isinstance(val, fields.Field)
+
+
+async def test_model_with_not_implemented_attributes_and_wrapper(application, mocks):
+    w = v2_wrapper.ModelWrapper("foo", object(), application)
+
+    with pytest.raises(web.HTTPNotImplemented):
+        await w.predict()
+    with pytest.raises(web.HTTPNotImplemented):
+        await w.train()
+
+    meta = w.get_metadata()
+    assert "description" in meta
+    assert "id" in meta
+    assert "name" in meta
+    pargs = w.get_predict_args()
+    targs = w.get_train_args()
+    for _arg, val in itertools.chain(pargs.items(), targs.items()):
+        assert isinstance(val, fields.Field)
+
+
+async def test_loading_ok(application, mocks):
+    deepaas.model.v2.register_models(application)
+
+    for m in deepaas.model.v2.MODELS.values():
+        assert isinstance(m, v2_wrapper.ModelWrapper)
+
+
+async def test_loading_ok_singleton(application, mocks, monkeypatch):
+    deepaas.model.v2.register_models(application)
+    new_model_name = uuid.uuid4().hex
+    monkeypatch.setattr(
+        deepaas.model.loading,
+        "get_available_models",
+        lambda x: {new_model_name: "barz"},
+    )
+    deepaas.model.v2.register_models(application)
+
+    for name, m in deepaas.model.v2.MODELS.items():
+        assert isinstance(m, v2_wrapper.ModelWrapper)
+        assert name != new_model_name
+
+
+def test_loading_error(application, monkeypatch):
+    monkeypatch.setattr(deepaas.model.loading, "get_available_models", lambda x: {})
+    with pytest.raises(exceptions.NoModelsAvailable):
+        deepaas.model.v2.register_models(application)
