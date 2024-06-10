@@ -17,44 +17,61 @@
 import sys
 
 import mock
+from oslo_config import cfg
+import pytest
 
 from deepaas.cmd import run
-from deepaas.tests import base
+import deepaas.config
+
+CONF = cfg.CONF
 
 
-class TestRun(base.TestCase):
-    @mock.patch("deepaas.cmd._shutdown.handle_signals")
-    @mock.patch("aiohttp.web.run_app")
-    @mock.patch("deepaas.api.get_app")
-    async def test_run(self, m_get_app, m_run_app, m_handle_signals):
-        m = mock.MagicMock()
-        m_get_app.return_value = m
-        with mock.patch.object(sys, "argv", ["deepaas-run"]):
-            run.main()
-        m_get_app.assert_called_once()
-        m_run_app.assert_called_with(
-            mock.ANY,
-            host="127.0.0.1",
-            port=5000,
-        )
-        m_handle_signals.assert_called_once()
+@mock.patch("deepaas.cmd._shutdown.handle_signals")
+@mock.patch("aiohttp.web.run_app")
+@mock.patch("deepaas.api.get_app")
+async def test_run(m_get_app, m_run_app, m_handle_signals):
+    m = mock.MagicMock()
+    m_get_app.return_value = m
+    with mock.patch.object(sys, "argv", ["deepaas-run"]):
+        run.main()
+    m_get_app.assert_called_once()
+    m_run_app.assert_called_with(
+        mock.ANY,
+        host="127.0.0.1",
+        port=5000,
+    )
+    m_handle_signals.assert_called_once()
 
-    @mock.patch("deepaas.cmd._shutdown.handle_signals")
-    @mock.patch("aiohttp.web.run_app")
-    @mock.patch("deepaas.api.get_app")
-    async def test_run_custom_ip_port(self, m_get_app, m_run_app, m_handle_signals):
-        m = mock.MagicMock()
-        m_get_app.return_value = m
-        ip = "1.1.1.1"
-        port = 1234
-        self.flags(listen_ip=ip)
-        self.flags(listen_port=port)
-        with mock.patch.object(sys, "argv", ["deepaas-run"]):
-            run.main()
-        m_get_app.assert_called_once()
-        m_run_app.assert_called_with(
-            mock.ANY,
-            host=ip,
-            port=port,
-        )
-        m_handle_signals.assert_called_once()
+
+@pytest.fixture
+def cfg_fixture():
+    def set_flag(flag, value):
+        CONF.set_override(flag, value)
+
+    return set_flag
+
+
+@mock.patch("deepaas.cmd._shutdown.handle_signals")
+@mock.patch("aiohttp.web.run_app")
+@mock.patch("deepaas.api.get_app")
+async def test_run_custom_ip_port(
+    m_get_app, m_run_app, m_handle_signals, cfg_fixture, monkeypatch
+):
+
+    monkeypatch.setattr(deepaas.config, "config_and_logging", lambda x: None)
+    m = mock.MagicMock()
+    m_get_app.return_value = m
+    ip = "1.1.1.1"
+    port = 1234
+
+    cfg_fixture("listen_ip", ip)
+    cfg_fixture("listen_port", port)
+    with mock.patch.object(sys, "argv", ["deepaas-run"]):
+        run.main()
+    m_get_app.assert_called_once()
+    m_run_app.assert_called_with(
+        mock.ANY,
+        host=ip,
+        port=port,
+    )
+    m_handle_signals.assert_called_once()
