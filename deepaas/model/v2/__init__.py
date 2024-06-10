@@ -14,8 +14,6 @@
 # License for the specific language governing permissions and limitations
 # under the License.
 
-import warnings
-
 from oslo_log import log
 
 from deepaas import config
@@ -39,34 +37,33 @@ def register_models(app):
     if MODELS_LOADED:
         return
 
-    try:
-        if CONF.model_name:
-            MODELS[CONF.model_name] = wrapper.ModelWrapper(
-                CONF.model_name,
-                loading.get_model_by_name(CONF.model_name, "v2"),
-                app,
-            )
+    if CONF.model_name:
+        model_name = CONF.model_name
+    else:
+        model_names = list(loading.get_available_model_names("v2"))
+        if not model_names:
+            LOG.error("No models found.")
+            raise exceptions.NoModelsAvailable()
+        elif len(model_names) == 1:
+            model_name = model_names[0]
         else:
-            for name, model in loading.get_available_models("v2").items():
-                MODELS[name] = wrapper.ModelWrapper(name, model, app)
+            LOG.error(
+                "Multiple models found, but no model has been specified, please "
+                "specify a model using the --model-name option."
+            )
+            raise exceptions.MultipleModelsFound()
+
+    try:
+        MODELS[model_name] = wrapper.ModelWrapper(
+            model_name,
+            loading.get_model_by_name(model_name, "v2"),
+            app,
+        )
     except exceptions.ModuleNotFoundError:
-        LOG.error("Model not found: %s", CONF.model_name)
+        LOG.error("Model not found: %s", model_name)
         raise
     except Exception as e:
-        LOG.warning("Error loading models: %s", e)
+        LOG.exception("Error loading model: %s", e)
         raise e
 
-    if MODELS:
-        if len(MODELS) > 1:
-            # Loading several models will be deprecated in the future
-            warn_msg = "Loading several models is deprecated."
-            warnings.warn(warn_msg, DeprecationWarning, stacklevel=2)
-            LOG.warning(warn_msg)
-
-        MODELS_LOADED = True
-        return
-
-    if not MODELS:
-        LOG.error("No models found in V2, loading test model")
-        raise exceptions.NoModelsAvailable()
     MODELS_LOADED = True
