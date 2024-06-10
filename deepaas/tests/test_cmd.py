@@ -26,7 +26,7 @@ class TestRun(base.TestCase):
     @mock.patch("deepaas.cmd._shutdown.handle_signals")
     @mock.patch("aiohttp.web.run_app")
     @mock.patch("deepaas.api.get_app")
-    def test_run(self, m_get_app, m_run_app, m_handle_signals):
+    async def test_run(self, m_get_app, m_run_app, m_handle_signals):
         m = mock.MagicMock()
         m_get_app.return_value = m
         with mock.patch.object(sys, "argv", ["deepaas-run"]):
@@ -42,7 +42,7 @@ class TestRun(base.TestCase):
     @mock.patch("deepaas.cmd._shutdown.handle_signals")
     @mock.patch("aiohttp.web.run_app")
     @mock.patch("deepaas.api.get_app")
-    def test_run_custom_ip_port(self, m_get_app, m_run_app, m_handle_signals):
+    async def test_run_custom_ip_port(self, m_get_app, m_run_app, m_handle_signals):
         m = mock.MagicMock()
         m_get_app.return_value = m
         ip = "1.1.1.1"
