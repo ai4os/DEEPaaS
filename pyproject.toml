@@ -102,6 +102,7 @@ twine = "^5.1.0"
 
 [tool.poetry.group.test-pip-missing-reqs.dependencies]
 pip-check-reqs = "^2.5.3"
+poetry-plugin-export = "^1.8.0"
 
 [build-system]
 requires = ["poetry-core"]
