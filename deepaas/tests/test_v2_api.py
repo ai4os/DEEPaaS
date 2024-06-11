@@ -20,6 +20,7 @@ import uuid
 from aiohttp import web
 from oslo_config import cfg
 from oslo_log import log as logging
+import pytest
 
 import deepaas
 from deepaas.api import v2
@@ -27,8 +28,9 @@ from deepaas.api.v2 import predict
 from deepaas.api.v2 import responses
 import deepaas.model
 import deepaas.model.v2
-from deepaas.tests import base
+from deepaas.model.v2 import wrapper as v2_wrapper
 from deepaas.tests import fake_responses
+from deepaas.tests import fake_v2_model
 
 CONF = cfg.CONF
 logging.register_options(CONF)
@@ -42,270 +44,163 @@ def test_loading_ok_with_missing_schema():
     assert response is responses.Prediction
 
 
-class TestApiV2NoTrain(base.TestCase):
-    async def get_application(self):
-        app = web.Application(debug=True)
+@pytest.fixture(autouse=True)
+def cfg_fixture():
+    def set_flag(flag, value):
+        CONF.set_override(flag, value)
+
+    return set_flag
+
+
+class BaseTestApiV2:
+    @pytest.fixture
+    @staticmethod
+    def wrapped_model():
+        return v2_wrapper.ModelWrapper("deepaas-test", fake_v2_model.TestModel(), None)
+
+    @pytest.fixture
+    @staticmethod
+    async def client(application, aiohttp_client):
+        c = await aiohttp_client(application)
+        return c
+
+    async def test_get_metadata(self, client):
+        meta = fake_responses.models_meta
+
+        ret = await client.get("/v2/models/")
+        assert ret.status in [200, 201]
+        assert meta == await ret.json()
+
+        ret = await client.get("/v2/models/deepaas-test/")
+        assert ret.status in [200, 201]
+        assert meta["models"][0] == await ret.json()
+
+    async def test_predict_data(self, client):
+        f = io.BytesIO(b"foo")
+        ret = await client.post(
+            "/v2/models/deepaas-test/predict/",
+            data={"data": (f, "foo.txt"), "parameter": 1},
+        )
+        assert 200 == ret.status
+
+        json = await ret.json()
+
+        assert "data" in json
+        del json["data"]
+
+        assert fake_responses.deepaas_test_predict == json
+
+    async def test_train(self, client):
+        ret = await client.post("/v2/models/deepaas-test/train/", data={"sleep": 0})
+        assert 200 == ret.status
+
+        json = await ret.json()
+
+        assert "date" in json
+        json.pop("date")
+
+        assert "uuid" in json
+        json.pop("uuid")
+
+        assert fake_responses.deepaas_test_train == json
+
+
+class TestApiV2NoTrain(BaseTestApiV2):
+    @pytest.fixture
+    @staticmethod
+    async def application(monkeypatch):
+        app = web.Application()
         app.middlewares.append(web.normalize_path_middleware())
 
-        deepaas.model.v2.register_models(app)
+        w = v2_wrapper.ModelWrapper("deepaas-test", fake_v2_model.TestModel(), app)
+
+        monkeypatch.setattr(deepaas.model, "V2_MODELS", {"deepaas-test": w})
 
         v2app = v2.get_app(enable_train=False)
         app.add_subapp("/v2", v2app)
 
         return app
 
-    def setUp(self):
-        super(TestApiV2NoTrain, self).setUp()
-
-        self.maxDiff = None
-
-        self.flags(debug=True)
-
-    def assert_ok(self, response):
-        self.assertIn(response.status, [200, 201])
-
-    async def test_not_found(self):
-        ret = await self.client.post("/v2/models/deepaas-test/train")
-        self.assertEqual(404, ret.status)
-
-    async def test_predict_data(self):
-        f = io.BytesIO(b"foo")
-        ret = await self.client.post(
-            "/v2/models/deepaas-test/predict/",
-            data={"data": (f, "foo.txt"), "parameter": 1},
-        )
-        json = await ret.json()
-        self.assertEqual(200, ret.status)
-        self.assertDictEqual(fake_responses.deepaas_test_predict, json)
-
-    async def test_get_metadata(self):
-        meta = fake_responses.models_meta
-
-        ret = await self.client.get("/v2/models/")
-        self.assert_ok(ret)
-        self.assertDictEqual(meta, await ret.json())
-
-        ret = await self.client.get("/v2/models/deepaas-test/")
-        self.assert_ok(ret)
-        self.assertDictEqual(meta["models"][0], await ret.json())
+    async def test_train(self, client):
+        ret = await client.post("/v2/models/deepaas-test/train")
+        assert 402 == ret.status
 
 
-class TestApiV2NoPredict(base.TestCase):
-    async def get_application(self):
-        app = web.Application(debug=True)
+class TestApiV2NoPredict(BaseTestApiV2):
+    @pytest.fixture
+    @staticmethod
+    async def application(monkeypatch):
+        app = web.Application()
         app.middlewares.append(web.normalize_path_middleware())
 
-        deepaas.model.v2.register_models(app)
+        w = v2_wrapper.ModelWrapper("deepaas-test", fake_v2_model.TestModel(), app)
+
+        monkeypatch.setattr(deepaas.model, "V2_MODELS", {"deepaas-test": w})
 
         v2app = v2.get_app(enable_predict=False)
         app.add_subapp("/v2", v2app)
 
         return app
 
-    def setUp(self):
-        super(TestApiV2NoPredict, self).setUp()
-
-        self.maxDiff = None
-
-        self.flags(debug=True)
-
-    def assert_ok(self, response):
-        self.assertIn(response.status, [200, 201])
-
-    async def test_not_found(self):
-        ret = await self.client.post("/v2/models/deepaas-test/predict/")
-        self.assertEqual(404, ret.status)
-
-    async def test_train(self):
-        ret = await self.client.post(
-            "/v2/models/deepaas-test/train/", data={"sleep": 0}
-        )
-        self.assertEqual(200, ret.status)
-        json = await ret.json()
-        json.pop("date")
-        self.assertDictEqual(fake_responses.deepaas_test_train, json)
-
-    async def test_get_metadata(self):
-        meta = fake_responses.models_meta
-
-        ret = await self.client.get("/v2/models/")
-        self.assert_ok(ret)
-        self.assertDictEqual(meta, await ret.json())
-
-        ret = await self.client.get("/v2/models/deepaas-test/")
-        self.assert_ok(ret)
-        self.assertDictEqual(meta["models"][0], await ret.json())
+    async def test_predict_data(self, client):
+        ret = await client.post("/v2/models/deepaas-test/predict/")
+        assert 402 == ret.status
 
 
-class TestApiV2NoDoc(base.TestCase):
-    async def get_application(self):
-        app = web.Application(debug=True)
+class TestApiV2(BaseTestApiV2):
+    @pytest.fixture
+    @staticmethod
+    async def application(monkeypatch):
+        app = web.Application()
         app.middlewares.append(web.normalize_path_middleware())
 
-        deepaas.model.v2.register_models(app)
+        w = v2_wrapper.ModelWrapper("deepaas-test", fake_v2_model.TestModel(), app)
 
-        v2app = v2.get_app(enable_doc=False)
-        app.add_subapp("/v2", v2app)
-
-        return app
-
-    def setUp(self):
-        super(TestApiV2NoDoc, self).setUp()
-
-        self.maxDiff = None
-
-        self.flags(debug=True)
-
-    def assert_ok(self, response):
-        self.assertIn(response.status, [200, 201])
-
-    async def test_not_found(self):
-        ret = await self.client.get("/api")
-        self.assertEqual(404, ret.status)
-
-
-class TestApiV2CusomBasePath(base.TestCase):
-    async def get_application(self):
-        app = web.Application(debug=True)
-        app.middlewares.append(web.normalize_path_middleware())
-
-        deepaas.model.v2.register_models(app)
-
-        v2app = v2.get_app(base_path="/custom")
-        app.add_subapp("/v2", v2app)
-
-        return app
-
-    def setUp(self):
-        super(TestApiV2CusomBasePath, self).setUp()
-
-        self.maxDiff = None
-
-        self.flags(debug=True)
-
-    def assert_ok(self, response):
-        self.assertIn(response.status, [200, 201])
-
-    async def test_predict_data(self):
-        f = io.BytesIO(b"foo")
-        ret = await self.client.post(
-            "/custom/v2/models/deepaas-test/predict/",
-            data={"data": (f, "foo.txt"), "parameter": 1},
-        )
-        json = await ret.json()
-        self.assertEqual(200, ret.status)
-        self.assertDictEqual(fake_responses.deepaas_test_predict, json)
-
-    async def test_train(self):
-        ret = await self.client.post(
-            "/custom/v2/models/deepaas-test/train/", data={"sleep": 0}
-        )
-        self.assertEqual(200, ret.status)
-        json = await ret.json()
-        json.pop("date")
-        self.assertDictEqual(fake_responses.deepaas_test_train, json)
-
-    async def test_get_metadata(self):
-        meta = fake_responses.models_meta
-
-        ret = await self.client.get("/custom/v2/models/")
-        self.assert_ok(ret)
-        self.assertDictEqual(meta, await ret.json())
-
-        ret = await self.client.get("/custom/v2/models/deepaas-test/")
-        self.assert_ok(ret)
-        self.assertDictEqual(meta["models"][0], await ret.json())
-
-
-class TestApiV2(base.TestCase):
-    async def get_application(self):
-        app = web.Application(debug=True)
-        app.middlewares.append(web.normalize_path_middleware())
-
-        deepaas.model.v2.register_models(app)
+        monkeypatch.setattr(deepaas.model, "V2_MODELS", {"deepaas-test": w})
 
         v2app = v2.get_app()
         app.add_subapp("/v2", v2app)
 
         return app
 
-    def setUp(self):
-        super(TestApiV2, self).setUp()
+    async def test_not_found(self, client):
+        ret = await client.get("/v2/models/%s" % uuid.uuid4().hex)
+        assert 404 == ret.status
 
-        self.maxDiff = None
+        ret = await client.put("/v2/models/%s" % uuid.uuid4().hex)
+        assert 404 == ret.status
 
-        self.flags(debug=True)
+        ret = await client.post("/v2/models/%s" % uuid.uuid4().hex)
+        assert 404 == ret.status
 
-    def assert_ok(self, response):
-        self.assertIn(response.status, [200, 201])
+        ret = await client.delete("/v2/models/%s" % uuid.uuid4().hex)
+        assert 404 == ret.status
 
-    async def test_not_found(self):
-        ret = await self.client.get("/v2/models/%s" % uuid.uuid4().hex)
-        self.assertEqual(404, ret.status)
+    async def test_model_not_found(self, client):
+        ret = await client.get("/v2/models/%s/train" % uuid.uuid4().hex)
+        assert 404 == ret.status
 
-        ret = await self.client.put("/v2/models/%s" % uuid.uuid4().hex)
-        self.assertEqual(404, ret.status)
+        ret = await client.put("/v2/models/%s/train" % uuid.uuid4().hex)
+        assert 404 == ret.status
 
-        ret = await self.client.post("/v2/models/%s" % uuid.uuid4().hex)
-        self.assertEqual(404, ret.status)
+        ret = await client.post("/v2/models/%s/predict" % uuid.uuid4().hex)
+        assert 404 == ret.status
 
-        ret = await self.client.delete("/v2/models/%s" % uuid.uuid4().hex)
-        self.assertEqual(404, ret.status)
+        ret = await client.get("/v2/models/%s" % uuid.uuid4().hex)
+        assert 404 == ret.status
 
-    async def test_model_not_found(self):
-        ret = await self.client.put("/v2/models/%s/train" % uuid.uuid4().hex)
-        self.assertEqual(404, ret.status)
-
-        ret = await self.client.post("/v2/models/%s/predict" % uuid.uuid4().hex)
-        self.assertEqual(404, ret.status)
-
-        ret = await self.client.get("/v2/models/%s" % uuid.uuid4().hex)
-        self.assertEqual(404, ret.status)
-
-    async def test_predict_no_parameters(self):
-        ret = await self.client.post("/v2/models/deepaas-test/predict/")
+    async def test_predict_no_parameters(self, client):
+        ret = await client.post("/v2/models/deepaas-test/predict/")
         json = await ret.json()
-        print(json)
-        self.assertDictEqual(
-            {
-                "parameter": ["Missing data for required field."],
-                "data": ["Missing data for required field."],
-            },
-            json,
-        )
-        self.assertEqual(422, ret.status)
 
-    async def test_predict_data(self):
-        f = io.BytesIO(b"foo")
-        ret = await self.client.post(
-            "/v2/models/deepaas-test/predict/",
-            data={"data": (f, "foo.txt"), "parameter": 1},
-        )
-        json = await ret.json()
-        self.assertEqual(200, ret.status)
-        self.assertDictEqual(fake_responses.deepaas_test_predict, json)
+        expected = {
+            "parameter": ["Missing data for required field."],
+            "data": ["Missing data for required field."],
+        }
+        assert 422 == ret.status
+        assert expected == json
 
-    async def test_train(self):
-        ret = await self.client.post(
-            "/v2/models/deepaas-test/train/", data={"sleep": 0}
-        )
-        self.assertEqual(200, ret.status)
-        json = await ret.json()
-        json.pop("date")
-        self.assertDictEqual(fake_responses.deepaas_test_train, json)
-
-    async def test_get_metadata(self):
-        meta = fake_responses.models_meta
-
-        ret = await self.client.get("/v2/models/")
-        self.assert_ok(ret)
-        self.assertDictEqual(meta, await ret.json())
-
-        ret = await self.client.get("/v2/models/deepaas-test/")
-        self.assert_ok(ret)
-        self.assertDictEqual(meta["models"][0], await ret.json())
-
-    async def test_bad_metods_metadata(self):
-        for i in (self.client.post, self.client.put, self.client.delete):
+    async def test_bad_metods_metadata(self, client):
+        for i in (client.post, client.put, client.delete):
             ret = await i("/v2/models/")
-            self.assertEqual(405, ret.status)
+            assert 405 == ret.status

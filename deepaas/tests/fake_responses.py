@@ -77,4 +77,7 @@ deepaas_test_predict = {
     "labels": [{"label": "foo", "probability": 1.0}],
 }
 
-deepaas_test_train = {"status": "running", "uuid": "2ad53089edfb4521af081c45df16bed5"}
+deepaas_test_train = {
+    "status": "running",
+    "args": {"sleep": 0},
+}
