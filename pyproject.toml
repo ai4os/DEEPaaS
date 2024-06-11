@@ -72,6 +72,7 @@ fixtures = "^4.1.0"
 reno = "^4.1.0"
 mock = "^5.1.0"
 testtools = "^2.7.1"
+setuptools = "^70.0.0"
 
 
 [tool.poetry.group.test-flake8.dependencies]
