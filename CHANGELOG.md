@@ -1,5 +1,34 @@
 # Changelog
 
+## [3.0.0](https://github.com/ai4os/DEEPaaS/compare/v2.4.0...v3.0.0) (2024-06-12)
+
+
+### ⚠ BREAKING CHANGES
+
+* remove oslo.log and use standard python logging
+* remove loading of various modules
+* remove automatic loading of deprecated deepaas-test model
+* remove deprecated deepaas-predict
+
+### Features
+
+* add -dev suffix to the version when installed as dev ([9a9602e](https://github.com/ai4os/DEEPaaS/commit/9a9602e63635bcb9dd35705a21af447cf622c114))
+* remove automatic loading of deprecated deepaas-test model ([376b0f9](https://github.com/ai4os/DEEPaaS/commit/376b0f905cce1c3416dbfbc61e5c91dc51db94c8)), closes [#132](https://github.com/ai4os/DEEPaaS/issues/132)
+* remove deprecated deepaas-predict ([097cc83](https://github.com/ai4os/DEEPaaS/commit/097cc8303d65daf9949ab93c2e97144f172f6ce5)), closes [#154](https://github.com/ai4os/DEEPaaS/issues/154)
+* remove loading of various modules ([80003c3](https://github.com/ai4os/DEEPaaS/commit/80003c328740165c735dc85d4d9d6bb0878ac41c)), closes [#128](https://github.com/ai4os/DEEPaaS/issues/128)
+* remove oslo.log and use standard python logging ([033a085](https://github.com/ai4os/DEEPaaS/commit/033a085deb3605602ac6dfc9c8cb96fcd76fd6ef)), closes [#133](https://github.com/ai4os/DEEPaaS/issues/133)
+
+
+### Bug Fixes
+
+* allow users to setup base_path for serving under a different prefix ([242e02e](https://github.com/ai4os/DEEPaaS/commit/242e02ee0dfb98227ff121a45636957c43e2762e)), closes [#111](https://github.com/ai4os/DEEPaaS/issues/111)
+* remove deprecated cli option ([7b5896d](https://github.com/ai4os/DEEPaaS/commit/7b5896d427fcaf6ba8fb574dce4eb17f55a8b88c))
+
+
+### Documentation
+
+* fix doc build ([903e6ec](https://github.com/ai4os/DEEPaaS/commit/903e6ec9b3eb41b2149835f9a55b978477c686d9))
+
 ## [2.4.0](https://github.com/ai4os/DEEPaaS/compare/v2.3.2...v2.4.0) (2024-06-07)
 
 
