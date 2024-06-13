@@ -14,15 +14,11 @@
 # License for the specific language governing permissions and limitations
 # under the License.
 
-import pathlib
 
-from aiohttp import web
-import aiohttp_apispec
+import fastapi
 from oslo_config import cfg
 
 import deepaas
-from deepaas.api import v2
-from deepaas.api import versions
 from deepaas import log
 from deepaas import model
 
@@ -53,75 +49,95 @@ API_DESCRIPTION = (
 ) + LINKS
 
 
-async def get_app(
-    swagger=True,
-    enable_doc=True,
-    doc="/api",
-    prefix="",
-    static_path="/static/swagger",
-    base_path="",
-    enable_train=True,
-    enable_predict=True,
-):
-    """Get the main app."""
+def get_fastapi_app(
+    enable_doc: bool = True,
+    enable_train: bool = True,
+    enable_predict: bool = True,
+    base_path: str = "",
+) -> fastapi.FastAPI:
+    """Get the main app, based on FastAPI."""
     global APP
 
     if APP:
         return APP
 
-    APP = web.Application(debug=CONF.debug, client_max_size=CONF.client_max_size)
-
-    APP.middlewares.append(web.normalize_path_middleware())
-
-    model.register_v2_models(APP)
-
-    v2app = v2.get_app(enable_train=enable_train, enable_predict=enable_predict)
-    if base_path:
-        path = str(pathlib.Path(base_path) / "v2")
-    else:
-        path = "/v2"
-    APP.add_subapp(path, v2app)
-    versions.register_version("stable", v2.get_version)
-
-    if base_path:
-        # Get versions.routes, and transform them to have the base_path, as we cannot
-        # directly modify the routes already created and stored in the RouteTableDef
-        for route in versions.routes:
-            APP.router.add_route(
-                route.method, str(pathlib.Path(base_path + route.path)), route.handler
-            )
-    else:
-        APP.add_routes(versions.routes)
-
-    LOG.info("Serving loaded V2 models: %s", list(model.V2_MODELS.keys()))
-
-    if CONF.warm:
-        for _, m in model.V2_MODELS.items():
-            LOG.debug("Warming models...")
-            await m.warm()
-
-    if swagger:
-        doc = str(pathlib.Path(base_path + doc))
-        swagger = str(pathlib.Path(base_path + "/swagger.json"))
-        static_path = str(pathlib.Path(base_path + static_path))
-
-        # init docs with all parameters, usual for ApiSpec
-        aiohttp_apispec.setup_aiohttp_apispec(
-            app=APP,
-            title="DEEP as a Service API endpoint",
-            info={
-                "description": API_DESCRIPTION,
-            },
-            externalDocs={
-                "description": "API documentation",
-                "url": "https://deepaas.readthedocs.org/",
-            },
-            version=deepaas.extract_version(),
-            url=swagger,
-            swagger_path=doc if enable_doc else None,
-            prefix=prefix,
-            static_path=static_path,
-            in_place=True,
-        )
+    APP = fastapi.FastAPI(
+        title="DEEP as a Service API endpoint",
+        description=API_DESCRIPTION,
+        version=deepaas.extract_version(),
+    )
 
     return APP
+
+
+# FIXME(aloga): kept here as a reference, remove when aiohttp is removed
+# async def get_aiohttp_app(
+#     swagger=True,
+#     enable_doc=True,
+#     doc="/api",
+#     prefix="",
+#     static_path="/static/swagger",
+#     base_path="",
+#     enable_train=True,
+#     enable_predict=True,
+# ):
+#     """Get the main app, based on aiohttp."""
+#     global APP
+
+#     if APP:
+#         return APP
+
+#     APP = web.Application(debug=CONF.debug, client_max_size=CONF.client_max_size)
+
+#     APP.middlewares.append(web.normalize_path_middleware())
+
+#     model.register_v2_models(APP)
+
+#     v2app = v2.get_app(enable_train=enable_train, enable_predict=enable_predict)
+#     if base_path:
+#         path = str(pathlib.Path(base_path) / "v2")
+#     else:
+#         path = "/v2"
+#     APP.add_subapp(path, v2app)
+#     versions.register_version("stable", v2.get_version)
+
+#     if base_path:
+#         # Get versions.routes, and transform them to have the base_path, as we cannot
+#         # directly modify the routes already created and stored in the RouteTableDef
+#         for route in versions.routes:
+#             APP.router.add_route(
+#                 route.method, str(pathlib.Path(base_path + route.path)), route.handler
+#             )
+#     else:
+#         APP.add_routes(versions.routes)
+
+#     LOG.info("Serving loaded V2 models: %s", list(model.V2_MODELS.keys()))
+
+#     if CONF.warm:
+#         for _, m in model.V2_MODELS.items():
+#             LOG.debug("Warming models...")
+#             await m.warm()
+
+#     if swagger:
+#         doc = str(pathlib.Path(base_path + doc))
+#         swagger = str(pathlib.Path(base_path + "/swagger.json"))
+#         static_path = str(pathlib.Path(base_path + static_path))
+
+#         # init docs with all parameters, usual for ApiSpec
+#         aiohttp_apispec.setup_aiohttp_apispec(
+#             app=APP,
+#             title="DEEP as a Service API endpoint",
+#             info={
+#                 "description": API_DESCRIPTION,
+#             },
+#             externalDocs={
+#                 "description": "API documentation",
+#                 "url": "https://deepaas.readthedocs.org/",
+#             },
+#             version=deepaas.extract_version(),
+#             url=swagger,
+#             swagger_path=doc if enable_doc else None,
+#             prefix=prefix,
+#             static_path=static_path,
+#             in_place=True,
+#         )
