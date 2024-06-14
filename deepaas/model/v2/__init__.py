@@ -29,7 +29,7 @@ MODEL = None
 MODEL_NAME = ""
 
 
-def load_model(app):
+def load_model():
     global MODEL
     global MODEL_NAME
 
@@ -56,7 +56,6 @@ def load_model(app):
         MODEL = wrapper.ModelWrapper(
             model_name,
             loading.get_model_by_name(model_name, "v2"),
-            app,
         )
         MODEL_NAME = model_name
     except exceptions.ModuleNotFoundError:
