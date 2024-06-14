@@ -20,11 +20,11 @@ V2_MODEL = v2.MODEL
 V2_MODEL_NAME = v2.MODEL_NAME
 
 
-def load_v2_model(app):
+def load_v2_model():
     """Register V2 models.
 
     This method has to be called before the API is spawned, so that we
     can look up the correct entry points and load the defined models.
     """
 
-    return v2.load_model(app)
+    return v2.load_model()
