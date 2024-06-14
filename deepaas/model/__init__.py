@@ -16,14 +16,15 @@
 
 from deepaas.model import v2
 
-V2_MODELS = v2.MODELS
+V2_MODEL = v2.MODEL
+V2_MODEL_NAME = v2.MODEL_NAME
 
 
-def register_v2_models(app):
+def load_v2_model(app):
     """Register V2 models.
 
     This method has to be called before the API is spawned, so that we
     can look up the correct entry points and load the defined models.
     """
 
-    return v2.register_models(app)
+    return v2.load_model(app)
