@@ -17,13 +17,9 @@
 import asyncio
 import collections
 import contextlib
-import datetime
 import functools
 import io
-import multiprocessing
-import multiprocessing.pool
 import os
-import signal
 import tempfile
 
 from aiohttp import web
@@ -100,18 +96,9 @@ class ModelWrapper(object):
         a response schema that is not JSON schema valid (DRAFT 4)
     """
 
-    def __init__(self, name, model_obj, app=None):
+    def __init__(self, name, model_obj):
         self.name = name
         self.model_obj = model_obj
-        self._app = app
-
-        self._loop = asyncio.get_event_loop()
-
-        self._workers = CONF.workers
-        self._executor = self._init_executor()
-
-        if self._app is not None:
-            self._setup_cleanup()
 
         schema = getattr(self.model_obj, "schema", None)
 
@@ -138,17 +125,6 @@ class ModelWrapper(object):
             self.has_schema = False
 
         self.response_schema = schema
-
-    def _setup_cleanup(self):
-        self._app.on_cleanup.append(self._close_executors)
-
-    async def _close_executors(self, app):
-        self._executor.shutdown()
-
-    def _init_executor(self):
-        n = self._workers
-        executor = CancellablePool(max_workers=n)
-        return executor
 
     @contextlib.contextmanager
     def _catch_error(self):
@@ -295,9 +271,7 @@ class ModelWrapper(object):
                 # FIXME(aloga); cleanup of tmpfile here
 
         with self._catch_error():
-            return self._run_in_pool(
-                self.predict_wrap, self.model_obj.predict, *args, **kwargs
-            )
+            return self.predict_wrap(self.model_obj.predict, *args, **kwargs)
 
     def train(self, *args, **kwargs):
         """Perform a training on wrapped model's ``train`` method.
@@ -311,7 +285,7 @@ class ModelWrapper(object):
         """
 
         with self._catch_error():
-            return self._run_in_pool(self.model_obj.train, *args, **kwargs)
+            return self.model_obj.train(*args, **kwargs)
 
     def get_train_args(self):
         """Add training arguments into the training parser.
@@ -338,86 +312,3 @@ class ModelWrapper(object):
         except (NotImplementedError, AttributeError):
             args = {}
         return args
-
-
-class NonDaemonProcess(multiprocessing.context.SpawnProcess):
-    """Processes must use 'spawn' instead of 'fork' (which is the default
-    in Linux) in order to work CUDA [1] or Tensorflow [2].
-
-    [1] https://pytorch.org/docs/stable/notes/multiprocessing.html
-    #cuda-in-multiprocessing
-    [2] https://github.com/tensorflow/tensorflow/issues/5448
-    #issuecomment-258934405
-    """
-
-    @property
-    def daemon(self):
-        return False
-
-    @daemon.setter
-    def daemon(self, value):
-        pass
-
-
-class NonDaemonPool(multiprocessing.pool.Pool):
-    # Based on https://stackoverflow.com/questions/6974695/
-    def Process(self, *args, **kwds):  # noqa
-        proc = super(NonDaemonPool, self).Process(*args, **kwds)
-        proc.__class__ = NonDaemonProcess
-
-        return proc
-
-
-class CancellablePool(object):
-    def __init__(self, max_workers=None):
-        self._free = {self._new_pool() for _ in range(max_workers)}
-        self._working = set()
-        self._change = asyncio.Event()
-
-    def _new_pool(self):
-        return NonDaemonPool(1, context=multiprocessing.get_context("spawn"))
-
-    async def apply(self, fn, *args):
-        """
-        Like multiprocessing.Pool.apply_async, but:
-         * is an asyncio coroutine
-         * terminates the process if cancelled
-        """
-        while not self._free:
-            await self._change.wait()
-            self._change.clear()
-        pool = usable_pool = self._free.pop()
-        self._working.add(pool)
-
-        loop = asyncio.get_event_loop()
-        fut = loop.create_future()
-
-        def _on_done(obj):
-            ret = {"output": obj, "finish_date": str(datetime.datetime.now())}
-            loop.call_soon_threadsafe(fut.set_result, ret)
-
-        def _on_err(err):
-            loop.call_soon_threadsafe(fut.set_exception, err)
-
-        pool.apply_async(fn, args, callback=_on_done, error_callback=_on_err)
-
-        try:
-            return await fut
-        except asyncio.CancelledError:
-            # This is ugly, but since our pools only have one slot we can
-            # kill the process before termination
-            try:
-                pool._pool[0].kill()
-            except AttributeError:
-                os.kill(pool._pool[0].pid, signal.SIGKILL)
-            pool.terminate()
-            usable_pool = self._new_pool()
-        finally:
-            self._working.remove(pool)
-            self._free.add(usable_pool)
-            self._change.set()
-
-    def shutdown(self):
-        for p in self._working:
-            p.terminate()
-        self._free.clear()
