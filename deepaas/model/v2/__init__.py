@@ -25,15 +25,15 @@ LOG = log.getLogger(__name__)
 CONF = config.CONF
 
 # Model registry
-MODELS = {}
-MODELS_LOADED = False
+MODEL = None
+MODEL_NAME = ""
 
 
-def register_models(app):
-    global MODELS
-    global MODELS_LOADED
+def load_model(app):
+    global MODEL
+    global MODEL_NAME
 
-    if MODELS_LOADED:
+    if MODEL:
         return
 
     if CONF.model_name:
@@ -53,16 +53,15 @@ def register_models(app):
             raise exceptions.MultipleModelsFound()
 
     try:
-        MODELS[model_name] = wrapper.ModelWrapper(
+        MODEL = wrapper.ModelWrapper(
             model_name,
             loading.get_model_by_name(model_name, "v2"),
             app,
         )
+        MODEL_NAME = model_name
     except exceptions.ModuleNotFoundError:
         LOG.error("Model not found: %s", model_name)
         raise
     except Exception as e:
         LOG.exception("Error loading model: %s", e)
         raise e
-
-    MODELS_LOADED = True
