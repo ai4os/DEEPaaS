@@ -16,8 +16,9 @@
 
 from deepaas.model import v2
 
-V2_MODEL = v2.MODEL
-V2_MODEL_NAME = v2.MODEL_NAME
+# FIXME(aloga): this is extremely ugly
+V2_MODEL = None
+V2_MODEL_NAME = None
 
 
 def load_v2_model():
@@ -27,4 +28,10 @@ def load_v2_model():
     can look up the correct entry points and load the defined models.
     """
 
-    return v2.load_model()
+    global V2_MODEL
+    global V2_MODEL_NAME
+
+    v2.load_model()
+
+    V2_MODEL = v2.MODEL
+    V2_MODEL_NAME = v2.MODEL_NAME
