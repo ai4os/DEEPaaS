@@ -20,16 +20,15 @@ import logging
 import sys
 import warnings
 
-from aiohttp import web
-import aiohttp_apispec
+import fastapi
 from oslo_config import cfg
 
 from deepaas import log
 
 CONF = cfg.CONF
 
-app = web.Application()
-routes = web.RouteTableDef()
+router = fastapi.APIRouter(prefix="/debug")
+
 
 # Ugly global variable to provide a string stream to read the DEBUG output
 # if it is enabled
@@ -52,6 +51,9 @@ class MultiOut(object):
         for f in self.handles:
             f.close()
 
+    def isatty(self):
+        return all(f.isatty() for f in self.handles)
+
 
 def setup_debug():
     global DEBUG_STREAM
@@ -59,7 +61,7 @@ def setup_debug():
     if CONF.debug_endpoint:
         DEBUG_STREAM = io.StringIO()
 
-        logger = log.getLogger("deepaas").logger
+        logger = log.getLogger("deepaas")
         hdlr = logging.StreamHandler(DEBUG_STREAM)
         hdlr.setFormatter(
             logging.Formatter("%(asctime)s - %(name)s - %(levelname)s - %(message)s")
@@ -78,23 +80,24 @@ def setup_debug():
         sys.stderr = MultiOut(DEBUG_STREAM, sys.stderr)
 
 
-@aiohttp_apispec.docs(
+@router.get(
+    "/",
+    summary="Return debug information if enabled by API.",
+    description="Return debug information if enabled by API.",
     tags=["debug"],
-    summary="""Return debug information if enabled by API.""",
-    description="""Return debug information if enabled by API.""",
-    produces=["text/plain"],
+    response_class=fastapi.responses.PlainTextResponse,
     responses={
-        200: {"description": "Debug information if debug endpoint is enabled"},
-        204: {"description": "Debug endpoint not enabled"},
+        "200": {
+            "content": {"text/plain": {}},
+            "description": "Debug information if debug endpoint is enabled",
+        },
+        "204": {"description": "Debug endpoint not enabled"},
     },
 )
-async def get(request):
+async def get():
     if DEBUG_STREAM is not None:
         print("--- DEBUG MARKER %s ---" % datetime.datetime.now())
         resp = DEBUG_STREAM.getvalue()
-        return web.Response(text=resp)
-    return web.HTTPNoContent()
-
-
-def setup_routes(app):
-    app.router.add_get("/debug/", get, allow_head=False)
+        return fastapi.responses.PlainTextResponse(resp)
+    else:
+        return fastapi.responses.Response(status_code=204)
