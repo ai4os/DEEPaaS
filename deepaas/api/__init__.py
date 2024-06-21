@@ -19,6 +19,7 @@ import fastapi
 from oslo_config import cfg
 
 import deepaas
+from deepaas.api import v2
 from deepaas import log
 from deepaas import model
 
@@ -50,10 +51,10 @@ API_DESCRIPTION = (
 
 
 def get_fastapi_app(
-    enable_doc: bool = True,
-    enable_train: bool = True,
-    enable_predict: bool = True,
-    base_path: str = "",
+    enable_doc: bool = True,  # FIXME(aloga): not handled yet
+    enable_train: bool = True,  # FIXME(aloga): not handled yet
+    enable_predict: bool = True,  # FIXME(aloga): not handled yet
+    base_path: str = "",  # FIXME(aloga): not handled yet
 ) -> fastapi.FastAPI:
     """Get the main app, based on FastAPI."""
     global APP
@@ -66,6 +67,15 @@ def get_fastapi_app(
         description=API_DESCRIPTION,
         version=deepaas.extract_version(),
     )
+
+    model.load_v2_model()
+
+    v2app = v2.get_app(
+        enable_train=enable_train,
+        enable_predict=enable_predict,
+    )
+
+    APP.include_router(v2app, prefix="/v2", tags=["v2"])
 
     return APP
 
