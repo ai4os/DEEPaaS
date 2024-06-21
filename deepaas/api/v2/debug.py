@@ -101,3 +101,12 @@ async def get():
         return fastapi.responses.PlainTextResponse(resp)
     else:
         return fastapi.responses.Response(status_code=204)
+
+
+def get_router() -> fastapi.APIRouter:
+    """Auxiliary function to get the router.
+
+    We use this function to be able to include the router in the main
+    application and do things before it gets included.
+    """
+    return router
