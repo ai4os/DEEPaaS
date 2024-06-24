@@ -33,15 +33,6 @@ import pydantic
 #     versions = fields.List(fields.Nested(Version))
 
 
-class Failure(marshmallow.Schema):
-    message = fields.Str(required=True, description="Failure message")
-
-
-class Prediction(marshmallow.Schema):
-    status = fields.String(required=True, description="Response status message")
-    predictions = fields.Str(required=True, description="String containing predictions")
-
-
 class Training(marshmallow.Schema):
     uuid = fields.UUID(required=True, description="Training identifier")
     date = fields.DateTime(required=True, description="Training start time")
@@ -68,37 +59,30 @@ class Location(pydantic.BaseModel):
 
 
 class ModelMeta(pydantic.BaseModel):
-    """"V2 model metadata.
+    """ "V2 model metadata.
 
     This class is used to represent the metadata of a model in the V2 API, as we were
     doing in previous versions.
     """
+
     id: str = pydantic.Field(..., description="Model identifier")  # noqa
     name: str = pydantic.Field(..., description="Model name")
     description: typing.Optional[str] = pydantic.Field(
-        description="Model description",
-        default=None
+        description="Model description", default=None
     )
     summary: typing.Optional[str] = pydantic.Field(
-        description="Model summary",
-        default=None
+        description="Model summary", default=None
     )
     license: typing.Optional[str] = pydantic.Field(
-        description="Model license",
-        default=None
+        description="Model license", default=None
     )
     author: typing.Optional[str] = pydantic.Field(
-        description="Model author",
-        default=None
+        description="Model author", default=None
     )
     version: typing.Optional[str] = pydantic.Field(
-        description="Model version",
-        default=None
+        description="Model version", default=None
     )
-    url: typing.Optional[str] = pydantic.Field(
-        description="Model url",
-        default=None
-    )
+    url: typing.Optional[str] = pydantic.Field(description="Model url", default=None)
     # Links can be alist of Locations, or an empty list
     links: typing.List[Location] = pydantic.Field(
         description="Model links",
@@ -107,6 +91,14 @@ class ModelMeta(pydantic.BaseModel):
 
 class ModelList(pydantic.BaseModel):
     models: typing.List[ModelMeta] = pydantic.Field(
-        ...,
-        description="List of loaded models"
+        ..., description="List of loaded models"
     )
+
+
+class Prediction(pydantic.BaseModel):
+    status: str = pydantic.Field(description="Response status message")
+    predictions: str = pydantic.Field(description="String containing predictions")
+
+
+class Failure(pydantic.BaseModel):
+    message: str = pydantic.Field(description="Failure message")

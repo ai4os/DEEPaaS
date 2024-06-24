@@ -19,7 +19,8 @@ from oslo_config import cfg
 
 from deepaas.api.v2 import debug as v2_debug
 from deepaas.api.v2 import models as v2_model
-# from deepaas.api.v2 import predict as v2_predict
+from deepaas.api.v2 import predict as v2_predict
+
 # from deepaas.api.v2 import responses
 # from deepaas.api.v2 import train as v2_train
 from deepaas import log
@@ -41,6 +42,7 @@ def get_app(enable_train=True, enable_predict=True):
 
     APP.include_router(v2_debug.router, tags=["debug"])
     APP.include_router(v2_model.get_router(), tags=["models"])
+    APP.include_router(v2_predict.get_router(), tags=["predict"])
 
     # APP.router.add_get("/", get_version, name="v2", allow_head=False)
     # v2_debug.setup_routes(APP)

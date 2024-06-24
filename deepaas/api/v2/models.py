@@ -27,7 +27,7 @@ router = fastapi.APIRouter(prefix="/models")
     "/",
     summary="Return loaded models and its information",
     description="Return list of DEEPaaS loaded models. In previous versions, DEEPaaS "
-                "could load several models and serve them on the same endpoint.",
+    "could load several models and serve them on the same endpoint.",
     tags=["models"],
     response_model=responses.ModelList,
 )
@@ -59,8 +59,10 @@ def _get_handler_for_model(model_name, model_obj):
     This function returns a handler for a model that can be used to
     register the routes in the router.
     """
+
     class Handler(object):
         """Class to handle the model metadata endpoints."""
+
         model_name = None
         model_obj = None
 

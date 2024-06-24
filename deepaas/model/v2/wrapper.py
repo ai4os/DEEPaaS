@@ -26,6 +26,7 @@ from aiohttp import web
 import marshmallow
 from oslo_config import cfg
 
+from deepaas.api.v2 import utils
 from deepaas import log
 
 LOG = log.getLogger(__name__)
@@ -110,6 +111,7 @@ class ModelWrapper(object):
                 self.has_schema = True
             except Exception as e:
                 LOG.exception(e)
+                # FIXME(aloga): do not use web exception here
                 raise web.HTTPInternalServerError(
                     reason=("Model defined schema is invalid, " "check server logs.")
                 )
@@ -118,13 +120,21 @@ class ModelWrapper(object):
                 if issubclass(schema, marshmallow.Schema):
                     self.has_schema = True
             except TypeError:
+                # FIXME(aloga): do not use web exception here
                 raise web.HTTPInternalServerError(
                     reason=("Model defined schema is invalid, " "check server logs.")
                 )
         else:
             self.has_schema = False
 
-        self.response_schema = schema
+        # Now convert to pydantic schema...
+        # FIXME(aloga): use try except
+        if schema is not None:
+            self.response_schema = utils.pydantic_from_marshmallow(
+                "ModelPredictionResponse", schema
+            )
+        else:
+            self.response_schema = None
 
     @contextlib.contextmanager
     def _catch_error(self):
@@ -245,7 +255,7 @@ class ModelWrapper(object):
 
         return ret
 
-    def predict(self, *args, **kwargs):
+    async def predict(self, *args, **kwargs):
         """Perform a prediction on wrapped model's ``predict`` method.
 
         :raises HTTPNotImplemented: If the method is not
