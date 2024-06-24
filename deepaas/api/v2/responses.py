@@ -33,15 +33,6 @@ import pydantic
 #     versions = fields.List(fields.Nested(Version))
 
 
-class Failure(marshmallow.Schema):
-    message = fields.Str(required=True, description="Failure message")
-
-
-class Prediction(marshmallow.Schema):
-    status = fields.String(required=True, description="Response status message")
-    predictions = fields.Str(required=True, description="String containing predictions")
-
-
 class Training(marshmallow.Schema):
     uuid = fields.UUID(required=True, description="Training identifier")
     date = fields.DateTime(required=True, description="Training start time")
@@ -110,3 +101,12 @@ class ModelList(pydantic.BaseModel):
         ...,
         description="List of loaded models"
     )
+
+
+class Prediction(pydantic.BaseModel):
+    status: str = pydantic.Field(description="Response status message")
+    predictions: str = pydantic.Field(description="String containing predictions")
+
+
+class Failure(pydantic.BaseModel):
+    message: str = pydantic.Field(description="Failure message")
