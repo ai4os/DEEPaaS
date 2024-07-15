@@ -28,10 +28,11 @@ import re
 import shutil
 import sys
 import tempfile
+import webargs
 import uuid
 
 from datetime import datetime
-from marshmallow import fields
+from marshmallow import fields #marshmallow
 from oslo_config import cfg
 from oslo_log import log
 
@@ -189,6 +190,12 @@ def _get_file_args(fields_in):
     for k, v in fields_in.items():
         if type(v) is fields.Field:
             file_fields.append(k)
+            print(f"type of {v} is {type(v)}, key: {k}")
+            try:
+                print(f"file? {getattr(v, 'type')}")
+            except:
+                print("no type found")
+
     return file_fields
 
 
@@ -205,6 +212,37 @@ model_name, model_obj = _get_model_name(model_name)
 # we get arguments for predict and train as dictionaries
 predict_args = _fields_to_dict(model_obj.get_predict_args())
 train_args = _fields_to_dict(model_obj.get_train_args())
+
+p_schema = webargs.core.dict2schema(model_obj.get_predict_args())
+print(f"Args: {model_obj.get_predict_args()}")
+
+print(f"Schema: {p_schema}")
+#print(f"Fields: {p_schema.fields}")
+Meta = getattr(p_schema, "Meta", None)
+print(f"Meta: {Meta}")
+
+###
+from pprint import pprint
+
+from apispec import APISpec
+from apispec.ext.marshmallow import MarshmallowPlugin
+
+spec = APISpec(
+    title="AI4OS Module",
+    version="0.1.0",
+    openapi_version="3.0.2",
+    plugins=[MarshmallowPlugin()],
+)
+
+spec.components.schema("Module", schema=p_schema)
+method_components = spec.to_dict()["components"]["schemas"]
+params = method_components["Module"]["properties"]
+required = method_components["Module"]["required"]
+print("params:")
+pprint(params)
+print("required:")
+pprint(required)
+##
 
 # Find which of the arguments are going to be files
 file_args = {}
@@ -339,31 +377,32 @@ def main():
     if CONF.deepaas_with_multiprocessing:
         mp.set_start_method("spawn", force=True)
 
-    # Create file wrapper for file args (if provided)
-    for farg in file_args[CONF.methods.name]:
-        if getattr(CONF.methods, farg, None):
-            fpath = conf_vars[farg]
+    if CONF.methods.name == "predict" or CONF.methods.name == "train":
+        # Create file wrapper for file args (if provided)
+        for farg in file_args[CONF.methods.name]:
+            if getattr(CONF.methods, farg, None):
+                fpath = conf_vars[farg]
 
-            # create tmp file as later it supposed
-            # to be deleted by the application
-            temp = tempfile.NamedTemporaryFile()
-            temp.close()
-            # copy original file into tmp file
-            with open(fpath, "rb") as f:
-                with open(temp.name, "wb") as f_tmp:
-                    for line in f:
-                        f_tmp.write(line)
+                # create tmp file as later it supposed
+                # to be deleted by the application
+                temp = tempfile.NamedTemporaryFile()
+                temp.close()
+                # copy original file into tmp file
+                with open(fpath, "rb") as f:
+                    with open(temp.name, "wb") as f_tmp:
+                        for line in f:
+                            f_tmp.write(line)
 
-            # create file object
-            file_type = mimetypes.MimeTypes().guess_type(fpath)[0]
-            file_obj = v2_wrapper.UploadedFile(
-                name="data",
-                filename=temp.name,
-                content_type=file_type,
-                original_filename=fpath,
-            )
-            # re-write parameter in conf_vars
-            conf_vars[farg] = file_obj
+                # create file object
+                file_type = mimetypes.MimeTypes().guess_type(fpath)[0]
+                file_obj = v2_wrapper.UploadedFile(
+                    name="data",
+                    filename=temp.name,
+                    content_type=file_type,
+                    original_filename=fpath,
+                )
+                # re-write parameter in conf_vars
+                conf_vars[farg] = file_obj
 
     # debug of input parameters
     LOG.debug("[DEBUG provided options, conf_vars]: {}".format(conf_vars))
