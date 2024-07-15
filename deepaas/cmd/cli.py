@@ -20,6 +20,7 @@
 import argparse
 import ast
 import deepaas
+import io
 import json
 import mimetypes
 import multiprocessing as mp
@@ -214,7 +215,7 @@ predict_args = _fields_to_dict(model_obj.get_predict_args())
 train_args = _fields_to_dict(model_obj.get_train_args())
 
 p_schema = webargs.core.dict2schema(model_obj.get_predict_args())
-print(f"Args: {model_obj.get_predict_args()}")
+#print(f"Args: {model_obj.get_predict_args()}")
 
 print(f"Schema: {p_schema}")
 #print(f"Fields: {p_schema.fields}")
@@ -230,7 +231,7 @@ from apispec.ext.marshmallow import MarshmallowPlugin
 spec = APISpec(
     title="AI4OS Module",
     version="0.1.0",
-    openapi_version="3.0.2",
+    openapi_version="3.1.0",
     plugins=[MarshmallowPlugin()],
 )
 
@@ -369,7 +370,7 @@ def main():
 
     log.setup(CONF, "deepaas-cli")
 
-    LOG.info("[INFO, Method] {} was called.".format(CONF.methods.name))
+    LOG.info("[Method] {} was called.".format(CONF.methods.name))
 
     # put all variables in dict, makes life easier...
     conf_vars = vars(CONF._namespace)
@@ -405,12 +406,12 @@ def main():
                 conf_vars[farg] = file_obj
 
     # debug of input parameters
-    LOG.debug("[DEBUG provided options, conf_vars]: {}".format(conf_vars))
+    LOG.debug("[provided options, conf_vars]: {}".format(conf_vars))
 
     if CONF.methods.name == "get_metadata":
         meta = model_obj.get_metadata()
         meta_json = json.dumps(meta)
-        LOG.debug("[DEBUG, get_metadata, Output]: {}".format(meta_json))
+        LOG.debug("[get_metadata]: {}".format(meta_json))
         if CONF.deepaas_method_output:
             _store_output(meta_json, CONF.deepaas_method_output)
 
@@ -419,7 +420,7 @@ def main():
     elif CONF.methods.name == "warm":
         # await model_obj.warm()
         model_obj.warm()
-        LOG.info("[INFO, warm] Finished warm() method")
+        LOG.info("[warm] Finished warm() method")
 
     elif CONF.methods.name == "predict":
         # call predict method
@@ -449,7 +450,7 @@ def main():
             ):  # noqa: W503
                 out_file = out_file + extension
                 LOG.warn(
-                    "[WARNING] You are trying to store {} "
+                    "You are trying to store {} "
                     "type data in the file "
                     "with {} extension!\n"
                     "===================> "
@@ -457,15 +458,18 @@ def main():
                 )
             if extension == ".json" or extension is None:
                 results_json = json.dumps(task)
-                LOG.debug("[DEBUG, predict, Output]: {}".format(results_json))
+                LOG.debug("[predict]: {}".format(results_json))
                 f = open(out_file, "w+")
                 f.write(results_json)
                 f.close()
-            else:
-                out_results = task.name
-                shutil.copy(out_results, out_file)
+            elif type(task) is io.BytesIO:
+                with open(out_file, "wb") as f:
+                    f.write(task.getbuffer())
 
-            LOG.info("[INFO, Output] Output is saved in {}".format(out_file))
+            else:
+                LOG.info(f"Output of type type({task}), {task}")
+
+            LOG.info("Output is saved in {}".format(out_file))
 
         return task
 
@@ -488,17 +492,17 @@ def main():
         # we assume that train always returns JSON
         ret["result"]["output"] = task
         results_json = json.dumps(ret)
-        LOG.info("[INFO] Elapsed time:  %s", str(end - start))
-        LOG.debug("[DEBUG, train, Output]: {}".format(results_json))
+        LOG.info("Elapsed time:  %s", str(end - start))
+        LOG.debug("[train]: {}".format(results_json))
         if CONF.deepaas_method_output:
             _store_output(results_json, CONF.deepaas_method_output)
         return results_json
 
     else:
-        LOG.warn("[WARNING] No Method was requested! Return get_metadata()")
+        LOG.warn("No Method was requested! Return get_metadata()")
         meta = model_obj.get_metadata()
         meta_json = json.dumps(meta)
-        LOG.debug("[DEBUG, get_metadata, Output]: {}".format(meta_json))
+        LOG.debug("get_metadata]: {}".format(meta_json))
 
         return meta_json
 
