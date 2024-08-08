@@ -1,5 +1,27 @@
 # Changelog
 
+## [2.5.0](https://github.com/ai4os/DEEPaaS/compare/v2.4.0...v2.5.0) (2024-08-08)
+
+
+### Features
+
+* add -dev suffix to the version when installed as dev ([4d087b3](https://github.com/ai4os/DEEPaaS/commit/4d087b3e7df9f53dcfe8fb695ca23e2f55af2abf))
+* add required info to help message ([d710254](https://github.com/ai4os/DEEPaaS/commit/d710254d15066643597b4cfe1c93582a711f0696))
+* add types to help message ([6099f24](https://github.com/ai4os/DEEPaaS/commit/6099f24ea60bd197d6ec55f398a3b080f2c428a2))
+* allow linebreaks in help messages ([2deabdb](https://github.com/ai4os/DEEPaaS/commit/2deabdbb53237373d3892bf53cb6b3f67376599f))
+* allow multiple input files ([b7b1b82](https://github.com/ai4os/DEEPaaS/commit/b7b1b82c56fb9cdb6313c11fd5f4ae4352be2a33))
+* properly support lists and dicts in argparse ([071b777](https://github.com/ai4os/DEEPaaS/commit/071b77784aaacbcda8a75a95adaf28c655b8846c))
+* support bools ([6e1453d](https://github.com/ai4os/DEEPaaS/commit/6e1453d4d05a2e90810da9926b6207c853804643))
+
+
+### Bug Fixes
+
+* allow users to setup base_path for serving under a different prefix ([39fa910](https://github.com/ai4os/DEEPaaS/commit/39fa91035db6ec925f7f278542bbc70e534e5063)), closes [#111](https://github.com/ai4os/DEEPaaS/issues/111)
+* change deprecated GH action ([71e8230](https://github.com/ai4os/DEEPaaS/commit/71e82303f91748f0e7f771aa890bb879712c800b))
+* change target branch on release-please action ([32b669c](https://github.com/ai4os/DEEPaaS/commit/32b669c6e5eccac5c03cd4ce99c1b6fdd6f0ced1))
+* make description optional ([7717348](https://github.com/ai4os/DEEPaaS/commit/77173480758e4c62a2c6e52009ffd82b90ee0b21))
+* remove deprecated cli option ([05d7f06](https://github.com/ai4os/DEEPaaS/commit/05d7f06f07aaced23776d39641591f38472b0cd6))
+
 ## [2.4.0](https://github.com/ai4os/DEEPaaS/compare/v2.3.2...v2.4.0) (2024-06-07)
 
 
