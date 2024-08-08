@@ -1,4 +1,4 @@
-name: Python package
+name: CI tests via tox
 
 on:
   push:
