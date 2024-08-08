@@ -14,11 +14,6 @@
 # License for the specific language governing permissions and limitations
 # under the License.
 
-# from aiohttp import web
-# import aiohttp_apispec
-# from webargs import aiohttpparser
-# import webargs.core
-
 import fastapi
 import fastapi.encoders
 import fastapi.exceptions
