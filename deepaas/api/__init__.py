@@ -103,6 +103,7 @@ async def get_app(
     if swagger:
         doc = str(pathlib.Path(base_path + doc))
         swagger = str(pathlib.Path(base_path + "/swagger.json"))
+        static_path = str(pathlib.Path(base_path + static_path))
 
         # init docs with all parameters, usual for ApiSpec
         aiohttp_apispec.setup_aiohttp_apispec(
