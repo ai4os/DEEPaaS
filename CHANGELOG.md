@@ -1,5 +1,13 @@
 # Changelog
 
+## [2.5.1](https://github.com/ai4os/DEEPaaS/compare/v2.5.0...v2.5.1) (2024-08-09)
+
+
+### Bug Fixes
+
+* also serve static_path from base_path ([267ab6a](https://github.com/ai4os/DEEPaaS/commit/267ab6ad6848757b8cc0a2dfb58e15c80ec0de28)), closes [#111](https://github.com/ai4os/DEEPaaS/issues/111)
+* do not pass basePath to aiohttp_apispec ([45c8452](https://github.com/ai4os/DEEPaaS/commit/45c84525566285f089bf82415e337a9adca14fe7)), closes [#111](https://github.com/ai4os/DEEPaaS/issues/111)
+
 ## [2.5.0](https://github.com/ai4os/DEEPaaS/compare/v2.4.0...v2.5.0) (2024-08-08)
 
 
