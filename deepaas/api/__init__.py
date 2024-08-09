@@ -115,7 +115,6 @@ async def get_app(
                 "description": "API documentation",
                 "url": "https://deepaas.readthedocs.org/",
             },
-            basePath=base_path,
             version=deepaas.extract_version(),
             url=swagger,
             swagger_path=doc if enable_doc else None,
