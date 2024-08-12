@@ -95,7 +95,7 @@ mypy = "^1.10.0"
 
 
 [tool.poetry.group.test-pypi.dependencies]
-twine = "^5.1.0"
+poetry = "^1.8.3"
 
 
 [tool.poetry.group.test-pip-missing-reqs.dependencies]
