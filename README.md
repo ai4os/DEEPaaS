@@ -2,8 +2,8 @@
 
 [![fair-software.eu](https://img.shields.io/badge/fair--software.eu-%E2%97%8F%20%20%E2%97%8F%20%20%E2%97%8F%20%20%E2%97%8F%20%20%E2%97%8F-green)](https://fair-software.eu)
 [![OpenSSF Best Practices](https://www.bestpractices.dev/projects/9063/badge)](https://www.bestpractices.dev/projects/9063)
-[![GitHub license](https://img.shields.io/github/license/indigo-dc/DEEPaaS.svg)](https://github.com/indigo-dc/DEEPaaS/blob/master/LICENSE)
-[![GitHub release](https://img.shields.io/github/release/indigo-dc/DEEPaaS.svg)](https://github.com/indigo-dc/DEEPaaS/releases)
+[![GitHub license](https://img.shields.io/github/license/ai4os/DEEPaaS.svg)](https://github.com/ai4os/DEEPaaS/blob/master/LICENSE)
+[![GitHub release](https://img.shields.io/github/release/ai4os/DEEPaaS.svg)](https://github.com/ai4os/DEEPaaS/releases)
 [![PyPI](https://img.shields.io/pypi/v/deepaas.svg)](https://pypi.python.org/pypi/deepaas)
 [![Python versions](https://img.shields.io/pypi/pyversions/deepaas.svg)](https://pypi.python.org/pypi/deepaas)
 [![Build Status](https://jenkins.services.ai4os.eu/job/AI4OS/job/DEEPaaS/job/master/badge/icon)](https://jenkins.services.ai4os.eu/job/AI4OS/job/DEEPaaS/job/master/)
