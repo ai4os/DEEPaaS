@@ -175,7 +175,7 @@ def _get_model_name(model_name=None):
     :param model_name: name of the model
     :return: model object
     """
-
+    model_name = CONF.model_name
     models = loading.get_available_models("v2")
     if model_name:
         model_obj = models.get(model_name)
@@ -202,8 +202,7 @@ def _get_model_name(model_name=None):
 
 
 # Get the model name
-model_name = CONF.model_name
-model_name, model_obj = _get_model_name(model_name)
+model_name, model_obj = _get_model_name()
 
 # use deepaas.model.v2.wrapper.ModelWrapper(). deepaas>1.2.1dev4
 # model_obj = v2_wrapper.ModelWrapper(name=model_name,
