@@ -43,6 +43,8 @@ from deepaas.model.v2 import wrapper as v2_wrapper
 
 CONF = config.CONF
 
+LOG = log.getLogger(__name__)
+
 debug_cli = False
 
 # Not all types are covered! If not listed, the type is 'str'
@@ -77,7 +79,7 @@ FIELD_TYPE_CONVERTERS = {
     fields.URL: str,
     fields.Url: str,
     fields.UUID: str,
-    fields.Field: str,
+    #fields.Field: str,
 }
 
 
@@ -127,7 +129,10 @@ def _fields_to_dict(fields_in):
         else:
             val_help += f"\nType: {param['type'].__name__}"
         if val_type is fields.Field:
-            val_help += " (filepath)"
+            if val.metadata.get("type", "") == "file":
+                val_help += " (filepath)"
+            else:
+                val_help += " (WARNING: original type fields.Field)"
 
         # Infer "required"
         param["required"] = val.required
@@ -147,6 +152,20 @@ def _fields_to_dict(fields_in):
         dict_out[key] = param
 
     return dict_out
+
+# Function to detect file arguments
+def _get_file_args(fields_in):
+    """Function to retrieve a list of file-type fields
+    :param fields_in: mashmallow fields
+    :return: list
+    """
+    file_fields = []
+    for k, v in fields_in.items():
+        if type(v) is fields.Field:
+            if v.metadata.get("type", "") == "file":
+                file_fields.append(k)
+
+    return file_fields
 
 
 # Function to get a model object
@@ -182,27 +201,8 @@ def _get_model_name(model_name=None):
         sys.exit(1)
 
 
-def _get_file_args(fields_in):
-    """Function to retrieve a list of file-type fields
-    :param fields_in: mashmallow fields
-    :return: list
-    """
-    file_fields = []
-    for k, v in fields_in.items():
-        if type(v) is fields.Field:
-            file_fields.append(k)
-            print(f"type of {v} is {type(v)}, key: {k}")
-            try:
-                print(f"file? {getattr(v, 'type')}")
-            except:
-                print("no type found")
-
-    return file_fields
-
-
 # Get the model name
 model_name = CONF.model_name
-
 model_name, model_obj = _get_model_name(model_name)
 
 # use deepaas.model.v2.wrapper.ModelWrapper(). deepaas>1.2.1dev4
@@ -213,37 +213,6 @@ model_name, model_obj = _get_model_name(model_name)
 # we get arguments for predict and train as dictionaries
 predict_args = _fields_to_dict(model_obj.get_predict_args())
 train_args = _fields_to_dict(model_obj.get_train_args())
-
-p_schema = webargs.core.dict2schema(model_obj.get_predict_args())
-#print(f"Args: {model_obj.get_predict_args()}")
-
-print(f"Schema: {p_schema}")
-#print(f"Fields: {p_schema.fields}")
-Meta = getattr(p_schema, "Meta", None)
-print(f"Meta: {Meta}")
-
-###
-from pprint import pprint
-
-from apispec import APISpec
-from apispec.ext.marshmallow import MarshmallowPlugin
-
-spec = APISpec(
-    title="AI4OS Module",
-    version="0.1.0",
-    openapi_version="3.1.0",
-    plugins=[MarshmallowPlugin()],
-)
-
-spec.components.schema("Module", schema=p_schema)
-method_components = spec.to_dict()["components"]["schemas"]
-params = method_components["Module"]["properties"]
-required = method_components["Module"]["required"]
-print("params:")
-pprint(params)
-print("required:")
-pprint(required)
-##
 
 # Find which of the arguments are going to be files
 file_args = {}
@@ -331,12 +300,7 @@ cli_opts = [
     ),
 ]
 
-
-CONF = cfg.CONF
 CONF.register_cli_opts(cli_opts)
-
-LOG = log.getLogger(__name__)
-
 
 # store DEEPAAS_METHOD output in a file
 def _store_output(results, out_file):
@@ -349,14 +313,12 @@ def _store_output(results, out_file):
     if not os.path.exists(out_path):  # Create path if does not exist
         os.makedirs(out_path)
 
-    f = open(out_file, "w+")
-    f.write(results)
-    f.close()
+    with open(out_file, "w+") as f:
+        f.write(results)
 
-    LOG.info("[INFO, Output] Output is saved in {}".format(out_file))
+    LOG.info("Output is saved in {}".format(out_file))
 
 
-# async def main():
 def main():
     """Executes model's methods with corresponding parameters"""
 
@@ -367,10 +329,9 @@ def main():
     log.set_defaults(default_log_levels=log.get_default_log_levels())
 
     CONF(sys.argv[1:], project="deepaas", version=deepaas.__version__)
-
     log.setup(CONF, "deepaas-cli")
 
-    LOG.info("[Method] {} was called.".format(CONF.methods.name))
+    LOG.info("{} was called.".format(CONF.methods.name))
 
     # put all variables in dict, makes life easier...
     conf_vars = vars(CONF._namespace)
@@ -378,8 +339,9 @@ def main():
     if CONF.deepaas_with_multiprocessing:
         mp.set_start_method("spawn", force=True)
 
+    # Create file wrapper for file args, ONLY for "predict()" and "train()"
     if CONF.methods.name == "predict" or CONF.methods.name == "train":
-        # Create file wrapper for file args (if provided)
+        # Create file wrapper for file args (if provided!)
         for farg in file_args[CONF.methods.name]:
             if getattr(CONF.methods, farg, None):
                 fpath = conf_vars[farg]
@@ -459,13 +421,10 @@ def main():
             if extension == ".json" or extension is None:
                 results_json = json.dumps(task)
                 LOG.debug("[predict]: {}".format(results_json))
-                f = open(out_file, "w+")
-                f.write(results_json)
-                f.close()
+                _store_output(results_json, out_file)
             elif type(task) is io.BytesIO:
                 with open(out_file, "wb") as f:
                     f.write(task.getbuffer())
-
             else:
                 LOG.info(f"Output of type type({task}), {task}")
 
@@ -502,7 +461,7 @@ def main():
         LOG.warn("No Method was requested! Return get_metadata()")
         meta = model_obj.get_metadata()
         meta_json = json.dumps(meta)
-        LOG.debug("get_metadata]: {}".format(meta_json))
+        LOG.debug("[get_metadata]: {}".format(meta_json))
 
         return meta_json
 
