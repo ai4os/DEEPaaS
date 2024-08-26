@@ -79,7 +79,7 @@ FIELD_TYPE_CONVERTERS = {
     fields.URL: str,
     fields.Url: str,
     fields.UUID: str,
-    #fields.Field: str,
+    fields.Field: str,
 }
 
 
@@ -201,6 +201,18 @@ def _get_model_name(model_name=None):
         sys.exit(1)
 
 
+def _get_file_args(fields_in):
+    """Function to retrieve a list of file-type fields
+    :param fields_in: mashmallow fields
+    :return: list
+    """
+    file_fields = []
+    for k, v in fields_in.items():
+        if type(v) is fields.Field:
+            file_fields.append(k)
+    return file_fields
+
+
 # Get the model name
 model_name = CONF.model_name
 model_name, model_obj = _get_model_name(model_name)
@@ -283,7 +295,6 @@ cli_opts = [
     cfg.StrOpt(
         "deepaas_method_output",
         help="Define an output file, if needed",
-        deprecated_name="deepaas_model_output",
     ),
     cfg.BoolOpt(
         "deepaas_with_multiprocessing",
@@ -316,8 +327,6 @@ def _store_output(results, out_file):
     with open(out_file, "w+") as f:
         f.write(results)
 
-    LOG.info("Output is saved in {}".format(out_file))
-
 
 def main():
     """Executes model's methods with corresponding parameters"""
@@ -328,10 +337,10 @@ def main():
     log.register_options(CONF)
     log.set_defaults(default_log_levels=log.get_default_log_levels())
 
-    CONF(sys.argv[1:], project="deepaas", version=deepaas.__version__)
+    CONF(sys.argv[1:], project="deepaas", version=deepaas.extract_version())
     log.setup(CONF, "deepaas-cli")
 
-    LOG.info("{} was called.".format(CONF.methods.name))
+    LOG.info(f"{CONF.methods.name} was called.")
 
     # put all variables in dict, makes life easier...
     conf_vars = vars(CONF._namespace)
@@ -377,12 +386,12 @@ def main():
         if CONF.deepaas_method_output:
             _store_output(meta_json, CONF.deepaas_method_output)
 
-        return meta_json
+        LOG.info(f"return: {meta_json}")
 
     elif CONF.methods.name == "warm":
         # await model_obj.warm()
         model_obj.warm()
-        LOG.info("[warm] Finished warm() method")
+        LOG.info("return: Finished warm() method")
 
     elif CONF.methods.name == "predict":
         # call predict method
@@ -428,9 +437,9 @@ def main():
             else:
                 LOG.info(f"Output of type type({task}), {task}")
 
-            LOG.info("Output is saved in {}".format(out_file))
-
-        return task
+            LOG.info(f"return: Output is saved in {out_file}")
+        else:
+            LOG.info(f"return: {task}")
 
     elif CONF.methods.name == "train":
         train_vars = _get_subdict(conf_vars, train_args)
@@ -455,7 +464,9 @@ def main():
         LOG.debug("[train]: {}".format(results_json))
         if CONF.deepaas_method_output:
             _store_output(results_json, CONF.deepaas_method_output)
-        return results_json
+            LOG.info(f"return: Output is saved in {CONF.deepaas_method_output}")
+        else:
+            LOG.info(f"return: {results_json}")
 
     else:
         LOG.warn("No Method was requested! Return get_metadata()")
@@ -463,7 +474,7 @@ def main():
         meta_json = json.dumps(meta)
         LOG.debug("[get_metadata]: {}".format(meta_json))
 
-        return meta_json
+        LOG.info(f"return: {meta_json}")
 
 
 if __name__ == "__main__":

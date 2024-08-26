@@ -15,6 +15,7 @@
 # License for the specific language governing permissions and limitations
 # under the License.
 
+import pathlib
 import sys
 
 from aiohttp import web
@@ -92,7 +93,17 @@ def main():
     config.config_and_logging(sys.argv)
     log = oslo_log.getLogger("deepaas")
 
-    base = "http://{}:{}".format(CONF.listen_ip, CONF.listen_port)
+    base_path = CONF.base_path
+
+    if base_path and not base_path.startswith("/"):
+        print("Base path should start with a '/'.", file=sys.stderr)
+        sys.exit(1)
+    elif base_path:
+        base_path = str(pathlib.Path(base_path))
+    else:
+        base_path = ""
+
+    base = "http://{}:{}{}".format(CONF.listen_ip, CONF.listen_port, base_path)
     spec = "{}/swagger.json".format(base)
     docs = "{}/api".format(base)
     v2 = "{}/v2".format(base)
@@ -100,7 +111,7 @@ def main():
     print(INTRO)
     print(BANNER.format(docs, spec, v2))
 
-    log.info("Starting DEEPaaS version %s", deepaas.__version__)
+    log.info("Starting DEEPaaS version %s", deepaas.extract_version())
 
     app = api.get_app(
         enable_doc=CONF.doc_endpoint,

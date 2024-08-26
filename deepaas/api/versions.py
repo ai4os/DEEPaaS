@@ -25,7 +25,7 @@ app = web.Application()
 routes = web.RouteTableDef()
 
 
-@routes.view("/")
+@routes.view("/", name="versions")
 class Versions(web.View):
     versions = {}
 

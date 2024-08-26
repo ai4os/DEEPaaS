@@ -14,6 +14,7 @@
 # License for the specific language governing permissions and limitations
 # under the License.
 
+import pathlib
 
 from aiohttp import web
 import aiohttp_apispec
@@ -75,10 +76,22 @@ async def get_app(
     model.register_v2_models(APP)
 
     v2app = v2.get_app(enable_train=enable_train, enable_predict=enable_predict)
-    APP.add_subapp("/v2", v2app)
+    if base_path:
+        path = str(pathlib.Path(base_path) / "v2")
+    else:
+        path = "/v2"
+    APP.add_subapp(path, v2app)
     versions.register_version("stable", v2.get_version)
 
-    APP.add_routes(versions.routes)
+    if base_path:
+        # Get versions.routes, and transform them to have the base_path, as we cannot
+        # directly modify the routes already created and stored in the RouteTableDef
+        for route in versions.routes:
+            APP.router.add_route(
+                route.method, str(pathlib.Path(base_path + route.path)), route.handler
+            )
+    else:
+        APP.add_routes(versions.routes)
 
     LOG.info("Serving loaded V2 models: %s", list(model.V2_MODELS.keys()))
 
@@ -88,6 +101,10 @@ async def get_app(
             await m.warm()
 
     if swagger:
+        doc = str(pathlib.Path(base_path + doc))
+        swagger = str(pathlib.Path(base_path + "/swagger.json"))
+        static_path = str(pathlib.Path(base_path + static_path))
+
         # init docs with all parameters, usual for ApiSpec
         aiohttp_apispec.setup_aiohttp_apispec(
             app=APP,
@@ -99,9 +116,8 @@ async def get_app(
                 "description": "API documentation",
                 "url": "https://deepaas.readthedocs.org/",
             },
-            basePath=base_path,
-            version=deepaas.__version__,
-            url="/swagger.json",
+            version=deepaas.extract_version(),
+            url=swagger,
             swagger_path=doc if enable_doc else None,
             prefix=prefix,
             static_path=static_path,

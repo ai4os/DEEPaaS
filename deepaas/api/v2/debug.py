@@ -15,6 +15,7 @@
 # under the License.
 
 import datetime
+import io
 import logging
 import sys
 import warnings
@@ -23,7 +24,6 @@ from aiohttp import web
 import aiohttp_apispec
 from oslo_config import cfg
 from oslo_log import log
-import six
 
 CONF = cfg.CONF
 
@@ -56,7 +56,7 @@ def setup_debug():
     global DEBUG_STREAM
 
     if CONF.debug_endpoint:
-        DEBUG_STREAM = six.StringIO()
+        DEBUG_STREAM = io.StringIO()
 
         logger = log.getLogger("deepaas").logger
         hdlr = logging.StreamHandler(DEBUG_STREAM)
@@ -71,7 +71,7 @@ def setup_debug():
             "restriction in the /debug/ endpoint. Disable it whenever "
             "you have finished debugging your application. \033[0m"
         )
-        warnings.warn(msg, RuntimeWarning)
+        warnings.warn(msg, RuntimeWarning, stacklevel=2)
 
         sys.stdout = MultiOut(DEBUG_STREAM, sys.stdout)
         sys.stderr = MultiOut(DEBUG_STREAM, sys.stderr)

@@ -60,13 +60,14 @@ def register_models(app):
         warnings.warn(
             "Error loading models, using test model. This will be deprecated soon.",
             DeprecationWarning,
+            stacklevel=2,
         )
 
     if MODELS:
         if len(MODELS) > 1:
             # Loading several models will be deprecated in the future
             warn_msg = "Loading several models is deprecated."
-            warnings.warn(warn_msg, DeprecationWarning)
+            warnings.warn(warn_msg, DeprecationWarning, stacklevel=2)
             LOG.warning(warn_msg)
 
         MODELS_LOADED = True
@@ -79,7 +80,7 @@ def register_models(app):
             "API, please use the demo_app instead. "
             "Check https://github.com/deephdc/demo_app for more information.",
         )
-        warnings.warn(warn_msg, DeprecationWarning)
+        warnings.warn(warn_msg, DeprecationWarning, stacklevel=2)
         LOG.info("No models found in V2, loading test model")
         LOG.warning(warn_msg)
         MODELS["deepaas-test"] = wrapper.ModelWrapper(
