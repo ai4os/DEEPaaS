@@ -201,18 +201,6 @@ def _get_model_name(model_name=None):
         sys.exit(1)
 
 
-def _get_file_args(fields_in):
-    """Function to retrieve a list of file-type fields
-    :param fields_in: mashmallow fields
-    :return: list
-    """
-    file_fields = []
-    for k, v in fields_in.items():
-        if type(v) is fields.Field:
-            file_fields.append(k)
-    return file_fields
-
-
 # Get the model name
 model_name = CONF.model_name
 model_name, model_obj = _get_model_name(model_name)
