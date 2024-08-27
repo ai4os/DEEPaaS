@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "deepaas"
-version = "2.5.1"
+version = "2.5.2"
 description = "DEEPaaS is a REST API to expose a machine learning model."
 authors = ["Alvaro Lopez Garcia <aloga@ifca.unican.es>"]
 license = "Apache-2"
