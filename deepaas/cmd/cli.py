@@ -160,9 +160,8 @@ def _get_file_args(fields_in):
     """
     file_fields = []
     for k, v in fields_in.items():
-        if type(v) is fields.Field:
-            if v.metadata.get("type", "") == "file":
-                file_fields.append(k)
+        if (type(v) is fields.Field) and (v.metadata.get("type", "") == "file"):
+            file_fields.append(k)
 
     return file_fields
 
