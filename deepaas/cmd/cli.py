@@ -33,7 +33,7 @@ import webargs
 import uuid
 
 from datetime import datetime
-from marshmallow import fields #marshmallow
+from marshmallow import fields  # marshmallow
 from oslo_config import cfg
 from oslo_log import log
 
@@ -152,6 +152,7 @@ def _fields_to_dict(fields_in):
         dict_out[key] = param
 
     return dict_out
+
 
 # Function to detect file arguments
 def _get_file_args(fields_in):
@@ -299,6 +300,7 @@ cli_opts = [
 ]
 
 CONF.register_cli_opts(cli_opts)
+
 
 # store DEEPAAS_METHOD output in a file
 def _store_output(results, out_file):
