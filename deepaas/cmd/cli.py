@@ -168,11 +168,11 @@ def _get_file_args(fields_in):
 
 
 # Function to get a model object
-def _get_model_name(model_name=None):
-    """Function to get model_obj from the name of the model.
+def _get_model_name():
+    """Return et mode name and model fron configured model.
+
     In case of error, prints the list of available models
-    :param model_name: name of the model
-    :return: model object
+    :return: mode name, model object
     """
     model_name = CONF.model_name
     models = loading.get_available_models("v2")
