@@ -1,5 +1,20 @@
 # Changelog
 
+## [2.5.2](https://github.com/ai4os/DEEPaaS/compare/v2.5.1...v2.5.2) (2024-08-27)
+
+
+### Bug Fixes
+
+* merge from releases/2.x, replace return with log.info() ([ce1a46a](https://github.com/ai4os/DEEPaaS/commit/ce1a46ae6a67cfeafe3fa9bbd18feb112115b477))
+* merge from releases/2.x, replace return with log.info() ([8b71eaf](https://github.com/ai4os/DEEPaaS/commit/8b71eafe6d8e8d55394a7d5bd4ca3c38e3fc15c1))
+* merge from releases/2.x, replace return with log.info() ([35033e4](https://github.com/ai4os/DEEPaaS/commit/35033e4ee0443c4ed6b7517aecb9e69178264f10))
+* merge ifs statements ([32a3f52](https://github.com/ai4os/DEEPaaS/commit/32a3f52934ba083f9beafe80f82fb057035206f5))
+* merge pull request [#187](https://github.com/ai4os/DEEPaaS/issues/187) from ai4os/fix/cli-upd ([93583ee](https://github.com/ai4os/DEEPaaS/commit/93583eea700cc47e6220a0f68a0fbc2302db73ab))
+* prepare deepaas-cli for the release 2.x ([1d9facd](https://github.com/ai4os/DEEPaaS/commit/1d9facda7229ff1df1830a08b8e03be3e9269d9f))
+* remove unused imports ([4c9c5de](https://github.com/ai4os/DEEPaaS/commit/4c9c5ded42b2b679c354b2a1d0c2f4e83c7cbb55))
+* remove unused parameter in function ([6d870d9](https://github.com/ai4os/DEEPaaS/commit/6d870d9670ccc5e9802d29c4289c06ccc2c5fc09))
+* remove W-I-P test for cli ([a0a1780](https://github.com/ai4os/DEEPaaS/commit/a0a178010d37a1df3b3d5976d7646764cf49d20f))
+
 ## [2.5.1](https://github.com/ai4os/DEEPaaS/compare/v2.5.0...v2.5.1) (2024-08-09)
 
 
