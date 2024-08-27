@@ -21,7 +21,6 @@ import urllib.request
 
 import mock
 
-# from deepaas.cmd import cli  # W-I-P
 from deepaas.cmd import execute
 from deepaas.cmd import run
 from deepaas.tests import base
@@ -63,16 +62,6 @@ class TestRun(base.TestCase):
             port=port,
         )
         m_handle_signals.assert_called_once()
-
-
-# W-I-P
-# class TestCLI(base.TestCase):
-#    @mock.patch("deepaas.cmd.cli.main")
-#    def test_cli_get_metadata(self, m_cli_get_meta):
-#        self.flags(methods="get_metadata")
-#        with mock.patch.object(sys, "argv", ["deepaas-cli"]):
-#            cli.main()
-#        m_cli_get_meta.assert_called_once()
 
 
 class TestExecute(base.TestCase):
