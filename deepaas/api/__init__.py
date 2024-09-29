@@ -73,6 +73,11 @@ def get_fastapi_app(
     )
 
     model.load_v2_model()
+    LOG.info("Serving loaded V2 model: %s", model.V2_MODEL_NAME)
+
+    if CONF.warm:
+        LOG.debug("Warming models...")
+        model.V2_MODEL.warm()
 
     v2app = v2.get_app(
         # FIXME(aloga): these have no effect now, remove.
