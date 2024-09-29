@@ -34,19 +34,19 @@ VERSIONS = {}
 CONF = cfg.CONF
 
 LINKS = """
-- [Project website](https://deep-hybrid.datacloud.eu).
-- [Project documentation](https://docs.deep-hybrid.datacloud.eu).
-- [Model marketplace](https://marketplace.deep-hybrid.datacloud.eu).
+- [AI4EOSC Project website](https://ai4eosc.eu).
+- [Project documentation](https://docs.ai4eosc.eu).
+- [API documentation](https://docs.ai4os.eu/deepaas).
+- [AI4EOSC Model marketplace](https://dashboard.cloud.ai4eosc.eu/marketplace).
 """
 
 API_DESCRIPTION = (
     "<img"
-    " src='https://marketplace.deep-hybrid-datacloud.eu/images/logo-deep.png'"
+    " src='https://raw.githubusercontent.com/ai4os/.github/ai4os/profile/"
+    "horizontal-transparent.png'"
     " width=200 alt='' />"
     "\n\nThis is a REST API that is focused on providing access "
-    "to machine learning models. By using the DEEPaaS API "
-    "users can easily run a REST API in front of their model, "
-    "thus accessing its functionality via HTTP calls. "
+    "to machine learning models. "
     "\n\nCurrently you are browsing the "
     "[Swagger UI](https://swagger.io/tools/swagger-ui/) "
     "for this API, a tool that allows you to visualize and interact with the "
@@ -68,7 +68,7 @@ def get_fastapi_app(
         return APP
 
     APP = fastapi.FastAPI(
-        title="DEEP as a Service API endpoint",
+        title="Model serving API endpoint",
         description=API_DESCRIPTION,
         version=deepaas.extract_version(),
         docs_url=f"{base_path}/docs" if enable_doc else None,  # NOTE(aloga): changed
