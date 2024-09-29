@@ -57,7 +57,7 @@ def get_fastapi_app(
     enable_doc: bool = True,  # FIXME(aloga): not handled yet
     enable_train: bool = True,  # FIXME(aloga): not handled yet
     enable_predict: bool = True,  # FIXME(aloga): not handled yet
-    base_path: str = "",  # FIXME(aloga): not handled yet
+    base_path: str = "",
 ) -> fastapi.FastAPI:
     """Get the main app, based on FastAPI."""
     global APP
@@ -85,11 +85,11 @@ def get_fastapi_app(
         enable_predict=enable_predict,
     )
 
-    APP.include_router(v2app, prefix="/v2", tags=["v2"])
+    APP.include_router(v2app, prefix=f"{base_path}/v2", tags=["v2"])
     VERSIONS["v2"] = v2.get_v2_version
 
     APP.add_api_route(
-        "/",
+        f"{base_path}/",
         get_root,
         methods=["GET"],
     )

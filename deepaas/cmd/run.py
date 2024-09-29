@@ -103,6 +103,7 @@ def main():
     else:
         base_path = ""
 
+    # FIXME(aloga): ensure that these paths are correct
     base = "http://{}:{}{}".format(CONF.listen_ip, CONF.listen_port, base_path)
     spec = "{}/swagger.json".format(base)
     docs = "{}/api".format(base)
@@ -122,7 +123,7 @@ def main():
         enable_doc=CONF.doc_endpoint,
         enable_train=CONF.train_endpoint,
         enable_predict=CONF.predict_endpoint,
-        base_path=CONF.base_path,
+        base_path=base_path,
     )
     uvicorn.run(app, host=CONF.listen_ip, port=CONF.listen_port)
     log.debug("Shutting down")
