@@ -43,7 +43,8 @@ def get_app(enable_train=True, enable_predict=True):
 
     APP.include_router(v2_debug.get_router(), tags=["debug"])
     APP.include_router(v2_model.get_router(), tags=["models"])
-    APP.include_router(v2_predict.get_router(), tags=["predict"])
+    if enable_predict:
+        APP.include_router(v2_predict.get_router(), tags=["predict"])
 
     # APP.router.add_get("/", get_version, name="v2", allow_head=False)
     # v2_debug.setup_routes(APP)
