@@ -22,6 +22,7 @@ from oslo_config import cfg
 
 import deepaas
 from deepaas.api import v2
+from deepaas.api.v2 import responses
 from deepaas import log
 from deepaas import model
 
@@ -97,6 +98,7 @@ def get_fastapi_app(
         methods=["GET"],
         summary="Get API version information",
         tags=["version"],
+        response_model=responses.VersionsAndLinks,
     )
 
     return APP

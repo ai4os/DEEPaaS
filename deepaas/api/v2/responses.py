@@ -22,17 +22,6 @@ from marshmallow import validate
 import pydantic
 
 
-# class Version(marshmallow.Schema):
-#     version = fields.Str(required="True")
-#     id = fields.Str(required="True")
-#     # links = fields.Nested(Location)
-#     type = fields.Str()
-
-
-# class Versions(marshmallow.Schema):
-#     versions = fields.List(fields.Nested(Version))
-
-
 class Training(marshmallow.Schema):
     uuid = fields.UUID(required=True, description="Training identifier")
     date = fields.DateTime(required=True, description="Training start time")
@@ -51,11 +40,25 @@ class TrainingList(marshmallow.Schema):
 
 # Pydantic models for the API
 
+class Version(pydantic.BaseModel):
+    version: str
+    id: str
+    type: str = "application/json"
+
+
+class Versions(pydantic.BaseModel):
+    versions: typing.List[Version]
+
 
 class Location(pydantic.BaseModel):
     rel: str
     href: pydantic.AnyHttpUrl
     type: str = "application/json"
+
+
+class VersionsAndLinks(pydantic.BaseModel):
+    versions: typing.List[Version]
+    links: typing.List[Location]
 
 
 class ModelMeta(pydantic.BaseModel):
