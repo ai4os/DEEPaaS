@@ -14,8 +14,10 @@
 # License for the specific language governing permissions and limitations
 # under the License.
 
+import json
 
 import fastapi
+import fastapi.responses
 from oslo_config import cfg
 
 import deepaas
@@ -26,6 +28,7 @@ from deepaas import model
 LOG = log.getLogger(__name__)
 
 APP = None
+VERSIONS = {}
 
 CONF = cfg.CONF
 
@@ -58,6 +61,7 @@ def get_fastapi_app(
 ) -> fastapi.FastAPI:
     """Get the main app, based on FastAPI."""
     global APP
+    global VERSIONS
 
     if APP:
         return APP
@@ -71,13 +75,53 @@ def get_fastapi_app(
     model.load_v2_model()
 
     v2app = v2.get_app(
+        # FIXME(aloga): these have no effect now, remove.
         enable_train=enable_train,
         enable_predict=enable_predict,
     )
 
     APP.include_router(v2app, prefix="/v2", tags=["v2"])
+    VERSIONS["v2"] = v2.get_v2_version
+
+    APP.add_api_route(
+        "/",
+        get_root,
+        methods=["GET"],
+    )
 
     return APP
+
+
+async def get_root(request: fastapi.Request) -> fastapi.responses.JSONResponse:
+    versions = []
+    for _ver, info in VERSIONS.items():
+        resp = await info(request)
+        versions.append(json.loads(resp.body))
+
+    root = str(request.url_for("get_root"))
+
+    response = {"versions": versions, "links": []}
+
+    doc = APP.docs_url.strip("/")
+    if doc:
+        doc = {"rel": "help", "type": "text/html", "href": f"{root}{doc}"}
+        response["links"].append(doc)
+
+    redoc = APP.redoc_url.strip("/")
+    if redoc:
+        redoc = {"rel": "help", "type": "text/html", "href": f"{root}{redoc}"}
+        response["links"].append(redoc)
+
+    spec = APP.openapi_url.strip("/")
+    if spec:
+        spec = {
+            "rel": "describedby",
+            "type": "application/json",
+            "href": f"{root}{spec}",
+        }
+        response["links"].append(spec)
+
+    return fastapi.responses.JSONResponse(content=response)
 
 
 # FIXME(aloga): kept here as a reference, remove when aiohttp is removed
