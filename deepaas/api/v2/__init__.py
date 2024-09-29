@@ -56,6 +56,7 @@ def get_app(enable_train=True, enable_predict=True):
         "/",
         get_v2_version,
         methods=["GET"],
+        tags=["version"],
         # NOTE(aloga): use a model here
     )
 
