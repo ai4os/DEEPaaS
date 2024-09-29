@@ -54,8 +54,8 @@ API_DESCRIPTION = (
 
 
 def get_fastapi_app(
-    enable_doc: bool = True,  # FIXME(aloga): not handled yet
-    enable_train: bool = True,  # FIXME(aloga): not handled yet
+    enable_doc: bool = True,
+    enable_train: bool = True,    # FIXME(aloga): not handled yet
     enable_predict: bool = True,  # FIXME(aloga): not handled yet
     base_path: str = "",
 ) -> fastapi.FastAPI:
@@ -70,6 +70,9 @@ def get_fastapi_app(
         title="DEEP as a Service API endpoint",
         description=API_DESCRIPTION,
         version=deepaas.extract_version(),
+        docs_url=f"{base_path}/docs" if enable_doc else None,  # NOTE(aloga): changed
+        redoc_url=f"{base_path}/redoc" if enable_doc else None,  # NOTE(aloga): new
+        openapi_url=f"{base_path}/openapi.json",  # NOTE(aloga): changed
     )
 
     model.load_v2_model()
