@@ -21,8 +21,7 @@ from oslo_config import cfg
 from deepaas.api.v2 import debug as v2_debug
 from deepaas.api.v2 import models as v2_model
 from deepaas.api.v2 import predict as v2_predict
-
-# from deepaas.api.v2 import responses
+from deepaas.api.v2 import responses
 # from deepaas.api.v2 import train as v2_train
 from deepaas import log
 
@@ -57,7 +56,7 @@ def get_app(enable_train=True, enable_predict=True):
         get_v2_version,
         methods=["GET"],
         tags=["version"],
-        # NOTE(aloga): use a model here
+        response_model=responses.Versions
     )
 
     return APP
