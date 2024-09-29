@@ -16,29 +16,27 @@
 
 import typing
 
-import marshmallow
-from marshmallow import fields
-from marshmallow import validate
 import pydantic
 
 
-class Training(marshmallow.Schema):
-    uuid = fields.UUID(required=True, description="Training identifier")
-    date = fields.DateTime(required=True, description="Training start time")
-    status = fields.Str(
-        required=True,
-        description="Training status",
-        enum=["running", "error", "completed", "cancelled"],
-        validate=validate.OneOf(["running", "error", "completed", "cancelled"]),
-    )
-    message = fields.Str(description="Optional message explaining status")
+# class Training(marshmallow.Schema):
+#     uuid = fields.UUID(required=True, description="Training identifier")
+#     date = fields.DateTime(required=True, description="Training start time")
+#     status = fields.Str(
+#         required=True,
+#         description="Training status",
+#         enum=["running", "error", "completed", "cancelled"],
+#         validate=validate.OneOf(["running", "error", "completed", "cancelled"]),
+#     )
+#     message = fields.Str(description="Optional message explaining status")
 
 
-class TrainingList(marshmallow.Schema):
-    trainings = fields.List(fields.Nested(Training))
+# class TrainingList(marshmallow.Schema):
+#     trainings = fields.List(fields.Nested(Training))
 
 
 # Pydantic models for the API
+
 
 class Version(pydantic.BaseModel):
     version: str
