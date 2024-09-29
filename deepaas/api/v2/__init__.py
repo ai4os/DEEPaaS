@@ -15,6 +15,7 @@
 # under the License.
 
 import fastapi
+import fastapi.responses
 from oslo_config import cfg
 
 from deepaas.api.v2 import debug as v2_debug
@@ -50,30 +51,27 @@ def get_app(enable_train=True, enable_predict=True):
     # v2_train.setup_routes(APP, enable=enable_train)
     # v2_predict.setup_routes(APP, enable=enable_predict)
 
+    APP.add_api_route(
+        "/",
+        get_v2_version,
+        methods=["GET"],
+        # NOTE(aloga): use a model here
+    )
+
     return APP
 
 
-# @aiohttp_apispec.docs(
-#     tags=["versions"],
-#     summary="Get V2 API version information",
-# )
-# @aiohttp_apispec.response_schema(responses.Version(), 200)
-# @aiohttp_apispec.response_schema(responses.Failure(), 400)
-# async def get_version(request):
-#     # NOTE(aloga): we use the router table from this application (i.e. the
-#     # global APP in this module) to be able to build the correct url, as it can
-#     # be prefixed outside of this module (in an add_subapp() call)
-#     root = APP.router["v2"].url_for()
-#     version = {
-#         "version": "stable",
-#         "id": "v2",
-#         "links": [
-#             {
-#                 "rel": "self",
-#                 "type": "application/json",
-#                 "href": "%s" % root,
-#             }
-#         ],
-#     }
-
-#     return web.json_response(version)
+async def get_v2_version(request: fastapi.Request) -> fastapi.responses.JSONResponse:
+    root = str(request.url_for("get_v2_version"))
+    version = {
+        "version": "stable",
+        "id": "v2",
+        "links": [
+            {
+                "rel": "self",
+                "type": "application/json",
+                "href": f"{root}",
+            }
+        ],
+    }
+    return fastapi.responses.JSONResponse(content=version)
