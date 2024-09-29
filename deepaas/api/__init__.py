@@ -95,6 +95,8 @@ def get_fastapi_app(
         f"{base_path}/",
         get_root,
         methods=["GET"],
+        summary="Get API version information",
+        tags=["version"],
     )
 
     return APP

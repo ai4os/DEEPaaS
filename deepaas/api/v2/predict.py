@@ -88,6 +88,7 @@ def _get_handler_for_model(model_name, model_obj):
                 self.predict,
                 methods=["POST"],
                 response_model=response,
+                tags=["models", "predict"]
             )
 
     return Handler(model_name, model_obj)
