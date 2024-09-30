@@ -18,8 +18,8 @@
 import pathlib
 import sys
 
-from aiohttp import web
 from oslo_config import cfg
+import uvicorn
 
 import deepaas
 from deepaas import api
@@ -103,6 +103,7 @@ def main():
     else:
         base_path = ""
 
+    # FIXME(aloga): ensure that these paths are correct
     base = "http://{}:{}{}".format(CONF.listen_ip, CONF.listen_port, base_path)
     spec = "{}/swagger.json".format(base)
     docs = "{}/api".format(base)
@@ -111,19 +112,21 @@ def main():
     print(INTRO)
     print(BANNER.format(docs, spec, v2))
 
-    log.info("Starting DEEPaaS version %s", deepaas.extract_version())
+    log.info(
+        "Starting DEEPaaS version %s with FastAPI backend",
+        deepaas.extract_version(),
+    )
 
-    app = api.get_app(
+    print("FastAPI backend is still experimental.")
+    print("Press Ctrl+C to stop the server.")
+    app = api.get_fastapi_app(
         enable_doc=CONF.doc_endpoint,
         enable_train=CONF.train_endpoint,
         enable_predict=CONF.predict_endpoint,
-        base_path=CONF.base_path,
+        base_path=base_path,
     )
-    web.run_app(
-        app,
-        host=CONF.listen_ip,
-        port=CONF.listen_port,
-    )
+    uvicorn.run(app, host=CONF.listen_ip, port=CONF.listen_port)
+    log.debug("Shutting down")
 
 
 if __name__ == "__main__":

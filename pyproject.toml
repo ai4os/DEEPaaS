@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "deepaas"
-version = "2.4.0"
+version = "3.0.0"
 description = "DEEPaaS is a REST API to expose a machine learning model."
 authors = ["Alvaro Lopez Garcia <aloga@ifca.unican.es>"]
 license = "Apache-2"
@@ -56,6 +56,7 @@ aiohttp-apispec = "^2.2.3"
 Werkzeug = "^3.0.3"
 marshmallow = "^3.21.3"
 webargs = "<6.0.0"
+fastapi = "^0.111.0"
 
 
 [tool.poetry.group.dev.dependencies]
@@ -94,7 +95,7 @@ mypy = "^1.10.0"
 
 
 [tool.poetry.group.test-pypi.dependencies]
-twine = "^5.1.0"
+poetry = "^1.8.3"
 
 
 [tool.poetry.group.test-pip-missing-reqs.dependencies]
