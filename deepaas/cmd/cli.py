@@ -295,7 +295,7 @@ cli_opts = [
 CONF = cfg.CONF
 CONF.register_cli_opts(cli_opts)
 
-LOG = log.get_logger(__name__)
+LOG = log.getLogger(__name__)
 
 
 # store DEEPAAS_METHOD output in a file
