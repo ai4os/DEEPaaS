@@ -43,9 +43,9 @@ deepaas-run = "deepaas.cmd.run:main"
 deepaas-predict = "deepaas.cmd.execute:main"
 deepaas-cli = "deepaas.cmd.cli:main"
 
-[tool.poetry.plugins] # Optional super table 
+[tool.poetry.plugins] # Optional super table
 
-[tool.poetry.plugins."oslo.config.opts"] 
+[tool.poetry.plugins."oslo.config.opts"]
 deepaas = "deepaas.opts:list_opts"
 
 [tool.poetry.dependencies]
@@ -58,50 +58,6 @@ aiohttp-apispec = "^2.2.3"
 Werkzeug = "^2.0.3"
 marshmallow = "^3.14.1"
 webargs = "<6.0.0"
-
-
-[tool.poetry.group.dev.dependencies]
-tox = "^4.15.1"
-
-
-[tool.poetry.group.test.dependencies]
-pytest = "^8.2.2"
-pytest-aiohttp = "^1.0.5"
-pytest-cov = "^5.0.0"
-fixtures = "^4.1.0"
-reno = "^4.1.0"
-mock = "^5.1.0"
-testtools = "^2.7.1"
-setuptools = "^70.0.0"
-
-
-[tool.poetry.group.test-flake8.dependencies]
-flake8 = "^7.0.0"
-flake8-bugbear = "^24.4.26"
-flake8-typing-imports = "^1.15.0"
-flake8-colors = "^0.1.9"
-pep8-naming = "^0.14.1"
-pydocstyle = "^6.3.0"
-
-
-[tool.poetry.group.test-black.dependencies]
-black = "^24.4.2"
-
-
-[tool.poetry.group.test-bandit.dependencies]
-bandit = "^1.7.8"
-
-
-[tool.poetry.group.test-mypy.dependencies]
-mypy = "^1.10.0"
-
-
-[tool.poetry.group.test-pypi.dependencies]
-twine = "^5.1.0"
-
-
-[tool.poetry.group.test-pip-missing-reqs.dependencies]
-pip-check-reqs = "^2.5.3"
 
 [build-system]
 requires = ["poetry-core"]
