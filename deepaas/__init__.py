@@ -15,7 +15,7 @@
 # under the License.
 
 from contextlib import suppress
-import importlib.metadata
+# import importlib.metadata  # does not work with 3.6
 from pathlib import Path
 
 __version__ = "2.5.2"
@@ -32,4 +32,5 @@ def extract_version() -> str:
                 .strip("'\"\n ")
             )
             return f"{version}-dev (at {root_dir})"
-    return importlib.metadata.version(__package__ or __name__.split(".", maxsplit=1)[0])
+    # return importlib.metadata.version(__package__ or __name__.split(".", maxsplit=1)[0])
+    return __version__
