@@ -1,5 +1,14 @@
 # Changelog
 
+## [2.6.0](https://github.com/ai4os/DEEPaaS/compare/v2.5.2...v2.6.0) (2024-11-11)
+
+
+### Features
+
+* disable poetry groups (not compatible with Python 3.6) ([a492900](https://github.com/ai4os/DEEPaaS/commit/a492900d2350023de445c362cfa02b46e3639590))
+* make requirements compatible with Python 3.6 ([c9ca14d](https://github.com/ai4os/DEEPaaS/commit/c9ca14d84e560e0c6ff14e083426e07f260bcd70))
+* stop using `importlib.metadata` incompatible with 3.6 ([c0178b7](https://github.com/ai4os/DEEPaaS/commit/c0178b7016dbaccedb88421b1f541db4c1d18127))
+
 ## [2.5.2](https://github.com/ai4os/DEEPaaS/compare/v2.5.1...v2.5.2) (2024-08-27)
 
 

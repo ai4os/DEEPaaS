@@ -18,7 +18,7 @@ from contextlib import suppress
 # import importlib.metadata  # does not work with 3.6
 from pathlib import Path
 
-__version__ = "2.5.2"
+__version__ = "2.6.0"
 
 
 def extract_version() -> str:
