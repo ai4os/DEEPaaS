@@ -56,23 +56,6 @@ async def test_run(monkeypatch, fastapi_app_fixture, uvicorn_run_fixture):
     )
 
 
-# @mock.patch("deepaas.cmd._shutdown.handle_signals")
-# @mock.patch("aiohttp.web.run_app")
-# @mock.patch("deepaas.api.get_app")
-# async def test_run(m_get_app, m_run_app, m_handle_signals):
-#     m = mock.MagicMock()
-#     m_get_app.return_value = m
-#     with mock.patch.object(sys, "argv", ["deepaas-run"]):
-#         run.main()
-#     m_get_app.assert_called_once()
-#     m_run_app.assert_called_with(
-#         mock.ANY,
-#         host="127.0.0.1",
-#         port=5000,
-#     )
-#     m_handle_signals.assert_called_once()
-
-
 @pytest.fixture
 def cfg_fixture():
     # Keep track of which flags were overridden

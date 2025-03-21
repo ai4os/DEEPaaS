@@ -19,19 +19,10 @@ import decimal
 import typing
 
 import fastapi
-from aiohttp import web
 import marshmallow
 import marshmallow.fields
 import pydantic
 import pydantic.utils
-
-
-class NotEnabledHandler(object):
-    def __getattr__(self, attr):
-        async def f(*args, **kwargs):
-            raise web.HTTPPaymentRequired()
-
-        return f
 
 
 # Convert marshmallow fields to pydantic fields
