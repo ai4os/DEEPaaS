@@ -283,33 +283,6 @@ class ModelWrapper(object):
         with self._catch_error():
             return self.predict_wrap(self.model_obj.predict, *args, **kwargs)
 
-    def train(self, *args, **kwargs):
-        """Perform a training on wrapped model's ``train`` method.
-
-        :raises HTTPNotImplemented: If the method is not
-            implemented in the wrapper model.
-        :raises HTTPInternalServerError: If the call produces
-            an error
-        :raises HTTPException: If the call produces an
-            error, already wrapped as a HTTPException
-        """
-
-        with self._catch_error():
-            return self.model_obj.train(*args, **kwargs)
-
-    def get_train_args(self):
-        """Add training arguments into the training parser.
-
-        :param parser: an argparse like object
-
-        This method will call the wrapped model ``add_train_args``.
-        """
-        try:
-            args = self.model_obj.get_train_args()
-        except (NotImplementedError, AttributeError):
-            args = {}
-        return args
-
     def get_predict_args(self):
         """Add predict arguments into the predict parser.
 

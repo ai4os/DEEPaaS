@@ -121,7 +121,6 @@ def main():
     print("Press Ctrl+C to stop the server.")
     app = api.get_fastapi_app(
         enable_doc=CONF.doc_endpoint,
-        enable_train=CONF.train_endpoint,
         enable_predict=CONF.predict_endpoint,
         base_path=base_path,
     )

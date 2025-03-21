@@ -11,10 +11,10 @@ Description
 ===========
 
 :program:`deepaas-cli` Command line interface (CLI) to DEEPaaS models
-    that are loaded through the ``deepaas.v2.models`` entrypoint API.
-    One gets access to the same get_metadata, warm, predict, and train
-    methods with all corresponding options as with DEEPaaS REST API.
-    To get available for the method options, one has to call
+    that are loaded through the ``deepaas.v2.models`` entrypoint API. One gets access
+    to the same get_metadata, warm, predict methods with all corresponding options as
+    with DEEPaaS REST API.  To get available for the method
+    options, one has to call
     ``deepaas-cli <method> --help``.
     Additional parameters are provided:
     ``--deepaas_method_output`` is to store the output in a pre-defined
@@ -41,15 +41,10 @@ Options
    Calls predict() method. The output can be stored via
    --deepaas_method_output.
 
-.. option:: train
-
-   Calls train() method. The output can be stored via
-   --deepaas_method_output.
-
 .. option:: --deepaas_method_output
 
    To save the results to a local file, if needed. Available for
-   get_metadata, predict, train methods.
+   get_metadata, predict methods.
 
 .. option:: --deepaas_with_multiprocessing
 

@@ -78,14 +78,8 @@ def test_not_implemented():
         def get_predict_args(self):
             super(Model, self).get_predict_args()
 
-        def train(self, **kwargs):
-            super(Model, self).train(**kwargs)
-
         def warm(self, **kwargs):
-            super(Model, self).train(**kwargs)
-
-        def get_train_args(self):
-            super(Model, self).get_train_args()
+            super(Model, self).warm(**kwargs)
 
     m = Model()
 
@@ -95,10 +89,6 @@ def test_not_implemented():
         m.predict()
     with pytest.raises(NotImplementedError):
         m.get_predict_args()
-    with pytest.raises(NotImplementedError):
-        m.train()
-    with pytest.raises(NotImplementedError):
-        m.get_train_args()
 
 
 async def test_bad_schema(application, mocks):
@@ -164,8 +154,6 @@ async def test_dummy_model(model, mocks):
         "labels": [{"label": "foo", "probability": 1.0}],
     }
 
-    assert model.train() is None
-
     meta = model.get_metadata()
     assert "description" in meta
     assert "id" in meta
@@ -173,8 +161,7 @@ async def test_dummy_model(model, mocks):
     assert "Alvaro Lopez Garcia" == meta["author"]
 
     pargs = model.get_predict_args()
-    targs = model.get_train_args()
-    for _arg, val in itertools.chain(pargs.items(), targs.items()):
+    for _arg, val in pargs.items():
         assert isinstance(val, fields.Field)
 
 
@@ -188,17 +175,12 @@ async def test_dummy_model_with_wrapper(application, model, mocks):
         "date": "2019-01-1",
         "labels": [{"label": "foo", "probability": 1.0}],
     }
-    task = w.train(sleep=0)
-    await task
-    ret = task.result()
-    assert ret["output"] is None
     meta = w.get_metadata()
     assert "description" in meta
     assert "id" in meta
     assert "name" in meta
     pargs = w.get_predict_args()
-    targs = w.get_train_args()
-    for _arg, val in itertools.chain(pargs.items(), targs.items()):
+    for _arg, val in pargs.items():
         print(val)
         print(fields.Field)
         assert isinstance(val, fields.Field)
@@ -209,16 +191,13 @@ async def test_model_with_not_implemented_attributes_and_wrapper(application, mo
 
     with pytest.raises(web.HTTPNotImplemented):
         await w.predict()
-    with pytest.raises(web.HTTPNotImplemented):
-        await w.train()
 
     meta = w.get_metadata()
     assert "description" in meta
     assert "id" in meta
     assert "name" in meta
     pargs = w.get_predict_args()
-    targs = w.get_train_args()
-    for _arg, val in itertools.chain(pargs.items(), targs.items()):
+    for _arg, val in pargs.items():
         assert isinstance(val, fields.Field)
 
 

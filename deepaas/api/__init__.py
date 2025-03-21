@@ -56,8 +56,7 @@ API_DESCRIPTION = (
 
 def get_fastapi_app(
     enable_doc: bool = True,
-    enable_train: bool = True,  # FIXME(aloga): not handled yet
-    enable_predict: bool = True,
+    enable_predict: bool = True,  # FIXME(aloga): check if these are honored
     base_path: str = "",
 ) -> fastapi.FastAPI:
     """Get the main app, based on FastAPI."""
@@ -85,7 +84,6 @@ def get_fastapi_app(
 
     v2app = v2.get_app(
         # FIXME(aloga): these have no effect now, remove.
-        enable_train=enable_train,
         enable_predict=enable_predict,
     )
 

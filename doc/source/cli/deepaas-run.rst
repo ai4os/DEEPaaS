@@ -28,11 +28,7 @@ Options
 
 .. option:: --predict-endpoint
 
-   Specify whether DEEPaaS should provide a train endpoint (default: True).
-
-.. option:: --train-endpoint
-
-   Specify whether DEEPaaS should provide a train endpoint (default: True).
+   Specify whether DEEPaaS should provide a prediction endpoint (default: True).
 
 .. option:: --debug-endpoint
 
@@ -56,11 +52,6 @@ Options
    Specify the number of workers to spawn for prediction tasks. If using a CPU
    you probably want to increase this number, if using a GPU probably you want
    to leave it to 1. (defaults to 1)
-
-.. option:: --train-workers TRAIN_WORKERS
-
-   Specify the number of workers to spawn for training tasks. Unless you know
-   what you are doing you should leave this number to 1. (defaults to 1)
 
 
 Files

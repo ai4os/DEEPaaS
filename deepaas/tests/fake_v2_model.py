@@ -100,13 +100,6 @@ class TestModel(base.BaseModel):
             }
             return d
 
-    def train(self, *args, **kwargs):
-        sleep = kwargs.get("sleep", 1)
-        LOG.debug("Got the following arguments: %s", args)
-        LOG.debug("Got the following kw arguments: %s", kwargs)
-        LOG.debug("Starting training, ending in %is" % sleep)
-        time.sleep(sleep)
-
     def get_predict_args(self):
         return {
             "data": fields.Field(
@@ -141,21 +134,6 @@ class TestModel(base.BaseModel):
                 validate=validate.OneOf(
                     ["application/json", "text/plain", "image/png"]
                 ),
-            ),
-        }
-
-    def get_train_args(self):
-        return {
-            "sleep": fields.Int(
-                required=True,
-                metadata={
-                    "descripton": (
-                        "This is a integer parameter, and it is a required one."
-                    ),
-                },
-            ),
-            "parameter_two": fields.Str(
-                metadata={"description": "This is a string parameter."}
             ),
         }
 
