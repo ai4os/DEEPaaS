@@ -59,9 +59,8 @@ def _get_handler_for_model(model_name, model_obj):
             self.model_name = model_name
             self.model_obj = model_obj
 
-        async def predict(self, args: pydantic_schema = fastapi.Depends()):
+        async def predict(self, args: pydantic_schema = fastapi.Depends()):  # noqa(B008)
             """Make a prediction given the input data."""
-            dict_args = args.model_dump(by_alias=True)
 
             ret = await self.model_obj.predict(**args.model_dump(by_alias=True))
 
