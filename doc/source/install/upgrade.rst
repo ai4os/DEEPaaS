@@ -3,6 +3,13 @@
 Upgrade notes
 =============
 
+Upgrading to version 3.0.0
+--------------------------
+
+The release ``3.0.0`` drops the support for the training endpoints of the API. Before
+upgrading your code and deploying into production please ensure that you are no
+longer using the training endpoints of the API.
+
 Upgrading to version 2.0.0
 --------------------------
 

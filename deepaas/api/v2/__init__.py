@@ -23,7 +23,6 @@ from deepaas.api.v2 import models as v2_model
 from deepaas.api.v2 import predict as v2_predict
 from deepaas.api.v2 import responses
 
-# from deepaas.api.v2 import train as v2_train
 from deepaas import log
 
 CONF = cfg.CONF
@@ -33,7 +32,7 @@ LOG = log.getLogger("deepaas.api.v2")
 APP = None
 
 
-def get_app(enable_train=True, enable_predict=True):
+def get_app(enable_predict=True):
     global APP
 
     # FIXME(aloga): check we cat get rid of global variables
@@ -45,12 +44,6 @@ def get_app(enable_train=True, enable_predict=True):
     APP.include_router(v2_model.get_router(), tags=["models"])
     if enable_predict:
         APP.include_router(v2_predict.get_router(), tags=["predict"])
-
-    # APP.router.add_get("/", get_version, name="v2", allow_head=False)
-    # v2_debug.setup_routes(APP)
-    # v2_model.setup_routes(APP)
-    # v2_train.setup_routes(APP, enable=enable_train)
-    # v2_predict.setup_routes(APP, enable=enable_predict)
 
     APP.add_api_route(
         "/",

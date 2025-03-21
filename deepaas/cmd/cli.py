@@ -202,20 +202,18 @@ model_name, model_obj = _get_model_name(model_name)
 #                                    model_obj=model_obj)
 
 # Once we know the model name,
-# we get arguments for predict and train as dictionaries
+# we get arguments for predict as dictionaries
 predict_args = _fields_to_dict(model_obj.get_predict_args())
-train_args = _fields_to_dict(model_obj.get_train_args())
 
 # Find which of the arguments are going to be files
 file_args = {}
 file_args["predict"] = _get_file_args(model_obj.get_predict_args())
-file_args["train"] = _get_file_args(model_obj.get_train_args())
 
 
 # Function to add later these arguments to CONF via SubCommandOpt
 def _add_methods(subparsers):
     """Function to add argparse subparsers via SubCommandOpt (see below)
-    for DEEPaaS methods get_metadata, warm, predict, train
+    for DEEPaaS methods get_metadata, warm, predict
     """
 
     # Use RawTextHelpFormatter to allow for line breaks in argparse help messages.
@@ -252,26 +250,11 @@ def _add_methods(subparsers):
             help=val["help"],
             required=val["required"],
         )
-    # get train arguments configured
-    train_parser = subparsers.add_parser(
-        "train",
-        help="train method, use " "train --help for the full list",
-        formatter_class=help_formatter,
-    )
-
-    for key, val in train_args.items():
-        train_parser.add_argument(
-            "--%s" % key,
-            default=val["default"],
-            type=val["type"],
-            help=val["help"],
-            required=val["required"],
-        )
 
 
 # Now options to be registered with oslo_config
 cli_opts = [
-    # intentionally long to avoid a conflict with opts from predict, train etc
+    # intentionally long to avoid a conflict with opts from predict, etc
     cfg.StrOpt(
         "deepaas_method_output",
         help="Define an output file, if needed",
@@ -423,31 +406,6 @@ def main():
             LOG.info("[INFO, Output] Output is saved in {}".format(out_file))
 
         return task
-
-    elif CONF.methods.name == "train":
-        train_vars = _get_subdict(conf_vars, train_args)
-        # structure of ret{} copied from api.v2.train.build_train_response !!!
-        # so far, one needs to sync manually the structures
-        start = datetime.now()
-        ret = {
-            "date": str(start),
-            "args": train_vars,
-            "status": "done",
-            "uuid": uuid.uuid4().hex,
-            "result": {},
-        }
-        task = model_obj.train(**train_vars)
-        end = datetime.now()
-        ret["result"]["finish_date"] = str(end)
-        ret["result"]["duration"] = str(end - start)
-        # we assume that train always returns JSON
-        ret["result"]["output"] = task
-        results_json = json.dumps(ret)
-        LOG.info("[INFO] Elapsed time:  %s", str(end - start))
-        LOG.debug("[DEBUG, train, Output]: {}".format(results_json))
-        if CONF.deepaas_method_output:
-            _store_output(results_json, CONF.deepaas_method_output)
-        return results_json
 
     else:
         LOG.warn("[WARNING] No Method was requested! Return get_metadata()")

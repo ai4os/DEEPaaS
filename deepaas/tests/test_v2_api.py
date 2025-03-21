@@ -88,41 +88,6 @@ class BaseTestApiV2:
 
         assert fake_responses.deepaas_test_predict == json
 
-    async def test_train(self, client):
-        ret = await client.post("/v2/models/deepaas-test/train/", data={"sleep": 0})
-        assert 200 == ret.status
-
-        json = await ret.json()
-
-        assert "date" in json
-        json.pop("date")
-
-        assert "uuid" in json
-        json.pop("uuid")
-
-        assert fake_responses.deepaas_test_train == json
-
-
-class TestApiV2NoTrain(BaseTestApiV2):
-    @pytest.fixture
-    @staticmethod
-    async def application(monkeypatch):
-        app = web.Application()
-        app.middlewares.append(web.normalize_path_middleware())
-
-        w = v2_wrapper.ModelWrapper("deepaas-test", fake_v2_model.TestModel(), app)
-
-        monkeypatch.setattr(deepaas.model, "V2_MODELS", {"deepaas-test": w})
-
-        v2app = v2.get_app(enable_train=False)
-        app.add_subapp("/v2", v2app)
-
-        return app
-
-    async def test_train(self, client):
-        ret = await client.post("/v2/models/deepaas-test/train")
-        assert 402 == ret.status
-
 
 class TestApiV2NoPredict(BaseTestApiV2):
     @pytest.fixture
@@ -175,12 +140,6 @@ class TestApiV2(BaseTestApiV2):
         assert 404 == ret.status
 
     async def test_model_not_found(self, client):
-        ret = await client.get("/v2/models/%s/train" % uuid.uuid4().hex)
-        assert 404 == ret.status
-
-        ret = await client.put("/v2/models/%s/train" % uuid.uuid4().hex)
-        assert 404 == ret.status
-
         ret = await client.post("/v2/models/%s/predict" % uuid.uuid4().hex)
         assert 404 == ret.status
 

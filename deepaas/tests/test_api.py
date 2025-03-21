@@ -69,22 +69,6 @@ class TestApiV2:
 
         assert fake_responses.deepaas_test_predict == json
 
-    async def test_train(self, client):
-        ret = await client.post(
-            "/custom/v2/models/deepaas-test/train/", data={"sleep": 0}
-        )
-        assert 200 == ret.status
-
-        json = await ret.json()
-
-        assert "date" in json
-        json.pop("date")
-
-        assert "uuid" in json
-        del json["uuid"]
-
-        assert fake_responses.deepaas_test_train == json
-
     async def test_get_metadata(self, client):
         meta = fake_responses.models_meta
 

@@ -75,9 +75,9 @@ return some basic metadata information about your model, as follows:
 Warming a model
 ###############
 
-You can initialize your model before any prediction or train is done by
-defining a ``warm`` function. This function receives no arguments and returns
-no result, but it will be call before the API is spawned.
+You can initialize your model before any prediction is done by defining a ``warm``
+function. This function receives no arguments and returns no result, but it will be call
+before the API is spawned.
 
 You can use it to implement any loading or initialization that your model may
 use. This way, your model will be ready whenever a first prediction is done,
@@ -89,25 +89,14 @@ reducint the waiting time.
 Training
 ########
 
-Regarding training there are two functions to be defined. First of all, you can
-specify the training arguments to be defined (and published through the API)
-with the ``get_train_args`` function, as follows:
-
-.. autofunction:: deepaas.model.v2.base.BaseModel.get_train_args
-   :no-index:
-
-Then, you must implement the training function (named ``train``) that will
-receive the defined arguments as keyword arguments:
-
-.. autofunction:: deepaas.model.v2.base.BaseModel.train
-   :no-index:
+Training a model is no longer supported.
 
 Prediction and inference
 ########################
 
-For prediction, there are different functions to be implemented. First of all,
-as for the training, you can specify the prediction arguments to be defined,
-(and published through the API) with the ``get_predict_args`` as follows:
+For prediction, there are different functions to be implemented. First of all, you can
+specify the prediction arguments to be defined, (and published through the API) with the
+``get_predict_args`` as follows:
 
 .. autofunction:: deepaas.model.v2.base.BaseModel.get_predict_args
    :no-index:
