@@ -19,14 +19,14 @@ import collections
 import contextlib
 import functools
 import io
-import os
-import tempfile
+# import os
+# import tempfile
 
-from aiohttp import web
 import marshmallow
 from oslo_config import cfg
 
 from deepaas.api.v2 import utils
+from deepaas import exceptions
 from deepaas import log
 
 LOG = log.getLogger(__name__)
@@ -111,19 +111,13 @@ class ModelWrapper(object):
                 self.has_schema = True
             except Exception as e:
                 LOG.exception(e)
-                # FIXME(aloga): do not use web exception here
-                raise web.HTTPInternalServerError(
-                    reason=("Model defined schema is invalid, " "check server logs.")
-                )
+                raise exceptions.MissingModelSchemaError()
         elif schema is not None:
             try:
                 if issubclass(schema, marshmallow.Schema):
                     self.has_schema = True
             except TypeError:
-                # FIXME(aloga): do not use web exception here
-                raise web.HTTPInternalServerError(
-                    reason=("Model defined schema is invalid, " "check server logs.")
-                )
+                raise exceptions.ModelResponseValidationError()
         else:
             self.has_schema = False
 
@@ -141,23 +135,15 @@ class ModelWrapper(object):
         name = self.name
         try:
             yield
-        except AttributeError:
-            raise web.HTTPNotImplemented(
-                reason=("Not implemented by underlying model (loaded '%s')" % name)
-            )
-        except NotImplementedError:
-            raise web.HTTPNotImplemented(
-                reason=("Model '%s' does not implement this functionality" % name)
-            )
+        except (AttributeError, NotImplementedError):
+            detail = f"Model '{name}' does not implement this functionality"
+            raise exceptions.ModelMethodNotImplementedError(detail=detail)
         except Exception as e:
             LOG.error(
                 "An exception has happened when calling method on " "'%s' model." % name
             )
             LOG.exception(e)
-            if isinstance(e, web.HTTPException):
-                raise e
-            else:
-                raise web.HTTPInternalServerError(reason=e)
+            raise exceptions.ModelMethodUnexpectedError(reason=e)
 
     def validate_response(self, response):
         """Validate a response against the model's response schema, if set.
@@ -170,25 +156,13 @@ class ModelWrapper(object):
             validated.
         """
         if self.has_schema is not True:
-            raise web.HTTPInternalServerError(
-                reason=(
-                    "Trying to validate against a schema, but I do not "
-                    "have one defined"
-                )
-            )
+            raise exceptions.MissingModelSchemaError()
 
         try:
-            self.response_schema().load(response)
-        except marshmallow.ValidationError as e:
-            LOG.exception(e)
-            raise web.HTTPInternalServerError(
-                reason="ERROR validating model response, check server logs."
-            )
+            self.response_schema(**response)
         except Exception as e:
             LOG.exception(e)
-            raise web.HTTPInternalServerError(
-                reason="Unknown ERROR validating response, check server logs."
-            )
+            raise exceptions.ModelResponseValidationError()
 
         return True
 
@@ -265,20 +239,21 @@ class ModelWrapper(object):
         :raises HTTPException: If the call produces an
             error, already wrapped as a HTTPException
         """
-        for key, val in kwargs.items():
-            if isinstance(val, web.FileField):
-                fd, name = tempfile.mkstemp()
-                fd = os.fdopen(fd, "w+b")
-                fd.write(val.file.read())
-                fd.close()
-                aux = UploadedFile(
-                    name=val.name,
-                    filename=name,
-                    content_type=val.content_type,
-                    original_filename=val.filename,
-                )
-                kwargs[key] = aux
-                # FIXME(aloga); cleanup of tmpfile here
+        # FIXME(aloga): this is old code from web.FileField (aiohhtp), review it
+        # for key, val in kwargs.items():
+        #     if isinstance(val, web.FileField):
+        #         fd, name = tempfile.mkstemp()
+        #         fd = os.fdopen(fd, "w+b")
+        #         fd.write(val.file.read())
+        #         fd.close()
+        #         aux = UploadedFile(
+        #             name=val.name,
+        #             filename=name,
+        #             content_type=val.content_type,
+        #             original_filename=val.filename,
+        #         )
+        #         kwargs[key] = aux
+        #         # FIXME(aloga); cleanup of tmpfile here
 
         with self._catch_error():
             return self.predict_wrap(self.model_obj.predict, *args, **kwargs)
