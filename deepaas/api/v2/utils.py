@@ -148,7 +148,7 @@ def sanitize_field_name(field_name):
 
 
 def check_for_file_fields(fields):
-    for field_name, field in fields.items():
+    for _, field in fields.items():
         if is_file_field(field):
             return True
     return False
