@@ -16,7 +16,6 @@
 # under the License.
 
 
-# import asyncio
 import argparse
 import ast
 import deepaas
@@ -28,9 +27,7 @@ import re
 import shutil
 import sys
 import tempfile
-import uuid
 
-from datetime import datetime
 from marshmallow import fields
 from oslo_config import cfg
 
