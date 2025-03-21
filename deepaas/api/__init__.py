@@ -99,6 +99,15 @@ def get_fastapi_app(
         response_model=responses.VersionsAndLinks,
     )
 
+    # Add a redirect from the old swagger.json to the new openapi.json
+    APP.add_api_route(
+        f"{base_path}/swagger.json",
+        APP.openapi,
+        methods=["GET"],
+        summary="Get OpenAPI schema",
+        tags=["version"],
+    )
+
     return APP
 
 

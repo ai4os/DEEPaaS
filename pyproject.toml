@@ -41,6 +41,7 @@ classifiers = [
 [tool.poetry.scripts]
 deepaas-run = "deepaas.cmd.run:main"
 deepaas-cli = "deepaas.cmd.cli:main"
+deepaas-test-v2-v3 = "deepaas.cmd.deepaas_test_v2_v3:main"
 
 [tool.poetry.plugins] # Optional super table 
 
