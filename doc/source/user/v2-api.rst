@@ -25,14 +25,12 @@ one will be served.
 
 In order to define your entry points, your module should leverage setuptools and be
 ready to be installed in the system. Then, in order to define your entry points, you
-should add the following to your ``setup.cfg`` configuration file:
+should add the following to your ``pyproject.toml`` configuration file:
 
-.. code-block:: ini
+.. code-block:: toml
 
-   [entry_points]
-
-   deepaas.v2.model =
-       my_model = package_name.module
+   [project.entry-points."deepaas.v2.model"]
+   my_model = package_name.module
 
 This will define an entry point in the ``deepaas.v2.model`` namespace, called
 ``my_model``. All the required functionality will be fetched from the
@@ -42,12 +40,10 @@ This will define an entry point in the ``deepaas.v2.model`` namespace, called
 If you provide a class with the required functionality, the entry point will be
 defined as follows:
 
-.. code-block:: ini
+.. code-block:: toml
 
-   [entry_points]
-
-   deepaas.v2.model =
-       my_model = package_name.module:Class
+   [project.entry-points."deepaas.v2.model"]
+   my_model = package_name.module:Class
 
 Again, this will define an entry point in the ``deepaas.v2.model`` namespace,
 called ``my_model``. All the required functionality will be fetched
