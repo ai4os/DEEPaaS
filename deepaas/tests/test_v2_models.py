@@ -30,7 +30,7 @@ from deepaas.tests import fake_v2_model
 
 
 @pytest.fixture
-async def mocks(monkeypatch):
+def mocks(monkeypatch):
     model_name = uuid.uuid4().hex
     monkeypatch.setattr(
         deepaas.model.loading,
@@ -80,7 +80,7 @@ def test_not_implemented():
         m.get_predict_args()
 
 
-async def test_bad_schema(mocks):
+def test_bad_schema(mocks):
     class Model(object):
         schema = []
 
@@ -88,7 +88,7 @@ async def test_bad_schema(mocks):
         v2_wrapper.ModelWrapper("test", Model())
 
 
-async def test_validate_no_schema(mocks):
+def test_validate_no_schema(mocks):
     class Model(object):
         schema = None
 
@@ -97,7 +97,7 @@ async def test_validate_no_schema(mocks):
         wrapper.validate_response(None)
 
 
-async def test_invalid_schema(mocks):
+def test_invalid_schema(mocks):
     class Model(object):
         schema = object()
 
@@ -105,7 +105,7 @@ async def test_invalid_schema(mocks):
         v2_wrapper.ModelWrapper("test", Model())
 
 
-async def test_marshmallow_schema(mocks):
+def test_marshmallow_schema(mocks):
     class Schema(marshmallow.Schema):
         foo = m_fields.Str()
 
@@ -119,7 +119,7 @@ async def test_marshmallow_schema(mocks):
         wrapper.validate_response({"foo": 1.0})
 
 
-async def test_dict_schema(mocks):
+def test_dict_schema(mocks):
     class Model(object):
         schema = {"foo": m_fields.Str()}
 
@@ -135,7 +135,7 @@ def model():
     return fake_v2_model.TestModel()
 
 
-async def test_dummy_model(model, mocks):
+def test_dummy_model(model, mocks):
     pred = model.predict()
     pred.pop("data")
     assert pred == {
@@ -191,7 +191,7 @@ async def test_model_with_not_implemented_attributes_and_wrapper(mocks):
         assert isinstance(val, fields.Field)
 
 
-async def test_loading_ok(mocks):
+def test_loading_ok(mocks):
     deepaas.model.v2.load_model()
 
     m = deepaas.model.v2.MODEL
@@ -200,7 +200,7 @@ async def test_loading_ok(mocks):
     #     assert isinstance(m, v2_wrapper.ModelWrapper)
 
 
-async def test_loading_ok_singleton(mocks, monkeypatch):
+def test_loading_ok_singleton(mocks, monkeypatch):
     deepaas.model.v2.load_model()
     new_model_name = uuid.uuid4().hex
     monkeypatch.setattr(

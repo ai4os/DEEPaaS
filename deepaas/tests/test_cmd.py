@@ -37,7 +37,7 @@ def uvicorn_run_fixture():
     return mock.MagicMock()
 
 
-async def test_run(monkeypatch, fastapi_app_fixture, uvicorn_run_fixture):
+def test_run(monkeypatch, fastapi_app_fixture, uvicorn_run_fixture):
     """Test the run command."""
     # uvicorn_run_fixture = mock.MagicMock()
     monkeypatch.setattr(deepaas.cmd._shutdown, "handle_signals", mock.MagicMock())
@@ -72,7 +72,7 @@ def cfg_fixture():
         CONF.clear_override(flag)
 
 
-async def test_run_custom_ip_port(
+def test_run_custom_ip_port(
     monkeypatch, cfg_fixture, fastapi_app_fixture, uvicorn_run_fixture
 ):
     """Run the cmd line with a custom IP and port."""
@@ -93,7 +93,7 @@ async def test_run_custom_ip_port(
     uvicorn_run_fixture.assert_called_with(fastapi_app_fixture(), host=ip, port=port)
 
 
-async def test_custom_base_path(monkeypatch, cfg_fixture, fastapi_app_fixture):
+def test_custom_base_path(monkeypatch, cfg_fixture, fastapi_app_fixture):
     """Run the cmd line with a custom base path."""
     monkeypatch.setattr(deepaas.config, "setup", lambda x: None)
 
@@ -112,7 +112,7 @@ async def test_custom_base_path(monkeypatch, cfg_fixture, fastapi_app_fixture):
     )
 
 
-async def test_custom_base_path_no_slash(monkeypatch, cfg_fixture, fastapi_app_fixture):
+def test_custom_base_path_no_slash(monkeypatch, cfg_fixture, fastapi_app_fixture):
     """Run the cmd line with a custom base path without a slash."""
     monkeypatch.setattr(deepaas.config, "setup", lambda x: None)
 
@@ -134,7 +134,7 @@ async def test_custom_base_path_no_slash(monkeypatch, cfg_fixture, fastapi_app_f
     )
 
 
-async def test_doc_endpoint_disabled(monkeypatch, cfg_fixture, fastapi_app_fixture):
+def test_doc_endpoint_disabled(monkeypatch, cfg_fixture, fastapi_app_fixture):
     """Run the cmd line with doc endpoint disabled."""
     monkeypatch.setattr(deepaas.config, "setup", lambda x: None)
 
