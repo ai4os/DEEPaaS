@@ -24,16 +24,21 @@ LOG = log.getLogger(__name__)
 
 CONF = config.CONF
 
-# Model registry
-MODELS = {}
-MODELS_LOADED = False
+# Model registry - simplified for single model use case
+MODEL = None
+MODEL_NAME = ""
 
 
 def register_models(app):
-    global MODELS
-    global MODELS_LOADED
+    """Register a single V2 model.
+    
+    Since DEEPaaS only handles one model at a time, this is simplified
+    to manage a single model instance.
+    """
+    global MODEL
+    global MODEL_NAME
 
-    if MODELS_LOADED:
+    if MODEL:
         return
 
     if CONF.model_name:
@@ -53,15 +58,14 @@ def register_models(app):
             raise exceptions.MultipleModelsFound()
 
     try:
-        MODELS[model_name] = wrapper.ModelWrapper(
+        MODEL = wrapper.ModelWrapper(
             model_name,
             loading.get_model_by_name(model_name, "v2"),
         )
+        MODEL_NAME = model_name
     except exceptions.ModuleNotFoundError:
         LOG.error("Model not found: %s", model_name)
         raise
     except Exception as e:
         LOG.exception("Error loading model: %s", e)
         raise e
-
-    MODELS_LOADED = True
