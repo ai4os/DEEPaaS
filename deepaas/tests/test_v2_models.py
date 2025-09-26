@@ -47,8 +47,8 @@ async def mocks(monkeypatch):
         "get_model_by_name",
         lambda x, y: fake_v2_model.TestModel,
     )
-    monkeypatch.setattr(deepaas.model.v2, "MODEL", None)
-    monkeypatch.setattr(deepaas.model.v2, "MODEL_NAME", "")
+    monkeypatch.setattr(deepaas.model.v2, "MODELS", {})
+    monkeypatch.setattr(deepaas.model.v2, "MODELS_LOADED", False)
 
 
 def test_abc():
@@ -192,34 +192,28 @@ async def test_model_with_not_implemented_attributes_and_wrapper(mocks):
 
 
 async def test_loading_ok(mocks):
-    deepaas.model.v2.load_model()
+    deepaas.model.v2.register_models(None)
 
-    m = deepaas.model.v2.MODEL
-    assert isinstance(m, v2_wrapper.ModelWrapper)
-    # for m in deepaas.model.v2.MODELS.values():
-    #     assert isinstance(m, v2_wrapper.ModelWrapper)
+    for m in deepaas.model.v2.MODELS.values():
+        assert isinstance(m, v2_wrapper.ModelWrapper)
 
 
 async def test_loading_ok_singleton(mocks, monkeypatch):
-    deepaas.model.v2.load_model()
+    deepaas.model.v2.register_models(None)
     new_model_name = uuid.uuid4().hex
     monkeypatch.setattr(
         deepaas.model.loading,
         "get_available_models",
         lambda x: {new_model_name: "barz"},
     )
-    deepaas.model.v2.load_model()
+    deepaas.model.v2.register_models(None)
 
-    name = deepaas.model.v2.MODEL_NAME
-    assert name != new_model_name
-    m = deepaas.model.v2.MODEL
-    assert isinstance(m, v2_wrapper.ModelWrapper)
-    # for name, m in deepaas.model.v2.MODELS.items():
-    #     assert isinstance(m, v2_wrapper.ModelWrapper)
-    #     assert name != new_model_name
+    for name, m in deepaas.model.v2.MODELS.items():
+        assert isinstance(m, v2_wrapper.ModelWrapper)
+        assert name != new_model_name
 
 
 def test_loading_error(monkeypatch):
     monkeypatch.setattr(deepaas.model.loading, "get_available_models", lambda x: {})
     with pytest.raises(exceptions.NoModelsAvailable):
-        deepaas.model.v2.load_model()
+        deepaas.model.v2.register_models(None)

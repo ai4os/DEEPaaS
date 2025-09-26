@@ -73,12 +73,14 @@ def get_fastapi_app(
         openapi_url=f"{base_path}/openapi.json",  # NOTE(aloga): changed
     )
 
-    model.load_v2_model()
-    LOG.info("Serving loaded V2 model: %s", model.V2_MODEL_NAME)
+    model.register_v2_models(APP)
+
+    LOG.info("Serving loaded V2 models: %s", list(model.V2_MODELS.keys()))
 
     if CONF.warm:
-        LOG.debug("Warming models...")
-        model.V2_MODEL.warm()
+        for _, m in model.V2_MODELS.items():
+            LOG.debug("Warming models...")
+            m.warm()
 
     v2app = v2.get_app()
 

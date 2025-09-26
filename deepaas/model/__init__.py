@@ -16,22 +16,27 @@
 
 from deepaas.model import v2
 
-# FIXME(aloga): this is extremely ugly
+V2_MODELS = v2.MODELS
+
+# Backwards compatibility - these will be updated after model registration
 V2_MODEL = None
 V2_MODEL_NAME = None
 
 
-def load_v2_model():
+def register_v2_models(app):
     """Register V2 models.
 
     This method has to be called before the API is spawned, so that we
     can look up the correct entry points and load the defined models.
     """
-
-    global V2_MODEL
-    global V2_MODEL_NAME
-
-    v2.load_model()
-
-    V2_MODEL = v2.MODEL
-    V2_MODEL_NAME = v2.MODEL_NAME
+    global V2_MODEL, V2_MODEL_NAME
+    
+    result = v2.register_models(app)
+    
+    # Update backwards compatibility variables
+    if V2_MODELS:
+        model_names = list(V2_MODELS.keys())
+        V2_MODEL_NAME = model_names[0]
+        V2_MODEL = V2_MODELS[V2_MODEL_NAME]
+    
+    return result
