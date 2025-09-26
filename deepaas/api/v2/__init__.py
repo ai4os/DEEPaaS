@@ -32,7 +32,7 @@ LOG = log.getLogger("deepaas.api.v2")
 APP = None
 
 
-def get_app(enable_predict=True):
+def get_app():
     global APP
 
     # FIXME(aloga): check we cat get rid of global variables
@@ -42,8 +42,7 @@ def get_app(enable_predict=True):
 
     APP.include_router(v2_debug.get_router(), tags=["debug"])
     APP.include_router(v2_model.get_router(), tags=["models"])
-    if enable_predict:
-        APP.include_router(v2_predict.get_router(), tags=["predict"])
+    APP.include_router(v2_predict.get_router(), tags=["predict"])
 
     # APP.router.add_get("/", get_version, name="v2", allow_head=False)
     # v2_debug.setup_routes(APP)
