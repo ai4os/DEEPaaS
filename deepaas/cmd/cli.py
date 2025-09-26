@@ -348,8 +348,9 @@ def main():
         LOG.debug("[DEBUG, get_metadata, Output]: {}".format(meta_json))
         if CONF.deepaas_method_output:
             _store_output(meta_json, CONF.deepaas_method_output)
-
-        return meta_json
+        else:
+            # Print output to stdout when no output file is specified
+            print(meta_json)
 
     elif CONF.methods.name == "warm":
         # await model_obj.warm()
@@ -401,16 +402,19 @@ def main():
                 shutil.copy(out_results, out_file)
 
             LOG.info("[INFO, Output] Output is saved in {}".format(out_file))
-
-        return task
+        else:
+            # Print output to stdout when no output file is specified  
+            # Default to JSON output when no file is specified
+            results_json = json.dumps(task)
+            LOG.debug("[DEBUG, predict, Output]: {}".format(results_json))
+            print(results_json)
 
     else:
         LOG.warn("[WARNING] No Method was requested! Return get_metadata()")
         meta = model_obj.get_metadata()
         meta_json = json.dumps(meta)
         LOG.debug("[DEBUG, get_metadata, Output]: {}".format(meta_json))
-
-        return meta_json
+        print(meta_json)
 
 
 if __name__ == "__main__":
