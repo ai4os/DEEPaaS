@@ -6,3 +6,4 @@ User and developer documentation
 
    quickstart
    v2-api
+   authentication

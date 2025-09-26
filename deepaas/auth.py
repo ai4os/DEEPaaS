@@ -37,14 +37,13 @@ async def verify_bearer_token(
 ) -> str:
     """Verify the bearer token against the configured token.
 
-    Args:
-        token: The HTTPAuthorizationCredentials from the request
+    :param token: The HTTPAuthorizationCredentials from the request
+    :type token: fastapi.security.HTTPAuthorizationCredentials
 
-    Returns:
-        The validated token string
+    :returns: The validated token string
+    :rtype: str
 
-    Raises:
-        HTTPException: If authentication is enabled but token is invalid/missing
+    :raises HTTPException: If authentication is enabled but token is invalid/missing
     """
     # If auth is not enabled, allow all requests
     if not is_auth_enabled():
@@ -78,7 +77,7 @@ def get_auth_dependency():
     Returns a dependency that can be used with FastAPI routes to enforce
     authentication when enabled.
 
-    Returns:
-        The authentication dependency function
+    :returns: The authentication dependency function
+    :rtype: fastapi.Depends
     """
     return fastapi.Depends(verify_bearer_token)
