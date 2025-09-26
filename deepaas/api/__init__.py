@@ -61,7 +61,6 @@ def get_fastapi_app(
 ) -> fastapi.FastAPI:
     """Get the main app, based on FastAPI."""
     global APP
-    global VERSIONS
 
     if APP:
         return APP
