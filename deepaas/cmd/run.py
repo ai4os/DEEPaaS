@@ -80,6 +80,7 @@ API documentation endpoint to check the API using the builtin Swagger UI
 or you can use any of our endpoints.
 
     API documentation: {}
+    API documentation: {}
     API specification: {}
           V2 endpoint: {}
 
@@ -103,14 +104,14 @@ def main():
     else:
         base_path = ""
 
-    # FIXME(aloga): ensure that these paths are correct
     base = "http://{}:{}{}".format(CONF.listen_ip, CONF.listen_port, base_path)
-    spec = "{}/swagger.json".format(base)
-    docs = "{}/api".format(base)
+    spec = "{}/openapi.json".format(base)
+    docs = "{}/docs".format(base)
+    redoc = "{}/redoc".format(base)
     v2 = "{}/v2".format(base)
 
     print(INTRO)
-    print(BANNER.format(docs, spec, v2))
+    print(BANNER.format(docs, redoc, spec, v2))
 
     log.info(
         "Starting DEEPaaS version %s with FastAPI backend",
