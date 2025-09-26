@@ -24,6 +24,8 @@ import mock
 from deepaas.cmd import execute
 from deepaas.cmd import run
 from deepaas.tests import base
+from deepaas.model.v2 import wrapper as v2_wrapper
+from webargs import fields
 
 
 class TestRun(base.TestCase):
@@ -112,3 +114,76 @@ class TestExecute(base.TestCase):
             execute.main()
         shutil.rmtree(output_dir)
         os.remove(output_dir + ".zip")
+
+
+class TestCLIModels(base.TestCase):
+    """Test CLI functionality with models that have missing methods"""
+
+    def test_model_wrapper_handles_missing_predict_args(self):
+        """Test that ModelWrapper handles models without get_predict_args"""
+        
+        class TrainOnlyModel:
+            def get_metadata(self):
+                return {"name": "train-only", "version": "1.0"}
+            
+            def train(self, **kwargs):
+                return {"status": "trained"}
+                
+            def get_train_args(self):
+                return {"epochs": fields.Int(required=True)}
+            
+            # NOTE: Missing get_predict_args method
+        
+        model = TrainOnlyModel()
+        wrapper = v2_wrapper.ModelWrapper("train-only", model, None)
+        
+        # Should not raise AttributeError
+        predict_args = wrapper.get_predict_args()
+        train_args = wrapper.get_train_args()
+        
+        self.assertEqual(predict_args, {})
+        self.assertIn("epochs", train_args)
+
+    def test_model_wrapper_handles_missing_train_args(self):
+        """Test that ModelWrapper handles models without get_train_args"""
+        
+        class PredictOnlyModel:
+            def get_metadata(self):
+                return {"name": "predict-only", "version": "1.0"}
+            
+            def predict(self, **kwargs):
+                return {"prediction": "result"}
+                
+            def get_predict_args(self):
+                return {"data": fields.Str(required=True)}
+            
+            # NOTE: Missing get_train_args method
+        
+        model = PredictOnlyModel()
+        wrapper = v2_wrapper.ModelWrapper("predict-only", model, None)
+        
+        # Should not raise AttributeError
+        predict_args = wrapper.get_predict_args()
+        train_args = wrapper.get_train_args()
+        
+        self.assertIn("data", predict_args)
+        self.assertEqual(train_args, {})
+
+    def test_model_wrapper_handles_missing_both_args(self):
+        """Test that ModelWrapper handles models without both args methods"""
+        
+        class MinimalModel:
+            def get_metadata(self):
+                return {"name": "minimal", "version": "1.0"}
+            
+            # NOTE: Missing both get_predict_args and get_train_args methods
+        
+        model = MinimalModel()
+        wrapper = v2_wrapper.ModelWrapper("minimal", model, None)
+        
+        # Should not raise AttributeError for either method
+        predict_args = wrapper.get_predict_args()
+        train_args = wrapper.get_train_args()
+        
+        self.assertEqual(predict_args, {})
+        self.assertEqual(train_args, {})
