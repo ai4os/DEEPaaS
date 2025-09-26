@@ -1,5 +1,47 @@
 # Changelog
 
+## [3.0.0](https://github.com/ai4os/DEEPaaS/compare/v2.4.0...v3.0.0) (2025-09-26)
+
+
+### ⚠ BREAKING CHANGES
+
+* remove oslo.log and use standard python logging
+* remove loading of various modules
+* remove automatic loading of deprecated deepaas-test model
+* remove deprecated deepaas-predict
+
+### Features
+
+* add -dev suffix to the version when installed as dev ([9a9602e](https://github.com/ai4os/DEEPaaS/commit/9a9602e63635bcb9dd35705a21af447cf622c114))
+* add required info to help message ([77d40b4](https://github.com/ai4os/DEEPaaS/commit/77d40b437c7eae03446b1b1e952b8640a7f2e5e0))
+* add types to help message ([0749057](https://github.com/ai4os/DEEPaaS/commit/0749057bc8b417a6ef4f6f79a436c97a2194699b))
+* allow linebreaks in help messages ([3fd3b55](https://github.com/ai4os/DEEPaaS/commit/3fd3b552b614aedb9f84cb882d6b38e2ae5ba487))
+* allow multiple input files ([ecff7f6](https://github.com/ai4os/DEEPaaS/commit/ecff7f637cd7384e5b8e167b35f78af1e01dc992))
+* properly support lists and dicts in argparse ([ad1ffd7](https://github.com/ai4os/DEEPaaS/commit/ad1ffd7887fb9265267907cf27795058aad762c3))
+* remove automatic loading of deprecated deepaas-test model ([376b0f9](https://github.com/ai4os/DEEPaaS/commit/376b0f905cce1c3416dbfbc61e5c91dc51db94c8)), closes [#132](https://github.com/ai4os/DEEPaaS/issues/132)
+* remove deprecated deepaas-predict ([097cc83](https://github.com/ai4os/DEEPaaS/commit/097cc8303d65daf9949ab93c2e97144f172f6ce5)), closes [#154](https://github.com/ai4os/DEEPaaS/issues/154)
+* remove loading of various modules ([80003c3](https://github.com/ai4os/DEEPaaS/commit/80003c328740165c735dc85d4d9d6bb0878ac41c)), closes [#128](https://github.com/ai4os/DEEPaaS/issues/128)
+* remove oslo.log and use standard python logging ([033a085](https://github.com/ai4os/DEEPaaS/commit/033a085deb3605602ac6dfc9c8cb96fcd76fd6ef)), closes [#133](https://github.com/ai4os/DEEPaaS/issues/133)
+* support bools ([b4f7fd3](https://github.com/ai4os/DEEPaaS/commit/b4f7fd30e0d60a7f7a6b32dfa730dbd3599dfd5c))
+
+
+### Bug Fixes
+
+* allow users to setup base_path for serving under a different prefix ([242e02e](https://github.com/ai4os/DEEPaaS/commit/242e02ee0dfb98227ff121a45636957c43e2762e)), closes [#111](https://github.com/ai4os/DEEPaaS/issues/111)
+* also serve static_path from base_path ([c30db00](https://github.com/ai4os/DEEPaaS/commit/c30db00bb2798dd1f9ffb6e89bf5f2483e5d434a)), closes [#111](https://github.com/ai4os/DEEPaaS/issues/111)
+* change deprecated GH action ([86886a1](https://github.com/ai4os/DEEPaaS/commit/86886a13e944f8c8ab87920e15da2abfe78dcea9))
+* change target branch on release-please action ([97c8703](https://github.com/ai4os/DEEPaaS/commit/97c870393c882db5c10efe7ae2b3049029317eb1))
+* do not pass basePath to aiohttp_apispec ([82a18f2](https://github.com/ai4os/DEEPaaS/commit/82a18f2465e9d0ef9e823a42dcb4772d322d039a)), closes [#111](https://github.com/ai4os/DEEPaaS/issues/111)
+* make description optional ([f4e9ec4](https://github.com/ai4os/DEEPaaS/commit/f4e9ec4b1746f2a7df7e85d8304b99f05e9d61ad))
+* remove deprecated cli option ([7b5896d](https://github.com/ai4os/DEEPaaS/commit/7b5896d427fcaf6ba8fb574dce4eb17f55a8b88c))
+
+
+### Documentation
+
+* fix doc build ([903e6ec](https://github.com/ai4os/DEEPaaS/commit/903e6ec9b3eb41b2149835f9a55b978477c686d9))
+* update badges ([01a25db](https://github.com/ai4os/DEEPaaS/commit/01a25db8f6308dafad7a80d4bebc3f083e678aa9))
+* update entry point configuration from setup.cfg to pyproject.toml ([b6afd86](https://github.com/ai4os/DEEPaaS/commit/b6afd86f6e8e3e336b03e698af86a9861b77715a))
+
 ## [2.4.0](https://github.com/ai4os/DEEPaaS/compare/v2.3.2...v2.4.0) (2024-06-07)
 
 
