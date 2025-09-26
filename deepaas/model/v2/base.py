@@ -195,47 +195,6 @@ class BaseModel(object, metaclass=abc.ABCMeta):
         raise NotImplementedError()
 
     @abc.abstractmethod
-    def train(self, **kwargs):
-        """Perform a training.
-
-        :param kwargs: The keyword arguments that the predict method accepts
-            must be defined by the ``get_train_args()`` method so the API is
-            able to pass them down. Usually you would populate these with all
-            the training hyper-parameters
-
-        :return: You can return any Python object that is JSON parseable
-            (eg. dict, string, float).
-        """
-        raise NotImplementedError()
-
-    @abc.abstractmethod
-    def get_train_args(self):
-        """Return the arguments that are needed to train the application.
-
-        This function should return a dictionary of ``webargs`` fields (check
-        `here <https://webargs.readthedocs.io/en/latest/quickstart.html>`_
-        for more information). For example::
-
-            from webargs import fields
-
-            (...)
-
-            def get_train_args():
-                return {
-                    "arg1": fields.Str(
-                        required=False,  # force the user to define the value
-                        missing="foo",  # default value to use
-                        enum=["choice1", "choice2"],  # list of choices
-                        description="Argument one"  # help string
-                    ),
-                }
-
-        :return dict: A dictionary of ``webargs`` fields containing the
-            application required arguments.
-        """
-        raise NotImplementedError()
-
-    @abc.abstractmethod
     def warm(self):
         """Warm (initialize, load) the model.
 

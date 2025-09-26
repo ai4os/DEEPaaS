@@ -15,7 +15,7 @@
 <img src="https://marketplace.deep-hybrid-datacloud.eu/images/logo-deep.png" width=200 alt="DEEP-Hybrid-DataCloud logo"/>
 
 DEEP as a Service API (DEEPaaS API) is a REST API built on
-[aiohttp](https://docs.aiohttp.org/) that allows to provide easy access to
+[FastAPI](https://fastapi.tiangolo.com/) that allows to provide easy access to
 machine learning, deep learning and artificial intelligence models. By using
 the DEEPaaS API users can easily run a REST API in front of their model, thus
 accessing its functionality via HTTP calls. DEEPaaS API leverages the [OpenAPI

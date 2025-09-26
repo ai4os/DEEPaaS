@@ -26,20 +26,6 @@ warnings.simplefilter("default", DeprecationWarning)
 
 opts = [
     cfg.BoolOpt(
-        "train-endpoint",
-        default=True,
-        help="""
-Specify whether DEEPaaS should provide a train endpoint (default: True).
-""",
-    ),
-    cfg.BoolOpt(
-        "predict-endpoint",
-        default=True,
-        help="""
-Specify whether DEEPaaS should provide a predict endpoint (default: True).
-""",
-    ),
-    cfg.BoolOpt(
         "debug-endpoint",
         default=False,
         help="""
