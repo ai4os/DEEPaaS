@@ -203,8 +203,8 @@ def _get_model_name():
 model_name, model_obj = _get_model_name()
 
 # use deepaas.model.v2.wrapper.ModelWrapper(). deepaas>1.2.1dev4
-# model_obj = v2_wrapper.ModelWrapper(name=model_name,
-#                                    model_obj=model_obj)
+model_obj = v2_wrapper.ModelWrapper(name=model_name,
+                                   model_obj=model_obj)
 
 # Once we know the model name,
 # we get arguments for predict and train as dictionaries
