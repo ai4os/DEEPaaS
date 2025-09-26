@@ -16,6 +16,7 @@
 
 import fastapi
 
+from deepaas import auth
 from deepaas.api.v2 import responses
 from deepaas import model
 
@@ -33,6 +34,7 @@ router = fastapi.APIRouter(prefix="/models")
 )
 async def index_models(
     request: fastapi.Request,
+    _: str = auth.get_auth_dependency(),
 ):
     """Return loaded models and its information."""
 
@@ -70,7 +72,7 @@ def _get_handler_for_model(model_name, model_obj):
             self.model_name = model_name
             self.model_obj = model_obj
 
-        async def get(self, request: fastapi.Request):
+        async def get(self, request: fastapi.Request, _: str = auth.get_auth_dependency()):
             """Return model's metadata."""
             m = {
                 "id": self.model_name,
