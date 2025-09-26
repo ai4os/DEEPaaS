@@ -104,7 +104,7 @@ def get_pydantic_type(field, optional=True):
     else:
         conv = FIELD_CONVERTERS[type(field)]
 
-    # TODO: Is there a cleaner way to check for annotation types?
+    # Is there a cleaner way to check for annotation types?
     if isinstance(conv, type) or conv.__module__ == "typing":
         pyd_type = conv
     else:
