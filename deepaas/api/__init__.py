@@ -56,7 +56,6 @@ API_DESCRIPTION = (
 
 def get_fastapi_app(
     enable_doc: bool = True,
-    enable_predict: bool = True,  # FIXME(aloga): check if these are honored
     base_path: str = "",
 ) -> fastapi.FastAPI:
     """Get the main app, based on FastAPI."""
@@ -81,10 +80,7 @@ def get_fastapi_app(
         LOG.debug("Warming models...")
         model.V2_MODEL.warm()
 
-    v2app = v2.get_app(
-        # FIXME(aloga): these have no effect now, remove.
-        enable_predict=enable_predict,
-    )
+    v2app = v2.get_app()
 
     APP.include_router(v2app, prefix=f"{base_path}/v2", tags=["v2"])
     VERSIONS["v2"] = v2.get_v2_version

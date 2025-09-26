@@ -108,7 +108,7 @@ async def test_custom_base_path(monkeypatch, cfg_fixture, fastapi_app_fixture):
 
     fastapi_app_fixture.assert_called_once()
     fastapi_app_fixture.assert_called_with(
-        enable_doc=True, enable_predict=True, base_path=str(pathlib.Path(base_path))
+        enable_doc=True, base_path=str(pathlib.Path(base_path))
     )
 
 
@@ -130,16 +130,15 @@ async def test_custom_base_path_no_slash(monkeypatch, cfg_fixture, fastapi_app_f
     mock_exit.assert_called_once_with(1)
     fastapi_app_fixture.assert_called_once()
     fastapi_app_fixture.assert_called_with(
-        enable_doc=True, enable_predict=True, base_path=str(pathlib.Path(base_path))
+        enable_doc=True, base_path=str(pathlib.Path(base_path))
     )
 
 
-async def test_predict_and_doc_endpoints(monkeypatch, cfg_fixture, fastapi_app_fixture):
-    """Run the cmd line with predict and doc endpoints disabled."""
+async def test_doc_endpoint_disabled(monkeypatch, cfg_fixture, fastapi_app_fixture):
+    """Run the cmd line with doc endpoint disabled."""
     monkeypatch.setattr(deepaas.config, "setup", lambda x: None)
 
     cfg_fixture("doc_endpoint", False)
-    cfg_fixture("predict_endpoint", False)
 
     monkeypatch.setattr(deepaas.api, "get_fastapi_app", fastapi_app_fixture)
     monkeypatch.setattr("uvicorn.run", mock.MagicMock())
@@ -149,5 +148,5 @@ async def test_predict_and_doc_endpoints(monkeypatch, cfg_fixture, fastapi_app_f
 
     fastapi_app_fixture.assert_called_once()
     fastapi_app_fixture.assert_called_with(
-        enable_doc=False, enable_predict=False, base_path=""
+        enable_doc=False, base_path=""
     )
