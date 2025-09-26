@@ -1,0 +1,111 @@
+[DEFAULT]
+
+#
+# From deepaas
+#
+
+#
+# IP address on which the DEEPaaS API will listen.
+#
+# The DEEPaaS API service listens on this IP address for incoming
+# requests.
+#  (string value)
+#listen_ip = 127.0.0.1
+
+#
+# Port on which the DEEPaaS API will listen.
+#
+# The DEEPaaS API service listens on this port number for incoming
+# requests.
+#  (port value)
+# Minimum value: 0
+# Maximum value: 65535
+#listen_port = 5000
+
+#
+# Base path for the API. This is useful when the API is served behind a
+# reverse proxy that is not at the root of the domain. For example, if
+# the API is served at https://example.com/deepaas, then the base path
+# should be set to /deepaas. Defaults to the root of the domain.
+#  (string value)
+#base_path =
+
+#
+# Specify whether DEEPaaS should provide a predict endpoint (default: True).
+#  (boolean value)
+#predict_endpoint = true
+
+#
+# Enable debug endpoint. If set we will provide all the information that you
+# print to the standard output and error (i.e. stdout and stderr) through the
+# "/debug" endpoint. Default is to not provide this information. This will not
+# provide logging information about the API itself.
+#  (boolean value)
+#debug_endpoint = false
+
+#
+# Enable documentation endpoint. If set we will provide the documentation
+# through the "/api" endpoint. Default is to provide this information.
+#  (boolean value)
+#doc_endpoint = true
+
+#
+# Specify the number of workers to spawn. If using a CPU you probably want to
+# increase this number, if using a GPU probably you want to leave it to 1.
+# (defaults to 1)
+#  (integer value)
+#workers = 1
+
+#
+# Client’s maximum size in a request, in bytes. If a POST request exceeds this
+# value, it raises an HTTPRequestEntityTooLarge exception. If set to 0, no
+# file size limit will be enforced.
+#  (integer value)
+# Minimum value: 0
+#client_max_size = 0
+
+#
+# Pre-warm the modules (eg. load models, do preliminary checks, etc). You might
+# want to disable this option if DEEPaaS is loading more than one module
+# because
+# you risk getting out of memory errors.
+#  (boolean value)
+#warm = true
+
+#
+# Specify the model to be used. If not specified, DEEPaaS will fail if there
+# are
+# more than only one models available.
+#  (string value)
+#model_name =
+
+#
+# Enable debug mode in logging. This will provide more information about what
+# is happening in the API. Default is to not provide this information.
+#  (boolean value)
+#debug = false
+
+#
+# Specify the log level for the API. Default is INFO. Possible values are
+# DEBUG,
+# INFO, WARNING, ERROR, CRITICAL.
+#  (string value)
+# Possible values:
+# DEBUG - <No description provided>
+# INFO - <No description provided>
+# WARNING - <No description provided>
+# ERROR - <No description provided>
+# CRITICAL - <No description provided>
+#log_level = INFO
+
+#
+# Specify the log file to use. If not specified, logs will be sent to stdout.
+#  (string value)
+#log_file =
+
+#
+# Bearer token for API authentication. If set, all API endpoints will require
+# the 'Authorization: Bearer <token>' header to be present in requests.
+# If not set, authentication is disabled.
+#  (string value)
+#auth_bearer_token =

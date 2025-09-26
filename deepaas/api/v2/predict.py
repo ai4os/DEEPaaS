@@ -18,6 +18,7 @@ import fastapi
 import fastapi.encoders
 import fastapi.exceptions
 
+from deepaas import auth
 from deepaas.api.v2 import responses
 from deepaas.api.v2 import utils
 from deepaas import model
@@ -60,7 +61,9 @@ def _get_handler_for_model(model_name, model_obj):
             self.model_obj = model_obj
 
         async def predict(
-            self, args: pydantic_schema = fastapi.Depends()  # noqa(B008)
+            self, 
+            args: pydantic_schema = fastapi.Depends(),  # noqa(B008)
+            _: str = auth.get_auth_dependency(),  # noqa(B008)
         ):
             """Make a prediction given the input data."""
 
