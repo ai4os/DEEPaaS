@@ -48,11 +48,6 @@ def get_list_type(x):
     return typing.List
 
 
-# def get_nested_model(x):
-#     """Return a model from a nested marshmallow schema"""
-#     return pydantic_from_marshmallow(x.schema)
-
-
 FIELD_CONVERTERS = {
     marshmallow.fields.Bool: bool,
     marshmallow.fields.Boolean: bool,
