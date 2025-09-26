@@ -53,10 +53,10 @@ class TestBearerAuth:
     async def test_verify_token_no_token_provided(self):
         """Test token verification when auth is enabled but no token provided."""
         CONF.set_override("auth_bearer_token", "test-token")
-        
+
         with pytest.raises(fastapi.HTTPException) as exc_info:
             await auth.verify_bearer_token(None)
-        
+
         assert exc_info.value.status_code == 401
         assert "Bearer token required" in exc_info.value.detail
         assert exc_info.value.headers["WWW-Authenticate"] == "Bearer"
@@ -65,16 +65,16 @@ class TestBearerAuth:
     async def test_verify_token_invalid_token(self):
         """Test token verification with invalid token."""
         CONF.set_override("auth_bearer_token", "correct-token")
-        
+
         # Mock HTTPAuthorizationCredentials
         mock_token = fastapi.security.HTTPAuthorizationCredentials(
-            scheme="Bearer", 
+            scheme="Bearer",
             credentials="wrong-token"
         )
-        
+
         with pytest.raises(fastapi.HTTPException) as exc_info:
             await auth.verify_bearer_token(mock_token)
-        
+
         assert exc_info.value.status_code == 401
         assert "Invalid bearer token" in exc_info.value.detail
         assert exc_info.value.headers["WWW-Authenticate"] == "Bearer"
@@ -83,13 +83,13 @@ class TestBearerAuth:
     async def test_verify_token_valid_token(self):
         """Test token verification with valid token."""
         CONF.set_override("auth_bearer_token", "correct-token")
-        
+
         # Mock HTTPAuthorizationCredentials
         mock_token = fastapi.security.HTTPAuthorizationCredentials(
-            scheme="Bearer", 
+            scheme="Bearer",
             credentials="correct-token"
         )
-        
+
         result = await auth.verify_bearer_token(mock_token)
         assert result == "correct-token"
 
@@ -99,6 +99,10 @@ class TestBearerAuth:
         # Check that it's a fastapi.Depends object
         assert hasattr(dependency, 'dependency')
         assert callable(dependency.dependency)
+
+
+# Fix the function definition issue by creating a separate auth dependency
+auth_dependency = auth.get_auth_dependency()
 
 
 class TestBearerAuthIntegration:
@@ -118,7 +122,7 @@ class TestBearerAuthIntegration:
             return {"message": "public"}
 
         @app.get("/protected")
-        async def protected_endpoint(_: str = auth.get_auth_dependency()):
+        async def protected_endpoint(_=auth_dependency):
             return {"message": "protected"}
 
         return app
@@ -127,7 +131,7 @@ class TestBearerAuthIntegration:
         """Test that public endpoints work without authentication."""
         app = self.create_test_app()
         client = fastapi.testclient.TestClient(app)
-        
+
         response = client.get("/public")
         assert response.status_code == 200
         assert response.json() == {"message": "public"}
@@ -137,7 +141,7 @@ class TestBearerAuthIntegration:
         CONF.set_override("auth_bearer_token", "")
         app = self.create_test_app()
         client = fastapi.testclient.TestClient(app)
-        
+
         response = client.get("/protected")
         assert response.status_code == 200
         assert response.json() == {"message": "protected"}
@@ -147,7 +151,7 @@ class TestBearerAuthIntegration:
         CONF.set_override("auth_bearer_token", "secret-token")
         app = self.create_test_app()
         client = fastapi.testclient.TestClient(app)
-        
+
         response = client.get("/protected")
         assert response.status_code == 401
         assert "Bearer token required" in response.json()["detail"]
@@ -157,7 +161,7 @@ class TestBearerAuthIntegration:
         CONF.set_override("auth_bearer_token", "secret-token")
         app = self.create_test_app()
         client = fastapi.testclient.TestClient(app)
-        
+
         response = client.get(
             "/protected",
             headers={"Authorization": "Bearer wrong-token"}
@@ -170,7 +174,7 @@ class TestBearerAuthIntegration:
         CONF.set_override("auth_bearer_token", "secret-token")
         app = self.create_test_app()
         client = fastapi.testclient.TestClient(app)
-        
+
         response = client.get(
             "/protected",
             headers={"Authorization": "Bearer secret-token"}
@@ -183,7 +187,7 @@ class TestBearerAuthIntegration:
         CONF.set_override("auth_bearer_token", "secret-token")
         app = self.create_test_app()
         client = fastapi.testclient.TestClient(app)
-        
+
         # Test with malformed header (no "Bearer" prefix)
         response = client.get(
             "/protected",

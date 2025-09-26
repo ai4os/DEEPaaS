@@ -32,22 +32,24 @@ def is_auth_enabled() -> bool:
     return bool(CONF.auth_bearer_token)
 
 
-async def verify_bearer_token(token: str = fastapi.Depends(bearer_scheme)) -> str:
+async def verify_bearer_token(
+    token: fastapi.security.HTTPAuthorizationCredentials = fastapi.Depends(bearer_scheme)  # noqa: E501,B008
+) -> str:
     """Verify the bearer token against the configured token.
-    
+
     Args:
         token: The HTTPAuthorizationCredentials from the request
-        
+
     Returns:
         The validated token string
-        
+
     Raises:
         HTTPException: If authentication is enabled but token is invalid/missing
     """
     # If auth is not enabled, allow all requests
     if not is_auth_enabled():
         return None
-        
+
     # If auth is enabled but no token provided
     if token is None:
         LOG.warning("Authentication required but no bearer token provided")
@@ -56,7 +58,7 @@ async def verify_bearer_token(token: str = fastapi.Depends(bearer_scheme)) -> st
             detail="Bearer token required",
             headers={"WWW-Authenticate": "Bearer"},
         )
-    
+
     # Validate the token
     if token.credentials != CONF.auth_bearer_token:
         LOG.warning("Invalid bearer token provided")
@@ -65,17 +67,17 @@ async def verify_bearer_token(token: str = fastapi.Depends(bearer_scheme)) -> st
             detail="Invalid bearer token",
             headers={"WWW-Authenticate": "Bearer"},
         )
-    
+
     LOG.debug("Bearer token validated successfully")
     return token.credentials
 
 
 def get_auth_dependency():
     """Get the authentication dependency.
-    
+
     Returns a dependency that can be used with FastAPI routes to enforce
     authentication when enabled.
-    
+
     Returns:
         The authentication dependency function
     """
