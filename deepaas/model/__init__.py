@@ -16,7 +16,11 @@
 
 from deepaas.model import v2
 
-V2_MODELS = v2.MODELS
+# Create a proper module-level property using __getattr__ (Python 3.7+)
+def __getattr__(name):
+    if name == 'V2_MODELS':
+        return v2.MODELS
+    raise AttributeError(f"module {__name__!r} has no attribute {name!r}")
 
 # Backwards compatibility - these will be updated after model registration
 V2_MODEL = None
@@ -34,9 +38,9 @@ def register_v2_models(app):
     result = v2.register_models(app)
     
     # Update backwards compatibility variables
-    if V2_MODELS:
-        model_names = list(V2_MODELS.keys())
+    if v2.MODELS:
+        model_names = list(v2.MODELS.keys())
         V2_MODEL_NAME = model_names[0]
-        V2_MODEL = V2_MODELS[V2_MODEL_NAME]
+        V2_MODEL = v2.MODELS[V2_MODEL_NAME]
     
     return result
