@@ -14,50 +14,48 @@
 # License for the specific language governing permissions and limitations
 # under the License.
 
-from aiohttp import web
-import aiohttp_apispec
+import fastapi
+import fastapi.responses
 from oslo_config import cfg
 
 from deepaas.api.v2 import debug as v2_debug
 from deepaas.api.v2 import models as v2_model
 from deepaas.api.v2 import predict as v2_predict
 from deepaas.api.v2 import responses
-from deepaas.api.v2 import train as v2_train
+
 from deepaas import log
 
 CONF = cfg.CONF
 LOG = log.getLogger("deepaas.api.v2")
 
+# NOTE(aloga): singleton pattern for the FastAPI app
 APP = None
 
 
-def get_app(enable_train=True, enable_predict=True):
+def get_app():
     global APP
 
-    APP = web.Application()
+    APP = fastapi.APIRouter()
 
     v2_debug.setup_debug()
 
-    APP.router.add_get("/", get_version, name="v2", allow_head=False)
-    v2_debug.setup_routes(APP)
-    v2_model.setup_routes(APP)
-    v2_train.setup_routes(APP, enable=enable_train)
-    v2_predict.setup_routes(APP, enable=enable_predict)
+    APP.include_router(v2_debug.get_router(), tags=["debug"])
+    APP.include_router(v2_model.get_router(), tags=["models"])
+    APP.include_router(v2_predict.get_router(), tags=["predict"])
+
+    APP.add_api_route(
+        "/",
+        get_v2_version,
+        methods=["GET"],
+        tags=["version"],
+        response_model=responses.Versions,
+    )
 
     return APP
 
 
-@aiohttp_apispec.docs(
-    tags=["versions"],
-    summary="Get V2 API version information",
-)
-@aiohttp_apispec.response_schema(responses.Version(), 200)
-@aiohttp_apispec.response_schema(responses.Failure(), 400)
-async def get_version(request):
-    # NOTE(aloga): we use the router table from this application (i.e. the
-    # global APP in this module) to be able to build the correct url, as it can
-    # be prefixed outside of this module (in an add_subapp() call)
-    root = APP.router["v2"].url_for()
+def get_v2_version(request: fastapi.Request) -> fastapi.responses.JSONResponse:
+    root = str(request.url_for("get_v2_version"))
     version = {
         "version": "stable",
         "id": "v2",
@@ -65,9 +63,8 @@ async def get_version(request):
             {
                 "rel": "self",
                 "type": "application/json",
-                "href": "%s" % root,
+                "href": f"{root}",
             }
         ],
     }
-
-    return web.json_response(version)
+    return fastapi.responses.JSONResponse(content=version)

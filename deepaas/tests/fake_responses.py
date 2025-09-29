@@ -76,8 +76,3 @@ deepaas_test_predict = {
     "date": "2019-01-1",
     "labels": [{"label": "foo", "probability": 1.0}],
 }
-
-deepaas_test_train = {
-    "status": "running",
-    "args": {"sleep": 0},
-}

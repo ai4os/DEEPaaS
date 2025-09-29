@@ -14,52 +14,55 @@
 # License for the specific language governing permissions and limitations
 # under the License.
 
-import urllib.parse
-
-from aiohttp import web
-import aiohttp_apispec
+import fastapi
 
 from deepaas.api.v2 import responses
 from deepaas import model
 
 
-@aiohttp_apispec.docs(
-    tags=["models"],
-    summary="Return loaded models and its information",
-    description="DEEPaaS can load several models and server them on the same "
-    "endpoint, making a call to the root of the models namespace "
-    "will return the loaded models, as long as their basic "
-    "metadata.",
-)
-@aiohttp_apispec.response_schema(responses.ModelMeta(), 200)
-async def index(request):
-    """Return loaded models and its information.
+router = fastapi.APIRouter(prefix="/models")
 
-    DEEPaaS can load several models and server them on the same endpoint,
-    making a call to the root of the models namespace will return the
-    loaded models, as long as their basic metadata.
+
+@router.get(
+    "/",
+    summary="Return loaded models and its information",
+    description="Return list of DEEPaaS loaded models. In previous versions, DEEPaaS "
+    "could load several models and serve them on the same endpoint.",
+    tags=["models"],
+    response_model=responses.ModelList,
+)
+async def index_models(
+    request: fastapi.Request,
+):
+    """Return loaded models and its information."""
+
+    name = model.V2_MODEL_NAME
+    model_obj = model.V2_MODEL
+    m = {
+        "id": name,
+        "name": name,
+        "links": [
+            {
+                "rel": "self",
+                "href": str(request.url_for("get_model/" + name)),
+            }
+        ],
+    }
+    meta = model_obj.get_metadata()
+    m.update(meta)
+    return {"models": [m]}
+
+
+def _get_handler_for_model(model_name, model_obj):
+    """Auxiliary function to get the handler for a model.
+
+    This function returns a handler for a model that can be used to
+    register the routes in the router.
     """
 
-    models = []
-    for name, obj in model.V2_MODELS.items():
-        m = {
-            "id": name,
-            "name": name,
-            "links": [
-                {
-                    "rel": "self",
-                    "href": urllib.parse.urljoin("%s/" % request.path, name),
-                }
-            ],
-        }
-        meta = obj.get_metadata()
-        m.update(meta)
-        models.append(m)
-    return web.json_response({"models": models})
-
-
-def _get_handler(model_name, model_obj):
     class Handler(object):
+        """Class to handle the model metadata endpoints."""
+
         model_name = None
         model_obj = None
 
@@ -67,36 +70,50 @@ def _get_handler(model_name, model_obj):
             self.model_name = model_name
             self.model_obj = model_obj
 
-        @aiohttp_apispec.docs(
-            tags=["models"],
-            summary="Return model's metadata",
-        )
-        @aiohttp_apispec.response_schema(responses.ModelMeta(), 200)
-        async def get(self, request):
+        def get(self, request: fastapi.Request):
+            """Return model's metadata."""
             m = {
                 "id": self.model_name,
                 "name": self.model_name,
                 "links": [
                     {
                         "rel": "self",
-                        "href": request.path.rstrip("/"),
+                        "href": str(request.url),
                     }
                 ],
             }
             meta = self.model_obj.get_metadata()
             m.update(meta)
 
-            return web.json_response(m)
+            return m
+
+        def register_routes(self, router):
+            """Register routes for the model in the router."""
+            router.add_api_route(
+                f"/{self.model_name}",
+                self.get,
+                name="get_model/" + self.model_name,
+                summary="Return model's metadata",
+                tags=["models"],
+                response_model=responses.ModelMeta,
+            )
 
     return Handler(model_name, model_obj)
 
 
-def setup_routes(app):
-    app.router.add_get("/models/", index, allow_head=False)
+def get_router() -> fastapi.APIRouter:
+    """Auxiliary function to get the router.
 
-    # In the next lines we iterate over the loaded models and create the
-    # different resources for each model. This way we can also load the
-    # expected parameters if needed (as in the training method).
-    for model_name, model_obj in model.V2_MODELS.items():
-        hdlr = _get_handler(model_name, model_obj)
-        app.router.add_get("/models/%s/" % model_name, hdlr.get, allow_head=False)
+    We use this function to be able to include the router in the main
+    application and do things before it gets included.
+
+    In this case we explicitly include the model's endpoints.
+
+    """
+    model_name = model.V2_MODEL_NAME
+    model_obj = model.V2_MODEL
+
+    hdlr = _get_handler_for_model(model_name, model_obj)
+    hdlr.register_routes(router)
+
+    return router
