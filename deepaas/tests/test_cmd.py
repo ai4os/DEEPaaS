@@ -146,6 +146,4 @@ def test_doc_endpoint_disabled(monkeypatch, cfg_fixture, fastapi_app_fixture):
     run.main()
 
     fastapi_app_fixture.assert_called_once()
-    fastapi_app_fixture.assert_called_with(
-        enable_doc=False, base_path=""
-    )
+    fastapi_app_fixture.assert_called_with(enable_doc=False, base_path="")

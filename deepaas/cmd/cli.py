@@ -403,7 +403,7 @@ def main():
 
             LOG.info("[INFO, Output] Output is saved in {}".format(out_file))
         else:
-            # Print output to stdout when no output file is specified  
+            # Print output to stdout when no output file is specified
             # Default to JSON output when no file is specified
             results_json = json.dumps(task)
             LOG.debug("[DEBUG, predict, Output]: {}".format(results_json))
