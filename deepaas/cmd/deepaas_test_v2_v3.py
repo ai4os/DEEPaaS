@@ -292,7 +292,7 @@ def pytest_addoption(parser):
 
 def pytest_generate_tests(metafunc):
     """Generate test configurations."""
-    if set(["old_api_url", "new_api_url", "model_name", "debug"]).intersection(
+    if {"old_api_url", "new_api_url", "model_name", "debug"}.intersection(
         metafunc.fixturenames
     ):
         old_api_url = metafunc.config.getoption("old_api_base_url")
