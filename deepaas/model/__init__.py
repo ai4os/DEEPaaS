@@ -16,7 +16,7 @@
 
 from deepaas.model import v2
 
-# FIXME(aloga): this is extremely ugly
+# NOTE(aloga): Singleton pattern to hold the loaded model and its name
 V2_MODEL = None
 V2_MODEL_NAME = None
 

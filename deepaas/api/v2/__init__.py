@@ -28,14 +28,13 @@ from deepaas import log
 CONF = cfg.CONF
 LOG = log.getLogger("deepaas.api.v2")
 
-# XXX
+# NOTE(aloga): singleton pattern for the FastAPI app
 APP = None
 
 
 def get_app():
     global APP
 
-    # FIXME(aloga): check we cat get rid of global variables
     APP = fastapi.APIRouter()
 
     v2_debug.setup_debug()
