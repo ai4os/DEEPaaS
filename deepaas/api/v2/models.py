@@ -70,7 +70,7 @@ def _get_handler_for_model(model_name, model_obj):
             self.model_name = model_name
             self.model_obj = model_obj
 
-        async def get(self, request: fastapi.Request):
+        def get(self, request: fastapi.Request):
             """Return model's metadata."""
             m = {
                 "id": self.model_name,

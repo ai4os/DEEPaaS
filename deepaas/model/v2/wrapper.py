@@ -237,22 +237,6 @@ class ModelWrapper(object):
         :raises HTTPException: If the call produces an
             error, already wrapped as a HTTPException
         """
-        # FIXME(aloga): this is old code from web.FileField (aiohhtp), review it
-        # for key, val in kwargs.items():
-        #     if isinstance(val, web.FileField):
-        #         fd, name = tempfile.mkstemp()
-        #         fd = os.fdopen(fd, "w+b")
-        #         fd.write(val.file.read())
-        #         fd.close()
-        #         aux = UploadedFile(
-        #             name=val.name,
-        #             filename=name,
-        #             content_type=val.content_type,
-        #             original_filename=val.filename,
-        #         )
-        #         kwargs[key] = aux
-        #         # FIXME(aloga); cleanup of tmpfile here
-
         with self._catch_error():
             return self.predict_wrap(self.model_obj.predict, *args, **kwargs)
 
