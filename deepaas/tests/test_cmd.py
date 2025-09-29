@@ -39,7 +39,6 @@ def uvicorn_run_fixture():
 
 def test_run(monkeypatch, fastapi_app_fixture, uvicorn_run_fixture):
     """Test the run command."""
-    # uvicorn_run_fixture = mock.MagicMock()
     monkeypatch.setattr(deepaas.cmd._shutdown, "handle_signals", mock.MagicMock())
     monkeypatch.setattr(deepaas.api, "get_fastapi_app", fastapi_app_fixture)
     monkeypatch.setattr("uvicorn.run", uvicorn_run_fixture)

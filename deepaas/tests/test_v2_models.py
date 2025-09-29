@@ -196,8 +196,6 @@ def test_loading_ok(mocks):
 
     m = deepaas.model.v2.MODEL
     assert isinstance(m, v2_wrapper.ModelWrapper)
-    # for m in deepaas.model.v2.MODELS.values():
-    #     assert isinstance(m, v2_wrapper.ModelWrapper)
 
 
 def test_loading_ok_singleton(mocks, monkeypatch):
@@ -214,9 +212,6 @@ def test_loading_ok_singleton(mocks, monkeypatch):
     assert name != new_model_name
     m = deepaas.model.v2.MODEL
     assert isinstance(m, v2_wrapper.ModelWrapper)
-    # for name, m in deepaas.model.v2.MODELS.items():
-    #     assert isinstance(m, v2_wrapper.ModelWrapper)
-    #     assert name != new_model_name
 
 
 def test_loading_error(monkeypatch):

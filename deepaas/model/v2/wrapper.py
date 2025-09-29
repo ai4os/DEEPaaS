@@ -20,9 +20,6 @@ import contextlib
 import functools
 import io
 
-# import os
-# import tempfile
-
 import marshmallow
 from oslo_config import cfg
 
