@@ -120,11 +120,14 @@ class ModelWrapper(object):
             self.has_schema = False
 
         # Now convert to pydantic schema...
-        # FIXME(aloga): use try except
         if schema is not None:
-            self.response_schema = utils.pydantic_from_marshmallow(
-                "ModelPredictionResponse", schema
-            )
+            try:
+                self.response_schema = utils.pydantic_from_marshmallow(
+                    "ModelPredictionResponse", schema
+                )
+            except Exception as e:
+                LOG.exception(e)
+                raise exceptions.ModelResponseValidationError()
         else:
             self.response_schema = None
 
