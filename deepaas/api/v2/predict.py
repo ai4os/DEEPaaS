@@ -73,7 +73,7 @@ def _get_handler_for_model(model_name, model_obj):
                 # FIXME(aloga): Validation does not work, as we are converting from
                 # Marshmallow to Pydantic, check this as son as possible.
                 # self.model_obj.validate_response(ret)
-                return fastapi.responses.JSONResponse(ret)
+                return fastapi.responses.JSONResponse(content=ret)
 
             return fastapi.responses.JSONResponse(
                 content={"status": "OK", "predictions": ret}

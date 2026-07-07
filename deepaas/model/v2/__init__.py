@@ -55,7 +55,7 @@ def load_model():
     try:
         MODEL = wrapper.ModelWrapper(
             model_name,
-            loading.get_model_by_name(model_name, "v2"),
+            loading.get_model_by_name(model_name, "v2")(),
         )
         MODEL_NAME = model_name
     except exceptions.ModuleNotFoundError:

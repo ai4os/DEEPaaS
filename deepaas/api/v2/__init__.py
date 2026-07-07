@@ -54,7 +54,7 @@ def get_app():
     return APP
 
 
-def get_v2_version(request: fastapi.Request) -> fastapi.responses.JSONResponse:
+async def get_v2_version(request: fastapi.Request) -> fastapi.responses.JSONResponse:
     root = str(request.url_for("get_v2_version"))
     version = {
         "version": "stable",
