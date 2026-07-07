@@ -220,7 +220,7 @@ class TestPredictEndpoint:
         labels = r.json()["labels"]
         assert isinstance(labels, list)
         assert labels[0]["label"] == "foo"
-        assert labels[0]["probability"] == pytest.approx(1.0)
+        assert labels[0]["probability"] == 1.0
 
     def test_predict_with_optional_parameter(self, client, upload_file):
         r = client.post(
