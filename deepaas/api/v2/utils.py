@@ -16,13 +16,13 @@
 
 import datetime
 import decimal
+import inspect
 import typing
 
 import fastapi
 import marshmallow
 import marshmallow.fields
 import pydantic
-import pydantic.utils
 
 
 # Convert marshmallow fields to pydantic fields
@@ -212,10 +212,99 @@ def pydantic_from_marshmallow(
 def get_pydantic_schema_from_marshmallow_fields(
     name: str,
     fields: dict,
-) -> pydantic.BaseModel:
+):
+    """Convert marshmallow fields to a FastAPI-compatible dependency class.
 
-    model = marshmallow.Schema.from_dict(fields)
+    Returns a class whose ``__init__`` carries the correct FastAPI
+    ``Form``/``File``/``Query`` ``FieldInfo`` defaults so that FastAPI's
+    dependency-injection machinery can locate each value in the right part
+    of the request (form body, file upload, or query string).
 
-    pydantic_model = pydantic_from_marshmallow(name, model())
+    The returned class also exposes a ``model_dump(by_alias=False)`` method
+    that mirrors the Pydantic interface used in the predict handler.
+    """
 
-    return pydantic_model
+    have_file_fields = check_for_file_fields(fields)
+
+    sig_params = [inspect.Parameter("self", inspect.Parameter.POSITIONAL_OR_KEYWORD)]
+    field_mapping = []  # [(sanitized_name, original_name), …]
+
+    for field_name, field in fields.items():
+        pyd_type = get_pydantic_type(field)
+        description = field.metadata.get("description")
+
+        if field.default:
+            default_val = field.default
+        elif field.missing:
+            default_val = field.missing
+        else:
+            default_val = None
+
+        if is_file_field(field):
+            field_cls = fastapi.File
+        elif have_file_fields:
+            field_cls = fastapi.Form
+        else:
+            field_cls = fastapi.Query
+
+        san_name = sanitize_field_name(field_name)
+        field_mapping.append((san_name, field_name))
+
+        if is_file_field(field):
+            if field.required and not default_val:
+                field_info = field_cls(..., description=description)
+            else:
+                # Optional file: a bare ``None`` default lets FastAPI accept
+                # a missing upload without raising a validation error.
+                field_info = None
+        else:
+            if field.required and not default_val:
+                field_info = field_cls(
+                    ...,
+                    description=description,
+                    alias=field_name,
+                )
+            elif default_val is None:
+                field_info = field_cls(
+                    None,
+                    description=description,
+                    alias=field_name,
+                )
+            else:
+                field_info = field_cls(
+                    default_val,
+                    description=description,
+                    alias=field_name,
+                )
+
+        if field_info is None:
+            param = inspect.Parameter(
+                san_name,
+                inspect.Parameter.POSITIONAL_OR_KEYWORD,
+                annotation=pyd_type,
+            )
+        else:
+            param = inspect.Parameter(
+                san_name,
+                inspect.Parameter.POSITIONAL_OR_KEYWORD,
+                default=field_info,
+                annotation=pyd_type,
+            )
+        sig_params.append(param)
+
+    _field_mapping = field_mapping
+
+    def __init__(self_obj, **kwargs):
+        for k, v in kwargs.items():
+            setattr(self_obj, k, v)
+
+    __init__.__signature__ = inspect.Signature(sig_params)
+
+    def model_dump(self_obj, by_alias=False):
+        result = {}
+        for san_name, orig_name in _field_mapping:
+            key = orig_name if by_alias else san_name
+            result[key] = getattr(self_obj, san_name, None)
+        return result
+
+    return type(name, (), {"__init__": __init__, "model_dump": model_dump})
