@@ -289,13 +289,16 @@ def get_pydantic_schema_from_marshmallow_fields(
         sig_params.append(param)
 
     def __init__(self, **kwargs):
-        for k, v in kwargs.items():
-            setattr(self, k, v)
+        for attr_name, attr_value in kwargs.items():
+            setattr(self, attr_name, attr_value)
 
     __init__.__signature__ = inspect.Signature(sig_params)
 
     def model_dump(self, by_alias=False):
         result = {}
+        # _field_mapping is a class attribute set in the type() call below;
+        # type(self) is used because this function is defined before the class
+        # is created, so there is no class name to reference directly.
         for sanitized_name, orig_name in type(self)._field_mapping:
             key = orig_name if by_alias else sanitized_name
             result[key] = getattr(self, sanitized_name, None)
