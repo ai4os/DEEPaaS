@@ -215,6 +215,11 @@ def test_loading_ok_singleton(mocks, monkeypatch):
 
 
 def test_loading_error(monkeypatch):
-    monkeypatch.setattr(deepaas.model.loading, "get_available_models", lambda x: {})
+    monkeypatch.setattr(deepaas.model.v2, "MODEL", None)
+    monkeypatch.setattr(
+        deepaas.model.loading,
+        "get_available_model_names",
+        lambda x: frozenset(),
+    )
     with pytest.raises(exceptions.NoModelsAvailable):
         deepaas.model.v2.load_model()
