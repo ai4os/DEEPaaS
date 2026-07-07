@@ -288,8 +288,6 @@ def get_pydantic_schema_from_marshmallow_fields(
             )
         sig_params.append(param)
 
-    _field_mapping = field_mapping
-
     def __init__(self_obj, **kwargs):
         for k, v in kwargs.items():
             setattr(self_obj, k, v)
@@ -298,7 +296,7 @@ def get_pydantic_schema_from_marshmallow_fields(
 
     def model_dump(self_obj, by_alias=False):
         result = {}
-        for san_name, orig_name in self_obj._field_mapping:
+        for san_name, orig_name in type(self_obj)._field_mapping:
             key = orig_name if by_alias else san_name
             result[key] = getattr(self_obj, san_name, None)
         return result
