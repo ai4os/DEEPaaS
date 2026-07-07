@@ -116,23 +116,26 @@ async def get_root(request: fastapi.Request) -> fastapi.responses.JSONResponse:
 
     response = {"versions": versions, "links": []}
 
-    doc = APP.docs_url.strip("/")
-    if doc:
-        doc = {"rel": "help", "type": "text/html", "href": f"{root}{doc}"}
-        response["links"].append(doc)
+    if APP.docs_url:
+        doc = APP.docs_url.lstrip("/")
+        response["links"].append(
+            {"rel": "help", "type": "text/html", "href": f"{root}{doc}"}
+        )
 
-    redoc = APP.redoc_url.strip("/")
-    if redoc:
-        redoc = {"rel": "help", "type": "text/html", "href": f"{root}{redoc}"}
-        response["links"].append(redoc)
+    if APP.redoc_url:
+        redoc = APP.redoc_url.lstrip("/")
+        response["links"].append(
+            {"rel": "help", "type": "text/html", "href": f"{root}{redoc}"}
+        )
 
-    spec = APP.openapi_url.strip("/")
-    if spec:
-        spec = {
-            "rel": "describedby",
-            "type": "application/json",
-            "href": f"{root}{spec}",
-        }
-        response["links"].append(spec)
+    if APP.openapi_url:
+        spec = APP.openapi_url.lstrip("/")
+        response["links"].append(
+            {
+                "rel": "describedby",
+                "type": "application/json",
+                "href": f"{root}{spec}",
+            }
+        )
 
     return fastapi.responses.JSONResponse(content=response)
