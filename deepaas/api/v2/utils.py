@@ -233,12 +233,8 @@ def get_pydantic_schema_from_marshmallow_fields(
         pyd_type = get_pydantic_type(field)
         description = field.metadata.get("description")
 
-        if field.default:
-            default_val = field.default
-        elif field.missing:
-            default_val = field.missing
-        else:
-            default_val = None
+        has_default = field.load_default is not marshmallow.missing
+        default_val = field.load_default if has_default else None
 
         if is_file_field(field):
             field_cls = fastapi.File
@@ -251,28 +247,28 @@ def get_pydantic_schema_from_marshmallow_fields(
         field_mapping.append((san_name, field_name))
 
         if is_file_field(field):
-            if field.required and not default_val:
+            if field.required:
                 field_info = field_cls(..., description=description)
             else:
                 # Optional file: a bare ``None`` default lets FastAPI accept
                 # a missing upload without raising a validation error.
                 field_info = None
         else:
-            if field.required and not default_val:
+            if field.required:
                 field_info = field_cls(
                     ...,
                     description=description,
                     alias=field_name,
                 )
-            elif default_val is None:
+            elif has_default:
                 field_info = field_cls(
-                    None,
+                    default_val,
                     description=description,
                     alias=field_name,
                 )
             else:
                 field_info = field_cls(
-                    default_val,
+                    None,
                     description=description,
                     alias=field_name,
                 )
@@ -302,9 +298,9 @@ def get_pydantic_schema_from_marshmallow_fields(
 
     def model_dump(self_obj, by_alias=False):
         result = {}
-        for san_name, orig_name in _field_mapping:
+        for san_name, orig_name in self_obj._field_mapping:
             key = orig_name if by_alias else san_name
             result[key] = getattr(self_obj, san_name, None)
         return result
 
-    return type(name, (), {"__init__": __init__, "model_dump": model_dump})
+    return type(name, (), {"__init__": __init__, "model_dump": model_dump, "_field_mapping": field_mapping})
