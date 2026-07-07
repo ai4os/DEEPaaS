@@ -117,19 +117,19 @@ async def get_root(request: fastapi.Request) -> fastapi.responses.JSONResponse:
     response = {"versions": versions, "links": []}
 
     if APP.docs_url:
-        doc = APP.docs_url.lstrip("/")
+        doc = APP.docs_url[1:]
         response["links"].append(
             {"rel": "help", "type": "text/html", "href": f"{root}{doc}"}
         )
 
     if APP.redoc_url:
-        redoc = APP.redoc_url.lstrip("/")
+        redoc = APP.redoc_url[1:]
         response["links"].append(
             {"rel": "help", "type": "text/html", "href": f"{root}{redoc}"}
         )
 
     if APP.openapi_url:
-        spec = APP.openapi_url.lstrip("/")
+        spec = APP.openapi_url[1:]
         response["links"].append(
             {
                 "rel": "describedby",
