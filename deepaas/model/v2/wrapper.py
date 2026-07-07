@@ -14,10 +14,8 @@
 # License for the specific language governing permissions and limitations
 # under the License.
 
-import asyncio
 import collections
 import contextlib
-import functools
 import io
 
 import marshmallow
@@ -189,12 +187,7 @@ class ModelWrapper(object):
             }
         return d
 
-    def _run_in_pool(self, func, *args, **kwargs):
-        fn = functools.partial(func, *args, **kwargs)
-        ret = self._loop.create_task(self._executor.apply(fn))
-        return ret
-
-    async def warm(self):
+    def warm(self):
         """Warm (i.e. load, initialize) the underlying model.
 
         This method is called automatically when the model is loaded. You
@@ -210,10 +203,8 @@ class ModelWrapper(object):
             return
 
         try:
-            n = self._workers
-            LOG.debug("Warming '%s' model with %s workers" % (self.name, n))
-            fs = [self._run_in_pool(func) for _ in range(0, n)]
-            await asyncio.gather(*fs)
+            LOG.debug("Warming '%s' model" % self.name)
+            func()
             LOG.debug("Model '%s' has been warmed" % self.name)
         except NotImplementedError:
             LOG.debug("Cannot warm (initialize) model '%s'" % self.name)
