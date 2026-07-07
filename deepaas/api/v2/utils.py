@@ -233,8 +233,8 @@ def get_pydantic_schema_from_marshmallow_fields(
         pyd_type = get_pydantic_type(field)
         description = field.metadata.get("description")
 
-        has_default = field.load_default is not marshmallow.missing
-        default_val = field.load_default if has_default else None
+        has_load_default = field.load_default is not marshmallow.missing
+        default_val = field.load_default if has_load_default else None
 
         if is_file_field(field):
             field_cls = fastapi.File
@@ -243,8 +243,8 @@ def get_pydantic_schema_from_marshmallow_fields(
         else:
             field_cls = fastapi.Query
 
-        san_name = sanitize_field_name(field_name)
-        field_mapping.append((san_name, field_name))
+        sanitized_name = sanitize_field_name(field_name)
+        field_mapping.append((sanitized_name, field_name))
 
         if is_file_field(field):
             if field.required:
@@ -260,7 +260,7 @@ def get_pydantic_schema_from_marshmallow_fields(
                     description=description,
                     alias=field_name,
                 )
-            elif has_default:
+            elif has_load_default:
                 field_info = field_cls(
                     default_val,
                     description=description,
@@ -275,30 +275,30 @@ def get_pydantic_schema_from_marshmallow_fields(
 
         if field_info is None:
             param = inspect.Parameter(
-                san_name,
+                sanitized_name,
                 inspect.Parameter.POSITIONAL_OR_KEYWORD,
                 annotation=pyd_type,
             )
         else:
             param = inspect.Parameter(
-                san_name,
+                sanitized_name,
                 inspect.Parameter.POSITIONAL_OR_KEYWORD,
                 default=field_info,
                 annotation=pyd_type,
             )
         sig_params.append(param)
 
-    def __init__(self_obj, **kwargs):
+    def __init__(self, **kwargs):
         for k, v in kwargs.items():
-            setattr(self_obj, k, v)
+            setattr(self, k, v)
 
     __init__.__signature__ = inspect.Signature(sig_params)
 
-    def model_dump(self_obj, by_alias=False):
+    def model_dump(self, by_alias=False):
         result = {}
-        for san_name, orig_name in type(self_obj)._field_mapping:
-            key = orig_name if by_alias else san_name
-            result[key] = getattr(self_obj, san_name, None)
+        for sanitized_name, orig_name in type(self)._field_mapping:
+            key = orig_name if by_alias else sanitized_name
+            result[key] = getattr(self, sanitized_name, None)
         return result
 
     return type(name, (), {"__init__": __init__, "model_dump": model_dump, "_field_mapping": field_mapping})
