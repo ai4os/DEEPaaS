@@ -61,6 +61,11 @@ def test_app():
     Model loading is mocked so the tests do not depend on any installed
     entry-point plugins.  Documentation endpoints are enabled so that the
     ``/docs``, ``/redoc``, and ``/openapi.json`` routes are available.
+
+    The fixture is session-scoped for performance (app startup is expensive).
+    Individual tests **must not** mutate global app state; if you need to test
+    error-path behaviour that requires a different singleton configuration, use
+    a separate function-scoped fixture with explicit ``monkeypatch`` resets.
     """
     _reset_api_singletons()
 
