@@ -25,6 +25,7 @@ from deepaas import api
 import deepaas.log
 from deepaas.cmd import _shutdown
 from deepaas import config
+from deepaas import exceptions
 
 cli_opts = [
     config.Opt(
@@ -119,10 +120,29 @@ def main():
 
     print("FastAPI backend is still experimental.")
     print("Press Ctrl+C to stop the server.")
-    app = api.get_fastapi_app(
-        enable_doc=CONF.doc_endpoint,
-        base_path=base_path,
-    )
+    try:
+        app = api.get_fastapi_app(
+            enable_doc=CONF.doc_endpoint,
+            base_path=base_path,
+        )
+    except exceptions.NoModelsAvailable:
+        print(
+            "ERROR: No models found. Install a model that provides a "
+            "'deepaas.v2.model' entry point, e.g. the demo application: "
+            "https://github.com/ai4os-hub/ai4os-demo-app",
+            file=sys.stderr,
+        )
+        sys.exit(1)
+    except exceptions.MultipleModelsFound:
+        print(
+            "ERROR: Several models found. Choose the model to serve with the "
+            "--model-name option.",
+            file=sys.stderr,
+        )
+        sys.exit(1)
+    except exceptions.ModuleNotFoundError as e:
+        print(f"ERROR: {e}", file=sys.stderr)
+        sys.exit(1)
     uvicorn.run(app, host=CONF.listen_ip, port=CONF.listen_port)
     log.debug("Shutting down")
 
