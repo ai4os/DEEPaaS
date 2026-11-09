@@ -28,11 +28,11 @@ with the ``auth_bearer_token`` option in the DEEPaaS configuration file:
    [DEFAULT]
    auth_bearer_token = my-secret-token
 
-or with the ``OS_DEFAULT__AUTH_BEARER_TOKEN`` environment variable:
+or with the ``DEEPAAS_AUTH_BEARER_TOKEN`` environment variable:
 
 .. code-block:: console
 
-   export OS_DEFAULT__AUTH_BEARER_TOKEN=my-secret-token
+   export DEEPAAS_AUTH_BEARER_TOKEN=my-secret-token
    deepaas-run
 
 It can also be set with the ``--auth-bearer-token`` command line option, but

@@ -22,6 +22,11 @@ account the following:
   anything from it (e.g. ``from aiohttp.web import HTTPBadRequest``), you must
   remove those imports or add ``aiohttp`` to your own requirements.
 * The ``workers`` and ``client-max-size`` options are deprecated and ignored.
+* ``oslo.config`` is no longer used. The command line options and the
+  configuration files are the same, but the ``OS_DEFAULT__<OPTION>``
+  environment variables are deprecated in favour of ``DEEPAAS_<OPTION>`` (e.g.
+  ``DEEPAAS_MODEL_NAME``), and ``oslo-config-generator`` can no longer be used
+  to generate a sample configuration file.
 * The documentation is served at ``/docs`` (Swagger UI) and ``/redoc``
   (ReDoc), and the OpenAPI specification at ``/openapi.json``
   (``/swagger.json`` is still served for compatibility).

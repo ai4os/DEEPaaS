@@ -106,3 +106,7 @@ venv.bak/
 # Editors
 *~
 .*.swp
+
+# Generated when building the documentation
+doc/source/_static/deepaas.conf.sample
+doc/source/install/configuration/options.inc
