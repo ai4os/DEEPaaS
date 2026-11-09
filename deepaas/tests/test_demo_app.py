@@ -44,7 +44,7 @@ from deepaas import model  # noqa: E402
 import deepaas.model.v2  # noqa: E402
 
 MODEL_NAME = "ai4os_demo_app"
-URL = f"/v2/models/{MODEL_NAME}/predict"
+URL = f"/v2/models/{MODEL_NAME}/predict/"
 
 IMAGE = b"\x89PNG\r\n\x1a\nfake image"
 AUDIO = b"RIFF fake audio"
@@ -103,7 +103,7 @@ class TestMetadata:
         assert [m["id"] for m in models] == [MODEL_NAME]
 
     def test_metadata(self, client):
-        r = client.get(f"/v2/models/{MODEL_NAME}")
+        r = client.get(f"/v2/models/{MODEL_NAME}/")
         assert r.status_code == 200
         meta = r.json()
         assert meta["name"] == "ai4os_demo_app"

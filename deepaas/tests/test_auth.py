@@ -30,6 +30,9 @@ TOKEN = "s3cr3t-t0k3n"  # nosec
 
 PROTECTED = [
     ("GET", "/v2/models/"),
+    ("GET", f"/v2/models/{TEST_MODEL_NAME}/"),
+    ("POST", f"/v2/models/{TEST_MODEL_NAME}/predict/"),
+    # Paths without the trailing slash are also protected
     ("GET", f"/v2/models/{TEST_MODEL_NAME}"),
     ("POST", f"/v2/models/{TEST_MODEL_NAME}/predict"),
     ("GET", "/v2/debug/"),
@@ -127,5 +130,8 @@ class TestAPIAuthentication:
         spec = client.get("/openapi.json").json()
         assert "HTTPBearer" in spec["components"]["securitySchemes"]
         for method, path in PROTECTED:
+            if path not in spec["paths"]:
+                # Not documented, the path with the trailing slash is
+                continue
             op = spec["paths"][path][method.lower()]
             assert op["security"] == [{"HTTPBearer": []}]

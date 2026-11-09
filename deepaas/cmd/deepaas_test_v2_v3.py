@@ -36,7 +36,10 @@ def compare_endpoints(old_spec, new_spec, model_name):
     old_paths = set(old_spec["paths"].keys())
     new_paths = set(new_spec["paths"].keys())
 
-    removed_paths = [f"/v2/models/{model_name}/train"]
+    removed_paths = [
+        f"/v2/models/{model_name}/train/",
+        f"/v2/models/{model_name}/train/{{uuid}}",
+    ]
     for path in removed_paths:
         old_paths.discard(path)
 
