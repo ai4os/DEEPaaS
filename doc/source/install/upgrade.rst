@@ -10,6 +10,24 @@ The release ``3.0.0`` drops the support for the training endpoints of the API. B
 upgrading your code and deploying into production please ensure that you are no
 longer using the training endpoints of the API.
 
+The release ``3.0.0`` also replaces `aiohttp <https://docs.aiohttp.org/>`_ with
+`FastAPI <https://fastapi.tiangolo.com/>`_ as the web framework. The model API
+(``get_metadata``, ``warm``, ``get_predict_args``, ``predict`` and ``schema``)
+does not change, uploaded files are still passed as
+:py:class:`deepaas.model.v2.wrapper.UploadedFile` objects and arguments can
+still be sent in the query string or as form fields. However, please take into
+account the following:
+
+* ``aiohttp`` is no longer installed with DEEPaaS. If your model imports
+  anything from it (e.g. ``from aiohttp.web import HTTPBadRequest``), you must
+  remove those imports or add ``aiohttp`` to your own requirements.
+* The ``workers`` and ``client-max-size`` options are deprecated and ignored.
+* The documentation is served at ``/docs`` (Swagger UI) and ``/redoc``
+  (ReDoc), and the OpenAPI specification at ``/openapi.json``
+  (``/swagger.json`` is still served for compatibility).
+* Requesting a media type that the model does not declare in its ``accept``
+  argument returns a ``406 Not Acceptable`` error.
+
 Upgrading to version 2.0.0
 --------------------------
 
