@@ -14,6 +14,7 @@
 # License for the specific language governing permissions and limitations
 # under the License.
 
+import types
 import uuid
 
 import marshmallow
@@ -196,6 +197,32 @@ def test_loading_ok(mocks):
 
     m = deepaas.model.v2.MODEL
     assert isinstance(m, v2_wrapper.ModelWrapper)
+
+
+@pytest.mark.parametrize(
+    "plugin",
+    [
+        types.SimpleNamespace(name="module"),
+        types.ModuleType("fake_model_module"),
+    ],
+)
+def test_loading_non_class_entry_point(plugin, mocks, monkeypatch):
+    monkeypatch.setattr(deepaas.model.v2, "MODEL", None)
+    monkeypatch.setattr(
+        deepaas.model.loading,
+        "get_model_by_name",
+        lambda name, version: plugin,
+    )
+    deepaas.model.v2.load_model()
+
+    assert deepaas.model.v2.MODEL.model_obj is plugin
+
+
+def test_loading_class_entry_point(mocks, monkeypatch):
+    monkeypatch.setattr(deepaas.model.v2, "MODEL", None)
+    deepaas.model.v2.load_model()
+
+    assert isinstance(deepaas.model.v2.MODEL.model_obj, fake_v2_model.TestModel)
 
 
 def test_loading_ok_singleton(mocks, monkeypatch):
