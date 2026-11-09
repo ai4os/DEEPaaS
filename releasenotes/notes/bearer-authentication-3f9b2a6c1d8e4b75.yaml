@@ -1,0 +1,6 @@
+---
+features:
+  - |
+    Add optional bearer token authentication. If the ``auth_bearer_token``
+    option is set, the model endpoints (including predictions) and the debug
+    endpoint require an ``Authorization: Bearer <token>`` header.

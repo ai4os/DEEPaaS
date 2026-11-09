@@ -22,7 +22,7 @@ from deepaas.api.v2 import debug as v2_debug
 from deepaas.api.v2 import models as v2_model
 from deepaas.api.v2 import predict as v2_predict
 from deepaas.api.v2 import responses
-
+from deepaas import auth
 from deepaas import log
 
 CONF = cfg.CONF
@@ -39,9 +39,18 @@ def get_app():
 
     v2_debug.setup_debug()
 
-    APP.include_router(v2_debug.get_router(), tags=["debug"])
-    APP.include_router(v2_model.get_router(), tags=["models"])
-    APP.include_router(v2_predict.get_router(), tags=["predict"])
+    # NOTE(aloga): the version endpoints are public, but the model and debug
+    # endpoints require authentication if it has been enabled.
+    auth_dependencies = [auth.get_auth_dependency()]
+    APP.include_router(
+        v2_debug.get_router(), tags=["debug"], dependencies=auth_dependencies
+    )
+    APP.include_router(
+        v2_model.get_router(), tags=["models"], dependencies=auth_dependencies
+    )
+    APP.include_router(
+        v2_predict.get_router(), tags=["predict"], dependencies=auth_dependencies
+    )
 
     APP.add_api_route(
         "/",
