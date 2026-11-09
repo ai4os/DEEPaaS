@@ -198,8 +198,6 @@ def run_tests(old_api_url, new_api_url, model_name, debug=False):
 # For pytest integration
 def test_api_endpoints(old_api_url, new_api_url, model_name, debug=False):
     """Pytest-compatible test function."""
-    import pytest
-
     # Retrieve OpenAPI specifications
     old_openapi_spec = get_openapi_spec(old_api_url)
     new_openapi_spec = get_openapi_spec(new_api_url)
@@ -211,12 +209,10 @@ def test_api_endpoints(old_api_url, new_api_url, model_name, debug=False):
     for endpoint in common_paths:
         # We will loop through all HTTP methods available in the old API
         for method in ["GET", "POST", "PUT", "DELETE"]:
-            try:
-                assert test_endpoint(
-                    old_api_url, new_api_url, method, endpoint, debug
-                )  # nosec
-            except AssertionError as e:
-                pytest.fail(str(e))
+            # NOTE: pytest reports a failed assertion as a test failure
+            assert test_endpoint(
+                old_api_url, new_api_url, method, endpoint, debug
+            )  # nosec
 
 
 def main():
