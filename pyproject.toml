@@ -53,6 +53,9 @@ pydantic = "^2.7.0"
 starlette = ">=0.37.2"
 uvicorn = ">=0.29.0"
 python-multipart = ">=0.0.9"
+# NOTE(aloga): deprecated, only kept for the models that raise aiohttp web
+# exceptions, as documented for DEEPaaS 2.x.
+aiohttp = "^3.9.5"
 requests = "^2.31.0"
 
 

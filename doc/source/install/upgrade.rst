@@ -18,9 +18,12 @@ does not change, uploaded files are still passed as
 still be sent in the query string or as form fields. However, please take into
 account the following:
 
-* ``aiohttp`` is no longer installed with DEEPaaS. If your model imports
-  anything from it (e.g. ``from aiohttp.web import HTTPBadRequest``), you must
-  remove those imports or add ``aiohttp`` to your own requirements.
+* ``aiohttp`` is still installed with DEEPaaS for compatibility, but it is
+  deprecated and it will be removed in a future release. If your model raises
+  ``aiohttp`` web exceptions (e.g. ``from aiohttp.web import HTTPBadRequest``),
+  raise :py:class:`fastapi.HTTPException` instead (e.g.
+  ``raise fastapi.HTTPException(status_code=400, detail="Invalid input")``),
+  or add ``aiohttp`` to your own requirements.
 * The ``workers`` and ``client-max-size`` options are deprecated and ignored.
 * ``oslo.config`` is no longer used. The command line options and the
   configuration files are the same, but the ``OS_DEFAULT__<OPTION>``
