@@ -157,6 +157,10 @@ def pydantic_from_marshmallow(
         pyd_type = get_pydantic_type(field)
 
         description = field.metadata.get("description")
+        # Keep the format (e.g. "password"), as clients use it to render values
+        extra = None
+        if field.metadata.get("format"):
+            extra = {"format": field.metadata["format"]}
 
         if field.default:
             default = field.default
@@ -176,6 +180,7 @@ def pydantic_from_marshmallow(
             default = field_cls(
                 ...,
                 description=description,
+                json_schema_extra=extra,
                 title=field_name,
                 serialization_alias=field_name,
             )
@@ -189,6 +194,7 @@ def pydantic_from_marshmallow(
             else:
                 default = field_cls(
                     description=description,
+                    json_schema_extra=extra,
                     title=field_name,
                     serialization_alias=field_name,
                 )
@@ -196,6 +202,7 @@ def pydantic_from_marshmallow(
             default = field_cls(
                 description=description,
                 default=default,
+                json_schema_extra=extra,
                 title=field_name,
                 serialization_alias=field_name,
             )
