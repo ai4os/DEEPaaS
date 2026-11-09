@@ -17,7 +17,9 @@
 import collections
 import contextlib
 import io
+import warnings
 
+import fastapi
 import marshmallow
 import starlette.concurrency
 
@@ -81,6 +83,33 @@ UploadedFile.__new__.__defaults__ = (None, None, None, None)
 ReturnedFile.__new__.__defaults__ = (None, None, None, None)
 
 
+def _from_aiohttp_error(error):
+    """Convert an aiohttp HTTP error raised by a model to a FastAPI one.
+
+    In DEEPaaS 2.x models were told to raise aiohttp web exceptions (e.g.
+    ``aiohttp.web.HTTPBadRequest``) to return HTTP errors, so we keep
+    supporting them (deprecated).
+
+    :returns: a ``fastapi.HTTPException``, or ``None`` if the error is not an
+        aiohttp HTTP error.
+    """
+    try:
+        import aiohttp.web
+    except ImportError:
+        return None
+
+    if not isinstance(error, aiohttp.web.HTTPException):
+        return None
+
+    warnings.warn(
+        "Raising aiohttp web exceptions from models is deprecated, raise "
+        "fastapi.HTTPException instead.",
+        DeprecationWarning,
+        stacklevel=2,
+    )
+    return fastapi.HTTPException(status_code=error.status, detail=error.reason)
+
+
 class ModelWrapper(object):
     """Class that will wrap the loaded models before exposing them.
 
@@ -142,7 +171,14 @@ class ModelWrapper(object):
         except (AttributeError, NotImplementedError):
             detail = f"Model '{name}' does not implement this functionality"
             raise exceptions.ModelMethodNotImplementedError(detail=detail)
+        except fastapi.HTTPException:
+            # The model wants to return a specific HTTP error
+            raise
         except Exception as e:
+            http_error = _from_aiohttp_error(e)
+            if http_error is not None:
+                raise http_error
+
             LOG.error(
                 "An exception has happened when calling method on " "'%s' model." % name
             )

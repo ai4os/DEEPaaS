@@ -28,6 +28,7 @@ import os
 import sys
 import time
 
+import aiohttp.web
 import fastapi
 from fastapi.testclient import TestClient
 import httpx
@@ -768,4 +769,48 @@ class TestResponseValidation:
     )
     def test_invalid_response(self, client, monkeypatch, response):
         r = self._post(client, monkeypatch, response)
+        assert r.status_code == 500
+
+
+# ---------------------------------------------------------------------------
+# HTTP errors raised by models
+# ---------------------------------------------------------------------------
+
+
+class TestModelHTTPErrors:
+    """Models can raise HTTP errors to return them to the client."""
+
+    def _post(self, client, monkeypatch, error):
+        def predict(**kwargs):
+            raise error
+
+        monkeypatch.setattr(model.V2_MODEL.model_obj, "predict", predict)
+        return client.post(
+            f"/v2/models/{TEST_MODEL_NAME}/predict/",
+            files={"data": ("test.bin", io.BytesIO(b"dummy"), "text/plain")},
+            data={"parameter": "1"},
+        )
+
+    def test_fastapi_error(self, client, monkeypatch):
+        error = fastapi.HTTPException(status_code=400, detail="Invalid input")
+        r = self._post(client, monkeypatch, error)
+        assert r.status_code == 400
+        assert r.json()["detail"] == "Invalid input"
+
+    @pytest.mark.parametrize(
+        "error,status",
+        [
+            (aiohttp.web.HTTPBadRequest(reason="Invalid input"), 400),
+            (aiohttp.web.HTTPNotFound(reason="Invalid input"), 404),
+            (aiohttp.web.HTTPServiceUnavailable(reason="Invalid input"), 503),
+        ],
+    )
+    def test_aiohttp_error(self, client, monkeypatch, error, status):
+        with pytest.warns(DeprecationWarning, match="aiohttp"):
+            r = self._post(client, monkeypatch, error)
+        assert r.status_code == status
+        assert r.json()["detail"] == "Invalid input"
+
+    def test_other_error(self, client, monkeypatch):
+        r = self._post(client, monkeypatch, ValueError("boom"))
         assert r.status_code == 500
