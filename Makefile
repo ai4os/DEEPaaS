@@ -12,7 +12,9 @@ help:
 	@echo '   make setup      generate a virtualenv and install DEEPaaS inside it '
 	@echo '   make develop    generate a virtualenv and install DEEPaaS inside it '
 	@echo '	                  in develop mode (i.e. pip install -e )              '
-	@echo '   make run        execute the API service from the virtualenv         '
+	@echo '   make demo       install the AI4OS demo application in the virtualenv'
+	@echo '   make run        execute the API service from the virtualenv, serving'
+	@echo '                   the demo application                                '
 	@echo '   make regenerate regenerate the virtualenv                           '
 	@echo '   make clean      cleanup the existing virtualenv                     '
 	@echo '                                                                       '
@@ -34,17 +36,25 @@ develop: $(VIRTUALENV)
 #
 regenerate: | clean $(VIRTUALENV)
 
-$(VIRTUALENV): requirements.txt
+$(VIRTUALENV):
 	@echo 'D> Creating $(VIRTUALENV)...'
-	virtualenv --python=python3 $(VIRTUALENV)
-	. $(VIRTUALENV)/bin/activate; pip install -r requirements.txt
+	python3 -m venv $(VIRTUALENV)
 
 .PHONY: clean 
 clean:
 	@echo 'D> Deleting $(VIRTUALENV)...'
 	rm -rf $(VIRTUALENV)
 
+# The demo application only needs a few of its dependencies to be served, and
+# it has to be installed in editable mode, as it reads its metadata from its
+# source tree.
+.PHONY: demo
+demo: $(VIRTUALENV)
+	. $(VIRTUALENV)/bin/activate; pip install --no-deps --src $(VIRTUALENV)/src \
+		-e git+https://github.com/ai4os-hub/ai4os-demo-app#egg=ai4os-demo-app
+	. $(VIRTUALENV)/bin/activate; pip install aiohttp tensorboardX mlflow-skinny pyyaml setuptools
+
 .PHONY: run 
-run: setup $(VIRTUALENV)
+run: setup demo $(VIRTUALENV)
 	@echo 'D> Running DEEPaaS inside $(VIRTUALENV)'
 	. $(VIRTUALENV)/bin/activate; deepaas-run
