@@ -248,3 +248,26 @@ def test_loading_error(monkeypatch):
     )
     with pytest.raises(exceptions.NoModelsAvailable):
         deepaas.model.v2.load_model()
+
+
+def test_wrapper_warm(mocks):
+    class Model(object):
+        warmed = False
+
+        def warm(self):
+            self.warmed = True
+
+    m = Model()
+    v2_wrapper.ModelWrapper("test", m).warm()
+    assert m.warmed
+
+
+class _NotImplementedWarm(object):
+    def warm(self):
+        raise NotImplementedError()
+
+
+@pytest.mark.parametrize("model_obj", [object(), _NotImplementedWarm()])
+def test_wrapper_warm_not_implemented(mocks, model_obj):
+    # Models without warm, or raising NotImplementedError, can be served
+    v2_wrapper.ModelWrapper("test", model_obj).warm()
