@@ -244,7 +244,9 @@ class TestOpenAPI:
         assert set(schema["properties"]) == files
         assert set(schema["required"]) == files
         image = schema["properties"]["demo_image"]
-        assert image["format"] == "binary"
+        # FastAPI documents files with the binary format or, since 0.133 (as
+        # recommended by OpenAPI 3.1), with a content media type
+        assert image.get("format") == "binary" or "contentMediaType" in image
         assert image["description"] == "test image upload"
 
     def test_response_schema(self, client, operation):
