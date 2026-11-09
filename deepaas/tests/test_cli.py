@@ -136,9 +136,7 @@ def test_model_name(models, capsys):
 
 
 def test_model_name_from_environment(models, capsys, monkeypatch):
-    models["other"] = types.SimpleNamespace(
-        get_metadata=lambda: {"name": "other"}, get_predict_args=lambda: {}
-    )
+    models["other"] = types.SimpleNamespace(get_metadata=lambda: {"name": "other"})
     monkeypatch.setenv("DEEPAAS_V2_MODEL", "other")
     cli.main(["get_metadata"])
     assert json.loads(capsys.readouterr().out) == {"name": "other"}
@@ -172,3 +170,23 @@ def test_module_models_are_not_instantiated(models, capsys):
     models["module"].get_predict_args = lambda: {}
     cli.main(["get_metadata"])
     assert json.loads(capsys.readouterr().out) == {"name": "module"}
+
+
+def _no_args():
+    raise NotImplementedError()
+
+
+@pytest.mark.parametrize(
+    "model",
+    [
+        types.SimpleNamespace(get_metadata=lambda: {"name": "other"}),
+        types.SimpleNamespace(
+            get_metadata=lambda: {"name": "other"}, get_predict_args=_no_args
+        ),
+    ],
+)
+def test_model_without_predict_args(models, capsys, model):
+    models.clear()
+    models["other"] = model
+    cli.main(["get_metadata"])
+    assert json.loads(capsys.readouterr().out) == {"name": "other"}
