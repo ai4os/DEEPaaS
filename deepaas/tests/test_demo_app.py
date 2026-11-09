@@ -247,6 +247,15 @@ class TestOpenAPI:
         assert image["format"] == "binary"
         assert image["description"] == "test image upload"
 
+    def test_response_schema(self, client, operation):
+        content = operation["responses"]["200"]["content"]["application/json"]
+        ref = content["schema"]["$ref"].split("/")[-1]
+        assert ref == "ModelPredictionResponse"
+        schema = client.get("/openapi.json").json()["components"]["schemas"][ref]
+        properties = schema["properties"]
+        assert properties["demo_image"]["description"] == "image"
+        assert properties["demo_password"]["format"] == "password"
+
     def test_media_types(self, operation):
         content = operation["responses"]["200"]["content"]
         assert {"application/json", "application/zip", "image/*"} <= set(content)
