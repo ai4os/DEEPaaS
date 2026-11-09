@@ -118,7 +118,6 @@ def main():
         deepaas.extract_version(),
     )
 
-    print("FastAPI backend is still experimental.")
     print("Press Ctrl+C to stop the server.")
     try:
         app = api.get_fastapi_app(
