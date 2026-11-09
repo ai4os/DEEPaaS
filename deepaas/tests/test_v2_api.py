@@ -100,6 +100,13 @@ class TestRootEndpoint:
             for href in expected:
                 assert c.get(href).status_code == 200
 
+            # The v2 Swagger UI path redirects to the new one, if enabled
+            r = c.get("/api/api", follow_redirects=False)
+            if enable_doc:
+                assert r.headers["location"] == "/api/docs"
+            else:
+                assert r.status_code == 404
+
     def test_get_root_status(self, client):
         r = client.get("/")
         assert r.status_code == 200
@@ -723,3 +730,8 @@ class TestV2Paths:
         data = client.get("/v2/models/").json()
         href = data["models"][0]["links"][0]["href"]
         assert href == f"http://testserver/v2/models/{TEST_MODEL_NAME}/"
+
+    def test_v2_docs_path_redirects(self, client):
+        r = client.get("/api", follow_redirects=False)
+        assert r.status_code == 307
+        assert r.headers["location"] == "/docs"

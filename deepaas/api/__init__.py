@@ -103,6 +103,15 @@ def get_fastapi_app(
         tags=["version"],
     )
 
+    if enable_doc:
+        # NOTE(aloga): in v2 the Swagger UI was served at /api
+        docs_url = APP.docs_url
+
+        async def redirect_to_docs():
+            return fastapi.responses.RedirectResponse(url=docs_url)
+
+        APP.add_api_route(f"{base_path}/api", redirect_to_docs, include_in_schema=False)
+
     return APP
 
 
