@@ -1,0 +1,6 @@
+---
+fixes:
+  - |
+    In ``deepaas-cli``, the ``name`` attribute of the ``UploadedFile`` objects
+    passed to the model is now the name of the argument, as in the API,
+    instead of always being ``data``.

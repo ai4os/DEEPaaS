@@ -354,7 +354,7 @@ def main(argv=None):
             # create file object
             file_type = mimetypes.MimeTypes().guess_type(fpath)[0]
             file_obj = v2_wrapper.UploadedFile(
-                name="data",
+                name=farg,
                 filename=temp.name,
                 content_type=file_type,
                 original_filename=fpath,

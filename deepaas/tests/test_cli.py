@@ -20,6 +20,7 @@ import json
 import os
 import types
 
+from marshmallow import fields
 import pytest
 
 from deepaas.cmd import cli
@@ -206,3 +207,22 @@ def test_tmp_files_removed_on_error(models, data_file, monkeypatch):
     with pytest.raises(Exception, match="model error"):
         cli.main(["predict", "--data", data_file, "--parameter", "1"])
     assert not os.path.exists(received["data"].filename)
+
+
+def test_uploaded_file_name(models, data_file):
+    received = {}
+
+    class Model(object):
+        def get_predict_args(self):
+            return {
+                "image": fields.Field(metadata={"type": "file"}, required=True),
+            }
+
+        def predict(self, **kwargs):
+            received.update(kwargs)
+            return {}
+
+    models.clear()
+    models["model"] = Model
+    cli.main(["predict", "--image", data_file])
+    assert received["image"].name == "image"
