@@ -21,11 +21,11 @@ import typing
 
 import fastapi
 import fastapi.security
-from oslo_config import cfg
 
+from deepaas import config
 from deepaas import log
 
-CONF = cfg.CONF
+CONF = config.CONF
 LOG = log.getLogger(__name__)
 
 # NOTE(aloga): auto_error is disabled so that we can allow requests without

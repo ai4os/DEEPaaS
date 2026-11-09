@@ -27,6 +27,9 @@ from unittest import mock
 import pytest
 from fastapi.testclient import TestClient
 
+import os
+
+from deepaas import config
 import deepaas.api as api_module
 import deepaas.api.v2 as v2_module
 import deepaas.model as model_module
@@ -36,6 +39,22 @@ from deepaas.tests import fake_v2_model
 
 #: The model name that ``fake_v2_model.TestModel`` advertises.
 TEST_MODEL_NAME = "deepaas-test"
+
+
+@pytest.fixture(autouse=True)
+def isolated_config(monkeypatch):
+    """Isolate the configuration of each test.
+
+    Ignore the configuration files and environment variables of the machine
+    running the tests, and restore the default values after each test.
+    """
+    monkeypatch.setattr(config, "_get_default_config_dirs", lambda *a, **kw: [])
+    for var in list(os.environ):
+        if var.startswith((config.ENV_PREFIX, config.LEGACY_ENV_PREFIX)):
+            monkeypatch.delenv(var)
+    config.CONF.reset()
+    yield config.CONF
+    config.CONF.reset()
 
 
 def _reset_api_singletons():

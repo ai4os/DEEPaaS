@@ -18,9 +18,9 @@ import json
 
 import fastapi
 import fastapi.responses
-from oslo_config import cfg
 
 import deepaas
+from deepaas import config
 from deepaas.api import v2
 from deepaas.api.v2 import responses
 from deepaas import log
@@ -31,7 +31,7 @@ LOG = log.getLogger(__name__)
 APP = None
 VERSIONS = {}
 
-CONF = cfg.CONF
+CONF = config.CONF
 
 LINKS = """
 - [AI4EOSC Project website](https://ai4eosc.eu).
