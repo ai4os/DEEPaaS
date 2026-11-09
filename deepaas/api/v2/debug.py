@@ -61,7 +61,7 @@ def setup_debug():
     if CONF.debug_endpoint:
         DEBUG_STREAM = io.StringIO()
 
-        logger = log.getLogger("deepaas")
+        logger = log.LOG
         hdlr = logging.StreamHandler(DEBUG_STREAM)
         hdlr.setFormatter(
             logging.Formatter("%(asctime)s - %(name)s - %(levelname)s - %(message)s")

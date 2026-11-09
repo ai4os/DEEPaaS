@@ -23,7 +23,9 @@ model.  The ``client`` fixture is provided by ``conftest.py``.
 
 import asyncio
 import io
+import logging
 import os
+import sys
 import time
 
 import fastapi
@@ -35,7 +37,10 @@ import pytest
 import starlette.datastructures
 
 from deepaas import api as api_module
+from deepaas.api.v2 import debug as v2_debug
 from deepaas.api.v2 import predict as v2_predict
+from deepaas import config
+from deepaas import log
 from deepaas import model
 from deepaas.model.v2 import wrapper as v2_wrapper
 from deepaas.tests.conftest import TEST_MODEL_NAME
@@ -311,6 +316,36 @@ class TestDebugEndpoint:
         # Debug is not enabled in the test app, so we expect 204 No Content.
         r = client.get("/v2/debug/")
         assert r.status_code == 204
+
+    @pytest.fixture
+    def debug_enabled(self, monkeypatch):
+        """Enable the debug endpoint, restoring the global state afterwards."""
+        logger = logging.getLogger("deepaas")
+        handlers = list(logger.handlers)
+        monkeypatch.setattr(sys, "stdout", sys.stdout)
+        monkeypatch.setattr(sys, "stderr", sys.stderr)
+        monkeypatch.setattr(v2_debug, "DEBUG_STREAM", None)
+        monkeypatch.setattr(config.CONF, "debug_endpoint", True)
+        yield
+        logger.handlers = handlers
+
+    def test_debug_enabled_returns_output(self, client, debug_enabled):
+        # NOTE: pytest replaces sys.stdout between the fixture setup and the
+        # test, so the debug endpoint has to be set up here.
+        with pytest.warns(RuntimeWarning, match="debug endpoint"):
+            v2_debug.setup_debug()
+
+        print("printed to stdout")
+        print("printed to stderr", file=sys.stderr)
+        log.getLogger("test").warning("logged message")
+
+        r = client.get("/v2/debug/")
+        assert r.status_code == 200
+        assert r.headers["content-type"].startswith("text/plain")
+        assert "printed to stdout" in r.text
+        assert "printed to stderr" in r.text
+        assert "logged message" in r.text
+        assert "DEBUG MARKER" in r.text
 
 
 # ---------------------------------------------------------------------------
