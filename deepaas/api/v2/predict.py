@@ -226,9 +226,7 @@ def _get_handler_for_model(model_name, model_obj):
                     )
 
                 if self.model_obj.has_schema:
-                    # FIXME(aloga): Validation does not work, as we are converting
-                    # from Marshmallow to Pydantic, check this as son as possible.
-                    # self.model_obj.validate_response(ret)
+                    self.model_obj.validate_response(ret)
                     return fastapi.responses.JSONResponse(
                         content=ret, background=cleanup
                     )

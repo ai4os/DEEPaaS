@@ -735,3 +735,37 @@ class TestV2Paths:
         r = client.get("/api", follow_redirects=False)
         assert r.status_code == 307
         assert r.headers["location"] == "/docs"
+
+
+# ---------------------------------------------------------------------------
+# Response validation
+# ---------------------------------------------------------------------------
+
+
+class TestResponseValidation:
+    """JSON predictions are validated against the model response schema."""
+
+    def _post(self, client, monkeypatch, response):
+        monkeypatch.setattr(
+            model.V2_MODEL.model_obj, "predict", lambda **kwargs: response
+        )
+        return client.post(
+            f"/v2/models/{TEST_MODEL_NAME}/predict/",
+            files={"data": ("test.bin", io.BytesIO(b"dummy"), "text/plain")},
+            data={"parameter": "1"},
+        )
+
+    def test_valid_response(self, client, monkeypatch):
+        r = self._post(client, monkeypatch, {"date": "2019-01-1", "labels": []})
+        assert r.status_code == 200
+
+    @pytest.mark.parametrize(
+        "response",
+        [
+            {"date": "2019-01-1", "labels": "not a list"},
+            {"date": "2019-01-1", "labels": [], "unknown": 1},
+        ],
+    )
+    def test_invalid_response(self, client, monkeypatch, response):
+        r = self._post(client, monkeypatch, response)
+        assert r.status_code == 500

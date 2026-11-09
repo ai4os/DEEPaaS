@@ -271,3 +271,21 @@ class _NotImplementedWarm(object):
 def test_wrapper_warm_not_implemented(mocks, model_obj):
     # Models without warm, or raising NotImplementedError, can be served
     v2_wrapper.ModelWrapper("test", model_obj).warm()
+
+
+def test_validate_partial_response(mocks):
+    class Model(object):
+        schema = {"foo": m_fields.Str(), "bar": m_fields.Int()}
+
+    wrapper = v2_wrapper.ModelWrapper("test", Model())
+    # As in v2, fields are not required unless declared so
+    assert wrapper.validate_response({"foo": "bar"})
+
+
+def test_validate_unknown_fields(mocks):
+    class Model(object):
+        schema = {"foo": m_fields.Str()}
+
+    wrapper = v2_wrapper.ModelWrapper("test", Model())
+    with pytest.raises(exceptions.ModelResponseValidationError):
+        wrapper.validate_response({"foo": "bar", "unknown": 1})
