@@ -61,6 +61,16 @@ class TestRootEndpoint:
             "http://testserver/openapi.json",
         ]
 
+    @pytest.mark.parametrize("warm", [True, False])
+    def test_app_warms_model(self, client, monkeypatch, warm):
+        warmed = []
+        monkeypatch.setattr(model.V2_MODEL.model_obj, "warm", lambda: warmed.append(1))
+        monkeypatch.setattr(config.CONF, "warm", warm)
+        monkeypatch.setattr(api_module, "APP", None)
+        monkeypatch.setattr(api_module, "VERSIONS", {})
+        api_module.get_fastapi_app()
+        assert warmed == ([1] if warm else [])
+
     @pytest.mark.parametrize(
         "enable_doc,expected",
         [
