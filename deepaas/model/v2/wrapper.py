@@ -20,6 +20,7 @@ import io
 
 import marshmallow
 from oslo_config import cfg
+import starlette.concurrency
 
 from deepaas.api.v2 import utils
 from deepaas import exceptions
@@ -231,9 +232,14 @@ class ModelWrapper(object):
             an error
         :raises HTTPException: If the call produces an
             error, already wrapped as a HTTPException
+
+        The model's ``predict`` method is a blocking call, therefore it is
+        executed in a worker thread so that the event loop is not blocked.
         """
         with self._catch_error():
-            return self.predict_wrap(self.model_obj.predict, *args, **kwargs)
+            return await starlette.concurrency.run_in_threadpool(
+                self.predict_wrap, self.model_obj.predict, *args, **kwargs
+            )
 
     def get_predict_args(self):
         """Add predict arguments into the predict parser.

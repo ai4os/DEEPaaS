@@ -21,10 +21,13 @@ real FastAPI application loaded with the ``fake_v2_model.TestModel`` dummy
 model.  The ``client`` fixture is provided by ``conftest.py``.
 """
 
+import asyncio
 import io
 import os
+import time
 
 import fastapi
+import httpx
 from marshmallow import fields as m_fields
 from marshmallow import validate
 import pytest
@@ -528,3 +531,59 @@ class TestPredictResponses:
         assert "accept" not in [
             p["name"] for p in spec["paths"][self.url]["post"].get("parameters", [])
         ]
+
+
+# ---------------------------------------------------------------------------
+# Concurrency
+# ---------------------------------------------------------------------------
+
+
+class TestPredictDoesNotBlock:
+    """Model predictions must not block the event loop."""
+
+    def test_predict_runs_outside_event_loop(self, client, monkeypatch):
+        received = {}
+
+        def predict(**kwargs):
+            try:
+                asyncio.get_running_loop()
+                received["in_loop"] = True
+            except RuntimeError:
+                received["in_loop"] = False
+            return {"date": "2019-01-1", "labels": []}
+
+        monkeypatch.setattr(model.V2_MODEL.model_obj, "predict", predict)
+        r = client.post(
+            f"/v2/models/{TEST_MODEL_NAME}/predict",
+            files={"data": ("test.bin", io.BytesIO(b"dummy"), "text/plain")},
+            data={"parameter": "1"},
+        )
+        assert r.status_code == 200
+        assert received["in_loop"] is False
+
+    async def test_concurrent_requests(self, test_app, monkeypatch):
+        def predict(**kwargs):
+            time.sleep(0.5)
+            return {"date": "2019-01-1", "labels": []}
+
+        monkeypatch.setattr(model.V2_MODEL.model_obj, "predict", predict)
+
+        transport = httpx.ASGITransport(app=test_app)
+        async with httpx.AsyncClient(
+            transport=transport, base_url="http://test"
+        ) as client:
+
+            async def slow():
+                return await client.post(
+                    f"/v2/models/{TEST_MODEL_NAME}/predict",
+                    files={"data": ("t.bin", b"dummy", "text/plain")},
+                    data={"parameter": "1"},
+                )
+
+            start = time.monotonic()
+            responses = await asyncio.gather(slow(), slow())
+            elapsed = time.monotonic() - start
+            assert [r.status_code for r in responses] == [200, 200]
+            # If predictions blocked the event loop, they would run one after
+            # the other, taking at least 1 second.
+            assert elapsed < 0.9
