@@ -172,8 +172,6 @@ async def test_dummy_model_with_wrapper(model, mocks):
 
     pargs = w.get_predict_args()
     for _arg, val in pargs.items():
-        print(val)
-        print(fields.Field)
         assert isinstance(val, fields.Field)
 
 
