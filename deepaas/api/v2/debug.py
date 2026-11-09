@@ -21,11 +21,11 @@ import sys
 import warnings
 
 import fastapi
-from oslo_config import cfg
 
+from deepaas import config
 from deepaas import log
 
-CONF = cfg.CONF
+CONF = config.CONF
 
 router = fastapi.APIRouter(prefix="/debug")
 

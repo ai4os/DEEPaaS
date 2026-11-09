@@ -16,8 +16,8 @@
 
 import fastapi
 import fastapi.responses
-from oslo_config import cfg
 
+from deepaas import config
 from deepaas.api.v2 import debug as v2_debug
 from deepaas.api.v2 import models as v2_model
 from deepaas.api.v2 import predict as v2_predict
@@ -25,7 +25,7 @@ from deepaas.api.v2 import responses
 from deepaas import auth
 from deepaas import log
 
-CONF = cfg.CONF
+CONF = config.CONF
 LOG = log.getLogger("deepaas.api.v2")
 
 # NOTE(aloga): singleton pattern for the FastAPI app

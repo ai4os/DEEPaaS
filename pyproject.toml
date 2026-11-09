@@ -43,14 +43,8 @@ deepaas-run = "deepaas.cmd.run:main"
 deepaas-cli = "deepaas.cmd.cli:main"
 deepaas-test-v2-v3 = "deepaas.cmd.deepaas_test_v2_v3:main"
 
-[tool.poetry.plugins] # Optional super table 
-
-[tool.poetry.plugins."oslo.config.opts"] 
-deepaas = "deepaas.opts:list_opts"
-
 [tool.poetry.dependencies]
 python = "^3.10"
-"oslo.config" = "^9.4.0"
 stevedore = "^5.2.0"
 marshmallow = "^3.21.3"
 webargs = "<6.0.0"

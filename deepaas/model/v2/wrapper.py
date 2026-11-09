@@ -19,16 +19,16 @@ import contextlib
 import io
 
 import marshmallow
-from oslo_config import cfg
 import starlette.concurrency
 
+from deepaas import config
 from deepaas.api.v2 import utils
 from deepaas import exceptions
 from deepaas import log
 
 LOG = log.getLogger(__name__)
 
-CONF = cfg.CONF
+CONF = config.CONF
 
 
 UploadedFile = collections.namedtuple(

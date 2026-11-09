@@ -18,7 +18,6 @@
 import pathlib
 import sys
 
-from oslo_config import cfg
 import uvicorn
 
 import deepaas
@@ -28,7 +27,7 @@ from deepaas.cmd import _shutdown
 from deepaas import config
 
 cli_opts = [
-    cfg.StrOpt(
+    config.Opt(
         "listen-ip",
         default="127.0.0.1",
         help="""
@@ -38,7 +37,7 @@ The DEEPaaS API service listens on this IP address for incoming
 requests.
 """,
     ),
-    cfg.PortOpt(
+    config.PortOpt(
         "listen-port",
         default=5000,
         help="""
@@ -49,7 +48,7 @@ requests.
 """,
     ),
     # Allow to define base path for the API
-    cfg.StrOpt(
+    config.Opt(
         "base-path",
         default="",
         help="""
@@ -61,8 +60,8 @@ should be set to /deepaas. Defaults to the root of the domain.
     ),
 ]
 
-CONF = cfg.CONF
-CONF.register_cli_opts(cli_opts)
+CONF = config.CONF
+CONF.register_opts(cli_opts)
 
 INTRO = """
          ##         ###

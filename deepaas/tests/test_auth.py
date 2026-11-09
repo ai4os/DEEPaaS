@@ -46,10 +46,9 @@ PUBLIC = [
 
 
 @pytest.fixture
-def token():
-    config.CONF.set_override("auth_bearer_token", TOKEN)
-    yield TOKEN
-    config.CONF.clear_override("auth_bearer_token")
+def token(monkeypatch):
+    monkeypatch.setattr(config.CONF, "auth_bearer_token", TOKEN)
+    return TOKEN
 
 
 def _request(client, method, path, headers=None):
