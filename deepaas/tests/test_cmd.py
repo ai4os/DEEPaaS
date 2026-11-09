@@ -22,6 +22,7 @@ import pytest
 
 from deepaas.cmd import run
 import deepaas.config
+from deepaas import exceptions
 
 
 @pytest.fixture
@@ -134,3 +135,19 @@ def test_doc_endpoint_disabled(run_main, fastapi_app_fixture):
 def test_logging_setup(run_main):
     run_main("--debug", "--log-file", "/tmp/foo.log")  # nosec
     deepaas.log.setup.assert_called_once_with("DEBUG", "/tmp/foo.log")  # nosec
+
+
+@pytest.mark.parametrize(
+    "exception,message",
+    [
+        (exceptions.NoModelsAvailable(), "No models found"),
+        (exceptions.MultipleModelsFound(), "--model-name"),
+        (exceptions.ModuleNotFoundError("Model 'foo' not found"), "'foo'"),
+    ],
+)
+def test_model_errors(run_main, fastapi_app_fixture, capsys, exception, message):
+    fastapi_app_fixture.side_effect = exception
+    with pytest.raises(SystemExit) as e:
+        run_main()
+    assert e.value.code == 1
+    assert message in capsys.readouterr().err

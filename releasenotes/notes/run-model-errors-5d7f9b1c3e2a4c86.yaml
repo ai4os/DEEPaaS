@@ -1,0 +1,6 @@
+---
+fixes:
+  - |
+    ``deepaas-run`` now prints a clear error message, instead of a traceback,
+    when there are no models installed, when several models are found and
+    none is selected, or when the selected model does not exist.
