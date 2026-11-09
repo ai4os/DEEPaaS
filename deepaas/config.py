@@ -109,6 +109,19 @@ INFO, WARNING, ERROR, CRITICAL.
 Specify the log file to use. If not specified, logs will be sent to stdout.
 """,
     ),
+    cfg.StrOpt(
+        "auth-bearer-token",
+        default="",
+        secret=True,
+        help="""
+Bearer token for API authentication. If set, the model endpoints (including
+predictions) and the debug endpoint will require an
+'Authorization: Bearer <token>' header. If not set, authentication is
+disabled. Avoid passing it in the command line, as it will be visible in the
+process list: use a configuration file or the OS_DEFAULT__AUTH_BEARER_TOKEN
+environment variable instead.
+""",
+    ),
 ]
 
 CONF = cfg.CONF
