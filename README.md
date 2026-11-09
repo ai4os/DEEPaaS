@@ -33,9 +33,11 @@ The best way to quickly try the DEEPaaS API is through:
     make run
 
 This command will install a virtualenv (in the `virtualenv` directory) with
-DEEPaaS and all its dependencies and will run the DEEPaaS REST API, listening
-on `127.0.0.1:5000`. If you browse to `http://127.0.0.1:5000` you will get the
-Swagger documentation page (i.e. the Swagger web UI).
+DEEPaaS and all its dependencies, together with the [AI4OS demo
+application](https://github.com/ai4os-hub/ai4os-demo-app) as the model to
+serve, and will run the DEEPaaS REST API, listening on `127.0.0.1:5000`. If you
+browse to `http://127.0.0.1:5000/docs` you will get the Swagger documentation
+page (i.e. the Swagger web UI).
 
 ### Develop mode
 
