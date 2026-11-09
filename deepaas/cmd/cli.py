@@ -335,6 +335,7 @@ def main(argv=None):
         mp.set_start_method("spawn", force=True)
 
     # Create file wrapper for file args (if provided)
+    tmp_files = []
     for farg in file_args.get(method, []):
         if conf_vars.get(farg):
             fpath = conf_vars[farg]
@@ -343,6 +344,7 @@ def main(argv=None):
             # to be deleted by the application
             temp = tempfile.NamedTemporaryFile()
             temp.close()
+            tmp_files.append(temp.name)
             # copy original file into tmp file
             with open(fpath, "rb") as f:
                 with open(temp.name, "wb") as f_tmp:
@@ -363,6 +365,19 @@ def main(argv=None):
     # debug of input parameters
     LOG.debug("[DEBUG provided options, conf_vars]: {}".format(conf_vars))
 
+    try:
+        _run_method(method, model_obj, conf_vars, predict_args)
+    finally:
+        # remove the temporary copies of the input files
+        for tmp_file in tmp_files:
+            try:
+                os.remove(tmp_file)
+            except OSError:
+                pass
+
+
+def _run_method(method, model_obj, conf_vars, predict_args):
+    """Run the given method of the model, storing or printing its output."""
     if method == "get_metadata":
         meta = model_obj.get_metadata()
         meta_json = json.dumps(meta)

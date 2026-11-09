@@ -1,0 +1,5 @@
+---
+fixes:
+  - |
+    ``deepaas-cli`` now removes the temporary copies of the input files once
+    the method has been executed.
