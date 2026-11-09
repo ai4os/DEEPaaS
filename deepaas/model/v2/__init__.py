@@ -14,6 +14,8 @@
 # License for the specific language governing permissions and limitations
 # under the License.
 
+import inspect
+
 from deepaas import config
 from deepaas import exceptions
 from deepaas import log
@@ -27,6 +29,18 @@ CONF = config.CONF
 # Model registry
 MODEL = None
 MODEL_NAME = ""
+
+
+def _instantiate(plugin):
+    """Get the object that implements the model API from an entry point.
+
+    Entry points can point either to a module (e.g. ``package.module``) or to a
+    class (e.g. ``package.module:Class``). Classes are instantiated, whereas
+    modules (or any other object) are used as they are.
+    """
+    if inspect.isclass(plugin):
+        return plugin()
+    return plugin
 
 
 def load_model():
@@ -55,7 +69,7 @@ def load_model():
     try:
         MODEL = wrapper.ModelWrapper(
             model_name,
-            loading.get_model_by_name(model_name, "v2")(),
+            _instantiate(loading.get_model_by_name(model_name, "v2")),
         )
         MODEL_NAME = model_name
     except exceptions.ModuleNotFoundError:
