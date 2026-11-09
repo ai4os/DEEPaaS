@@ -311,11 +311,16 @@ def main(argv=None):
 
     # Once we know the model name,
     # we get arguments for predict as dictionaries
-    predict_args = _fields_to_dict(model_obj.get_predict_args())
+    try:
+        model_args = model_obj.get_predict_args()
+    except (AttributeError, NotImplementedError):
+        # The model does not define any argument
+        model_args = {}
+    predict_args = _fields_to_dict(model_args)
 
     # Find which of the arguments are going to be files
     file_args = {}
-    file_args["predict"] = _get_file_args(model_obj.get_predict_args())
+    file_args["predict"] = _get_file_args(model_args)
 
     # Now parse the complete command line
     namespace = _get_parser(predict_args).parse_args(argv)

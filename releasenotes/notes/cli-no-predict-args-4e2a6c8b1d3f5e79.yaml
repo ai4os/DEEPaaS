@@ -1,0 +1,5 @@
+---
+fixes:
+  - |
+    ``deepaas-cli`` no longer fails with models that do not implement the
+    ``get_predict_args`` method.
