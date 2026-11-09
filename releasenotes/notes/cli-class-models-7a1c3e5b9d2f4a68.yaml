@@ -1,0 +1,6 @@
+---
+fixes:
+  - |
+    ``deepaas-cli`` now instantiates the models whose entry point is a class
+    (``package.module:Class``), as the API does. Previously, the methods were
+    called on the class itself.

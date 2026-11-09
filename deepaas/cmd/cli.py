@@ -32,6 +32,7 @@ from marshmallow import fields
 from deepaas import config
 from deepaas import log
 from deepaas.model import loading
+import deepaas.model.v2
 from deepaas.model.v2 import wrapper as v2_wrapper
 
 CONF = config.CONF
@@ -160,10 +161,11 @@ def _get_model_name(model_name=None):
             )
             sys.exit(1)
 
-        return model_name, model_obj
+        return model_name, deepaas.model.v2._instantiate(model_obj)
 
     elif len(models) == 1:
-        return models.popitem()
+        model_name, model_obj = models.popitem()
+        return model_name, deepaas.model.v2._instantiate(model_obj)
 
     else:
         sys.stderr.write(
