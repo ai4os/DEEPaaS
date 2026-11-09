@@ -171,10 +171,7 @@ def _get_handler_for_model(model_name, model_obj):
     else:
         accept_choices, accept_default = [], "application/json"
 
-    pydantic_schema = utils.get_pydantic_schema_from_marshmallow_fields(
-        "PydanticSchema",
-        user_declared_args,
-    )
+    parse_arguments, openapi_parameters = utils.get_arguments_parser(user_declared_args)
 
     class Handler(object):
         """Class to handle the model metadata endpoints."""
@@ -189,11 +186,11 @@ def _get_handler_for_model(model_name, model_obj):
         async def predict(
             self,
             request: fastapi.Request,
-            args: pydantic_schema = fastapi.Depends(),  # noqa(B008)
+            kwargs: dict = fastapi.Depends(parse_arguments),  # noqa(B008)
         ):
             """Make a prediction given the input data."""
 
-            kwargs = args.model_dump(by_alias=True)
+            kwargs = dict(kwargs)
             accept = "application/json"
             if accept_field is not None:
                 accept = _negotiate_accept(
@@ -265,6 +262,7 @@ def _get_handler_for_model(model_name, model_obj):
                 methods=["POST"],
                 response_model=response,
                 responses=extra_responses,
+                openapi_extra={"parameters": openapi_parameters},
                 tags=["models", "predict"],
             )
 
