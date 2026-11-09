@@ -28,7 +28,7 @@ from deepaas.tests import fake_v2_model
 
 @pytest.fixture
 def models(monkeypatch):
-    models = {"deepaas-test": fake_v2_model.TestModel()}
+    models = {"deepaas-test": fake_v2_model.TestModel}
     monkeypatch.setattr(loading, "get_available_models", lambda v: dict(models))
     return models
 
@@ -157,3 +157,18 @@ def test_several_models(models, capsys):
         cli.main(["get_metadata"])
     assert e.value.code == 1
     assert "--model-name" in capsys.readouterr().err
+
+
+def test_class_models_are_instantiated(models, capsys):
+    cli.main(["get_metadata"])
+    # TestModel.get_metadata is an instance method, it fails on the class
+    assert json.loads(capsys.readouterr().out)["name"] == "deepaas-test"
+
+
+def test_module_models_are_not_instantiated(models, capsys):
+    models.clear()
+    models["module"] = types.ModuleType("module")
+    models["module"].get_metadata = lambda: {"name": "module"}
+    models["module"].get_predict_args = lambda: {}
+    cli.main(["get_metadata"])
+    assert json.loads(capsys.readouterr().out) == {"name": "module"}
