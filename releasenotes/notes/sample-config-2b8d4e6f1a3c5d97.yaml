@@ -1,0 +1,6 @@
+---
+other:
+  - |
+    A sample configuration file, documenting all the options and their
+    environment variables, can be generated with ``tox -e genconfig`` or
+    ``python -c "from deepaas import opts; print(opts.generate_sample())"``.

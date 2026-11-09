@@ -34,6 +34,7 @@ import configparser
 import dataclasses
 import glob
 import os
+import textwrap
 import typing
 import warnings
 
@@ -378,6 +379,34 @@ def _get_from_environment(opt):
         )
         return os.environ[var], f"environment variable {var}"
     return None, None
+
+
+def generate_sample(opts=None) -> str:
+    """Generate a sample configuration file for the given options."""
+    if opts is None:
+        opts = CONF.opts
+
+    lines = ["[DEFAULT]", ""]
+    for opt in opts:
+        help_ = " ".join(opt.help.split())
+        lines.extend("# " + line for line in textwrap.wrap(help_, 77))
+        meta = [f"{opt.type.__name__} value"]
+        if opt.choices:
+            meta.append(f"allowed values: {', '.join(map(str, opt.choices))}")
+        if opt.min is not None:
+            meta.append(f"minimum value: {opt.min}")
+        if opt.max is not None:
+            meta.append(f"maximum value: {opt.max}")
+        lines.append(f"# ({'; '.join(meta)})")
+        lines.append(f"# Environment variable: {opt.env_vars[0]}")
+        if opt.deprecated_reason:
+            lines.append(f"# DEPRECATED: {opt.deprecated_reason}")
+        default = opt.default
+        if isinstance(default, bool):
+            default = str(default).lower()
+        lines.append(f"#{opt.dest} = {default if default is not None else '<None>'}")
+        lines.append("")
+    return "\n".join(lines)
 
 
 opts = [

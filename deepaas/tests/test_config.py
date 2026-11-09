@@ -21,6 +21,7 @@ import os
 import pytest
 
 from deepaas import config
+from deepaas import opts as deepaas_opts
 
 CONF = config.CONF
 
@@ -245,3 +246,12 @@ def test_default_config_dirs():
     dirs = _DEFAULT_CONFIG_DIRS("deepaas")
     assert dirs[:2] == [os.path.expanduser("~/.deepaas"), os.path.expanduser("~")]
     assert dirs[-2:] == ["/etc/deepaas", "/etc"]
+
+
+def test_sample():
+    sample = deepaas_opts.generate_sample()
+    assert sample.startswith("[DEFAULT]")
+    for _, group in deepaas_opts.list_opts():
+        for opt in group:
+            assert f"#{opt.dest} = " in sample
+            assert f"# Environment variable: {opt.env_vars[0]}" in sample
