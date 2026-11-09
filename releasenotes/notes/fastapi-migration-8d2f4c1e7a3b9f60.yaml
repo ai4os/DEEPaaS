@@ -2,9 +2,7 @@
 upgrade:
   - |
     DEEPaaS now uses FastAPI instead of aiohttp. The model API does not
-    change, but ``aiohttp`` is no longer installed, so models importing it
-    (e.g. ``from aiohttp.web import HTTPBadRequest``) must remove those
-    imports or declare ``aiohttp`` as their own dependency.
+    change.
   - |
     Requesting (via the ``Accept`` header) a media type that the model does
     not declare in its ``accept`` argument now returns a 406 error.
