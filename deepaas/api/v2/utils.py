@@ -17,11 +17,15 @@
 import datetime
 import decimal
 import inspect
+import json
 import typing
 
 import fastapi
+import fastapi.encoders
+import fastapi.exceptions
 import marshmallow
 import marshmallow.fields
+import marshmallow.validate
 import pydantic
 
 
@@ -209,107 +213,195 @@ def pydantic_from_marshmallow(
     return ret
 
 
-def get_pydantic_schema_from_marshmallow_fields(
-    name: str,
-    fields: dict,
-):
-    """Convert marshmallow fields to a FastAPI-compatible dependency class.
+def _get_field_description(field):
+    return field.metadata.get("description")
 
-    Returns a class whose ``__init__`` carries the correct FastAPI
-    ``Form``/``File``/``Query`` ``FieldInfo`` defaults so that FastAPI's
-    dependency-injection machinery can locate each value in the right part
-    of the request (form body, file upload, or query string).
 
-    The returned class also exposes a ``model_dump(by_alias=False)`` method
-    that mirrors the Pydantic interface used in the predict handler.
+def _get_field_openapi_schema(field):
+    """Get the OpenAPI schema of a (non file) marshmallow field."""
+    try:
+        pyd_type = get_pydantic_type(field, optional=False)
+        schema = pydantic.TypeAdapter(pyd_type).json_schema()
+    except Exception:
+        schema = {}
+
+    default = field.load_default
+    if default is not marshmallow.missing and not callable(default):
+        schema["default"] = fastapi.encoders.jsonable_encoder(default)
+
+    validators = field.validators or []
+    for v in validators:
+        if isinstance(v, marshmallow.validate.OneOf):
+            schema["enum"] = list(v.choices)
+        elif isinstance(v, marshmallow.validate.Range):
+            if v.min is not None:
+                schema["minimum"] = v.min
+            if v.max is not None:
+                schema["maximum"] = v.max
+    if "enum" not in schema and field.metadata.get("enum"):
+        schema["enum"] = list(field.metadata["enum"])
+    if field.metadata.get("format"):
+        schema["format"] = field.metadata["format"]
+
+    return schema
+
+
+def _get_openapi_parameters(fields):
+    """Document the (non file) arguments as query parameters, as in v2."""
+    params = []
+    for name, field in fields.items():
+        param = {
+            "name": name,
+            "in": "query",
+            "required": bool(field.required),
+            "schema": _get_field_openapi_schema(field),
+        }
+        description = _get_field_description(field)
+        if description:
+            param["description"] = description
+        params.append(param)
+    return params
+
+
+def _get_raw_value(field, sources):
+    """Get the raw value of a field from the first source that contains it.
+
+    :param sources: list of multi-dict like objects (query, form) or dicts
+        (JSON body), in order of precedence.
     """
+    key = field.data_key or field.name
+    is_list = isinstance(field, marshmallow.fields.List)
+    for source in sources:
+        if key not in source:
+            continue
+        if is_list and hasattr(source, "getlist"):
+            values = source.getlist(key)
+            # Allow sending lists as a single JSON encoded value
+            if len(values) == 1 and isinstance(values[0], str):
+                try:
+                    decoded = json.loads(values[0])
+                except ValueError:
+                    pass
+                else:
+                    if isinstance(decoded, list):
+                        values = decoded
+            return values
+        value = source[key]
+        if isinstance(field, marshmallow.fields.Dict) and isinstance(value, str):
+            try:
+                value = json.loads(value)
+            except ValueError:
+                pass
+        return value
+    return marshmallow.missing
 
-    have_file_fields = check_for_file_fields(fields)
 
-    sig_params = [inspect.Parameter("self", inspect.Parameter.POSITIONAL_OR_KEYWORD)]
-    field_mapping = []  # [(sanitized_name, original_name), …]
+async def _get_request_sources(request):
+    """Get the request query string, form and JSON body, if any."""
+    sources = [request.query_params]
+    content_type = request.headers.get("content-type", "")
+    if content_type.startswith(
+        ("multipart/form-data", "application/x-www-form-urlencoded")
+    ):
+        form = await request.form()
+        sources.append(form)
+    elif content_type.startswith("application/json"):
+        try:
+            body = await request.json()
+        except ValueError:
+            body = None
+        if isinstance(body, dict):
+            sources.append(body)
+    return sources
 
-    for field_name, field in fields.items():
-        pyd_type = get_pydantic_type(field)
-        description = field.metadata.get("description")
 
-        has_load_default = field.load_default is not marshmallow.missing
-        default_val = field.load_default if has_load_default else None
+def _validation_error(error):
+    """Convert a marshmallow error to a FastAPI request validation error."""
+    errors = []
+    for name, messages in error.normalized_messages().items():
+        if isinstance(messages, dict):
+            messages = [f"{k}: {v}" for k, v in messages.items()]
+        elif not isinstance(messages, (list, tuple)):
+            messages = [messages]
+        errors.append(
+            {
+                "type": "value_error",
+                "loc": ("query", name),
+                "msg": " ".join(str(m) for m in messages),
+                "input": None,
+            }
+        )
+    return fastapi.exceptions.RequestValidationError(errors)
 
+
+def get_arguments_parser(fields: dict):
+    """Get a FastAPI dependency that parses the arguments declared by a model.
+
+    As in DEEPaaS v2, the arguments are deserialized and validated using the
+    marshmallow fields declared by the model, so that types, defaults and
+    validators (e.g. ``Range`` or ``OneOf``) behave exactly as before.
+    Arguments can be sent in the query string, as form fields or in a JSON
+    body (looked up in that order), and keep their original names. Files are
+    handled by FastAPI as multipart uploads.
+
+    :param fields: dictionary of marshmallow fields, as returned by the
+        model's ``get_predict_args``.
+    :returns: a tuple with the dependency (returning a dictionary with the
+        parsed arguments) and the OpenAPI definition of the parameters.
+    """
+    file_fields = {}
+    other_fields = {}
+    for name, field in fields.items():
         if is_file_field(field):
-            field_cls = fastapi.File
-        elif have_file_fields:
-            field_cls = fastapi.Form
+            file_fields[name] = field
         else:
-            field_cls = fastapi.Query
+            other_fields[name] = field
 
-        sanitized_name = sanitize_field_name(field_name)
-        field_mapping.append((sanitized_name, field_name))
+    schema = marshmallow.Schema.from_dict(other_fields)(unknown=marshmallow.EXCLUDE)
 
-        if is_file_field(field):
-            if field.required:
-                field_info = field_cls(..., description=description)
-            else:
-                # Optional file: a bare ``None`` default lets FastAPI accept
-                # a missing upload without raising a validation error.
-                field_info = None
+    params = [
+        inspect.Parameter(
+            "request",
+            inspect.Parameter.KEYWORD_ONLY,
+            annotation=fastapi.Request,
+        )
+    ]
+    file_names = {}
+    for name, field in file_fields.items():
+        param_name = f"file_{len(file_names)}"
+        file_names[param_name] = name
+        description = _get_field_description(field)
+        if field.required:
+            annotation = fastapi.UploadFile
+            default = fastapi.File(..., alias=name, description=description)
         else:
-            if field.required:
-                field_info = field_cls(
-                    ...,
-                    description=description,
-                    alias=field_name,
-                )
-            elif has_load_default:
-                field_info = field_cls(
-                    default_val,
-                    description=description,
-                    alias=field_name,
-                )
-            else:
-                field_info = field_cls(
-                    None,
-                    description=description,
-                    alias=field_name,
-                )
-
-        if field_info is None:
-            param = inspect.Parameter(
-                sanitized_name,
-                inspect.Parameter.POSITIONAL_OR_KEYWORD,
-                annotation=pyd_type,
+            annotation = typing.Optional[fastapi.UploadFile]
+            default = fastapi.File(None, alias=name, description=description)
+        params.append(
+            inspect.Parameter(
+                param_name,
+                inspect.Parameter.KEYWORD_ONLY,
+                annotation=annotation,
+                default=default,
             )
-        else:
-            param = inspect.Parameter(
-                sanitized_name,
-                inspect.Parameter.POSITIONAL_OR_KEYWORD,
-                default=field_info,
-                annotation=pyd_type,
-            )
-        sig_params.append(param)
+        )
 
-    def __init__(self, **kwargs):
-        for attr_name, attr_value in kwargs.items():
-            setattr(self, attr_name, attr_value)
+    async def parse_arguments(request, **files):
+        sources = await _get_request_sources(request)
+        data = {}
+        for field in schema.fields.values():
+            value = _get_raw_value(field, sources)
+            if value is not marshmallow.missing:
+                data[field.data_key or field.name] = value
+        try:
+            args = schema.load(data)
+        except marshmallow.ValidationError as e:
+            raise _validation_error(e)
 
-    __init__.__signature__ = inspect.Signature(sig_params)
+        for param_name, name in file_names.items():
+            args[name] = files.get(param_name)
+        return args
 
-    def model_dump(self, by_alias=False):
-        result = {}
-        # _field_mapping is a class attribute set in the type() call below;
-        # type(self) is used because this function is defined before the class
-        # is created, so there is no class name to reference directly.
-        for sanitized_name, orig_name in type(self)._field_mapping:
-            key = orig_name if by_alias else sanitized_name
-            result[key] = getattr(self, sanitized_name, None)
-        return result
+    parse_arguments.__signature__ = inspect.Signature(params)
 
-    return type(
-        name,
-        (),
-        {
-            "__init__": __init__,
-            "model_dump": model_dump,
-            "_field_mapping": field_mapping,
-        },
-    )
+    return parse_arguments, _get_openapi_parameters(other_fields)
