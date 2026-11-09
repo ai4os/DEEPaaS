@@ -202,3 +202,22 @@ def test_openapi(client):
     assert params["a_choice"]["schema"]["enum"] == ["a", "b"]
     assert params["a_list"]["schema"]["type"] == "array"
     assert params["password"]["schema"]["format"] == "password"
+
+
+def test_openapi_file_names():
+    client = _get_client(
+        {
+            "image": fields.Raw(required=True, metadata={"type": "file"}),
+            "other-file": fields.Raw(metadata={"type": "file"}),
+        }
+    )
+    spec = client.get("/openapi.json").json()
+    body = spec["paths"]["/"]["post"]["requestBody"]["content"]
+    ref = body["multipart/form-data"]["schema"]["$ref"].split("/")[-1]
+    properties = spec["components"]["schemas"][ref]["properties"]
+    # Files are documented with their names, so that clients send them right
+    assert "image" in properties
+
+    r = client.post("/", files={"image": ("a.txt", b"a")})
+    assert r.status_code == 200
+    assert r.json()["image"] == {"filename": "a.txt", "content": "a"}

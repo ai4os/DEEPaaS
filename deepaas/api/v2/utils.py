@@ -18,6 +18,7 @@ import datetime
 import decimal
 import inspect
 import json
+import keyword
 import typing
 
 import fastapi
@@ -365,7 +366,14 @@ def get_arguments_parser(fields: dict):
     ]
     file_names = {}
     for name, field in file_fields.items():
-        param_name = f"file_{len(file_names)}"
+        # NOTE(aloga): FastAPI documents the multipart fields with the name of
+        # the parameter (not with its alias), so use the argument name if it
+        # is a valid identifier, so that clients built from the OpenAPI spec
+        # (e.g. Swagger UI) send the files with the right name.
+        if name.isidentifier() and not keyword.iskeyword(name) and name != "request":
+            param_name = name
+        else:
+            param_name = f"file_{len(file_names)}"
         file_names[param_name] = name
         description = _get_field_description(field)
         if field.required:

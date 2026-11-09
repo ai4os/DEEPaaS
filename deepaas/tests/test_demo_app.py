@@ -236,10 +236,16 @@ class TestOpenAPI:
         assert params["demo_password"]["schema"]["format"] == "password"
         assert params["demo_list_of_floats"]["schema"]["type"] == "array"
 
-    def test_files(self, operation):
+    def test_files(self, client, operation):
         content = operation["requestBody"]["content"]
-        schema_ref = content["multipart/form-data"]["schema"]["$ref"]
-        assert schema_ref
+        ref = content["multipart/form-data"]["schema"]["$ref"].split("/")[-1]
+        schema = client.get("/openapi.json").json()["components"]["schemas"][ref]
+        files = {"demo_image", "demo_audio", "demo_video"}
+        assert set(schema["properties"]) == files
+        assert set(schema["required"]) == files
+        image = schema["properties"]["demo_image"]
+        assert image["format"] == "binary"
+        assert image["description"] == "test image upload"
 
     def test_media_types(self, operation):
         content = operation["responses"]["200"]["content"]
