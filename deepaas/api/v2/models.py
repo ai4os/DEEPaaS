@@ -89,12 +89,20 @@ def _get_handler_for_model(model_name, model_obj):
 
         def register_routes(self, router):
             """Register routes for the model in the router."""
+            # NOTE(aloga): v2 paths end with a slash, but we also serve them
+            # without it, instead of redirecting clients.
             router.add_api_route(
-                f"/{self.model_name}",
+                f"/{self.model_name}/",
                 self.get,
                 name="get_model/" + self.model_name,
                 summary="Return model's metadata",
                 tags=["models"],
+                response_model=responses.ModelMeta,
+            )
+            router.add_api_route(
+                f"/{self.model_name}",
+                self.get,
+                include_in_schema=False,
                 response_model=responses.ModelMeta,
             )
 

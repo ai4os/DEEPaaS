@@ -610,10 +610,11 @@ class TestPredictResponses:
 
     def test_openapi_documents_media_types(self, client):
         spec = client.get("/openapi.json").json()
-        content = spec["paths"][self.url]["post"]["responses"]["200"]["content"]
+        url = self.url + "/"
+        content = spec["paths"][url]["post"]["responses"]["200"]["content"]
         assert {"application/json", "text/plain", "image/png"} <= set(content)
         assert "accept" not in [
-            p["name"] for p in spec["paths"][self.url]["post"].get("parameters", [])
+            p["name"] for p in spec["paths"][url]["post"].get("parameters", [])
         ]
 
 
@@ -671,3 +672,54 @@ class TestPredictDoesNotBlock:
             # If predictions blocked the event loop, they would run one after
             # the other, taking at least 1 second.
             assert elapsed < 0.9
+
+
+# ---------------------------------------------------------------------------
+# v2 paths
+# ---------------------------------------------------------------------------
+
+
+class TestV2Paths:
+    """The v2 paths (with a trailing slash) are served without redirections."""
+
+    @pytest.mark.parametrize(
+        "path",
+        [
+            "/v2/",
+            "/v2/models/",
+            f"/v2/models/{TEST_MODEL_NAME}/",
+            f"/v2/models/{TEST_MODEL_NAME}",
+            "/v2/debug/",
+        ],
+    )
+    def test_get(self, client, path):
+        r = client.get(path, follow_redirects=False)
+        assert r.status_code in (200, 204)
+
+    @pytest.mark.parametrize(
+        "path",
+        [
+            f"/v2/models/{TEST_MODEL_NAME}/predict/",
+            f"/v2/models/{TEST_MODEL_NAME}/predict",
+        ],
+    )
+    def test_predict(self, client, path):
+        r = client.post(
+            path,
+            files={"data": ("test.bin", io.BytesIO(b"dummy"), "text/plain")},
+            data={"parameter": "1"},
+            follow_redirects=False,
+        )
+        assert r.status_code == 200
+
+    def test_documented_paths(self, client):
+        paths = set(client.get("/openapi.json").json()["paths"])
+        assert f"/v2/models/{TEST_MODEL_NAME}/" in paths
+        assert f"/v2/models/{TEST_MODEL_NAME}/predict/" in paths
+        assert f"/v2/models/{TEST_MODEL_NAME}" not in paths
+        assert f"/v2/models/{TEST_MODEL_NAME}/predict" not in paths
+
+    def test_model_self_link(self, client):
+        data = client.get("/v2/models/").json()
+        href = data["models"][0]["links"][0]["href"]
+        assert href == f"http://testserver/v2/models/{TEST_MODEL_NAME}/"

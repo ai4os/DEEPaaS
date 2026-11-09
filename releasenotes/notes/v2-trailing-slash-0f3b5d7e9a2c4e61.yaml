@@ -1,0 +1,7 @@
+---
+fixes:
+  - |
+    The v2 API paths are served as in previous versions, with a trailing slash
+    (e.g. ``POST /v2/models/<model>/predict/``), instead of redirecting
+    clients to the path without it. The paths without the trailing slash are
+    also accepted.

@@ -256,14 +256,23 @@ def _get_handler_for_model(model_name, model_obj):
                     406: {"description": "Requested media type not supported"},
                 }
 
+            # NOTE(aloga): v2 paths end with a slash, but we also serve them
+            # without it, instead of redirecting clients.
             router.add_api_route(
-                f"/{self.model_name}/predict",
+                f"/{self.model_name}/predict/",
                 self.predict,
                 methods=["POST"],
                 response_model=response,
                 responses=extra_responses,
                 openapi_extra={"parameters": openapi_parameters},
                 tags=["models", "predict"],
+            )
+            router.add_api_route(
+                f"/{self.model_name}/predict",
+                self.predict,
+                methods=["POST"],
+                response_model=response,
+                include_in_schema=False,
             )
 
     return Handler(model_name, model_obj)
