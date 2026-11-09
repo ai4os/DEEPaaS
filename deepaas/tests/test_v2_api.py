@@ -24,6 +24,9 @@ model.  The ``client`` fixture is provided by ``conftest.py``.
 import io
 import os
 
+import fastapi
+from marshmallow import fields as m_fields
+from marshmallow import validate
 import pytest
 import starlette.datastructures
 
@@ -383,3 +386,145 @@ class TestUploadedFiles:
         )
         assert r.status_code == 500
         assert not os.path.exists(received["data"].filename)
+
+
+# ---------------------------------------------------------------------------
+# Accept header and returned files
+# ---------------------------------------------------------------------------
+
+
+class TestAcceptNegotiation:
+    """The ``accept`` argument is taken from the ``Accept`` header."""
+
+    choices = ["application/json", "text/plain", "image/png"]
+
+    @pytest.mark.parametrize(
+        "header,expected",
+        [
+            (None, "application/json"),
+            ("", "application/json"),
+            ("*/*", "application/json"),
+            ("text/plain", "text/plain"),
+            ("image/png;q=0.9", "image/png"),
+            ("text/html, image/png, */*", "image/png"),
+            ("text/html, */*;q=0.8", "application/json"),
+        ],
+    )
+    def test_negotiate(self, header, expected):
+        assert (
+            v2_predict._negotiate_accept(header, self.choices, "application/json")
+            == expected
+        )
+
+    def test_negotiate_not_acceptable(self):
+        with pytest.raises(fastapi.HTTPException) as e:
+            v2_predict._negotiate_accept("text/html", self.choices, "application/json")
+        assert e.value.status_code == 406
+
+    def test_negotiate_no_choices(self):
+        assert v2_predict._negotiate_accept("text/html", [], "foo/bar") == "text/html"
+
+    def test_accept_choices_and_default(self):
+        field = m_fields.Str(
+            load_default="image/png",
+            validate=validate.OneOf(["application/json", "image/png"]),
+        )
+        choices, default = v2_predict._get_accept_choices(field)
+        assert choices == ["application/json", "image/png"]
+        assert default == "image/png"
+
+    def test_accept_choices_first_as_default(self):
+        field = m_fields.Str(validate=[validate.OneOf(["text/plain", "image/png"])])
+        assert v2_predict._get_accept_choices(field) == (
+            ["text/plain", "image/png"],
+            "text/plain",
+        )
+
+    @pytest.mark.parametrize(
+        "accept,filename,expected",
+        [
+            ("image/png", None, "image/png"),
+            ("image/*", "foo.jpg", "image/jpeg"),
+            ("image/*", "foo", "application/octet-stream"),
+            ("image/*", None, "application/octet-stream"),
+        ],
+    )
+    def test_get_media_type(self, accept, filename, expected):
+        assert v2_predict._get_media_type(accept, filename) == expected
+
+
+class TestPredictResponses:
+    """Responses depending on the ``Accept`` header and the model output."""
+
+    url = f"/v2/models/{TEST_MODEL_NAME}/predict"
+
+    def _post(self, client, **kwargs):
+        return client.post(
+            self.url,
+            files={"data": ("test.bin", io.BytesIO(b"dummy"), "text/plain")},
+            data={"parameter": "1"},
+            **kwargs,
+        )
+
+    def test_accept_any_returns_json(self, client):
+        r = self._post(client, headers={"accept": "*/*"})
+        assert r.status_code == 200
+        assert r.headers["content-type"] == "application/json"
+        assert "labels" in r.json()
+
+    def test_accept_text_plain(self, client):
+        r = self._post(client, headers={"accept": "text/plain"})
+        assert r.status_code == 200
+        assert r.headers["content-type"].startswith("text/plain")
+        assert r.text.startswith("data:image/png;base64,")
+
+    def test_accept_image_png(self, client):
+        r = self._post(client, headers={"accept": "image/png"})
+        assert r.status_code == 200
+        assert r.headers["content-type"] == "image/png"
+        assert r.content.startswith(b"\x89PNG")
+
+    def test_accept_not_supported(self, client):
+        r = self._post(client, headers={"accept": "text/html"})
+        assert r.status_code == 406
+
+    def test_model_receives_accept(self, client, monkeypatch):
+        received = {}
+
+        def predict(**kwargs):
+            received.update(kwargs)
+            return {"date": "2019-01-1", "labels": []}
+
+        monkeypatch.setattr(model.V2_MODEL.model_obj, "predict", predict)
+        self._post(client, headers={"accept": "*/*"})
+        assert received["accept"] == "application/json"
+
+    def test_returned_file(self, client, monkeypatch, tmp_path):
+        path = tmp_path / "result.png"
+        path.write_bytes(b"\x89PNG result")
+
+        def predict(**kwargs):
+            return open(path, "rb")
+
+        monkeypatch.setattr(model.V2_MODEL.model_obj, "predict", predict)
+        r = self._post(client, headers={"accept": "image/png"})
+        assert r.status_code == 200
+        assert r.headers["content-type"] == "image/png"
+        assert r.content == b"\x89PNG result"
+
+    def test_return_uploaded_file(self, client, monkeypatch):
+        def predict(**kwargs):
+            return open(kwargs["data"].filename, "rb")
+
+        monkeypatch.setattr(model.V2_MODEL.model_obj, "predict", predict)
+        r = self._post(client, headers={"accept": "image/png"})
+        assert r.status_code == 200
+        assert r.content == b"dummy"
+
+    def test_openapi_documents_media_types(self, client):
+        spec = client.get("/openapi.json").json()
+        content = spec["paths"][self.url]["post"]["responses"]["200"]["content"]
+        assert {"application/json", "text/plain", "image/png"} <= set(content)
+        assert "accept" not in [
+            p["name"] for p in spec["paths"][self.url]["post"].get("parameters", [])
+        ]

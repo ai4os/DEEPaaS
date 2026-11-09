@@ -14,6 +14,8 @@
 # License for the specific language governing permissions and limitations
 # under the License.
 
+import io
+import mimetypes
 import os
 import shutil
 import tempfile
@@ -21,6 +23,7 @@ import tempfile
 import fastapi
 import fastapi.encoders
 import fastapi.exceptions
+import marshmallow
 import starlette.background
 import starlette.datastructures
 
@@ -59,7 +62,9 @@ def _save_uploaded_files(kwargs):
     new_kwargs = {}
     for key, val in kwargs.items():
         if isinstance(val, starlette.datastructures.UploadFile):
-            fd, name = tempfile.mkstemp()
+            # Keep the extension, so that the file type can be guessed
+            suffix = os.path.splitext(val.filename or "")[1]
+            fd, name = tempfile.mkstemp(suffix=suffix)
             tmp_files.append(name)
             with os.fdopen(fd, "w+b") as f:
                 val.file.seek(0)
@@ -72,6 +77,68 @@ def _save_uploaded_files(kwargs):
             )
         new_kwargs[key] = val
     return new_kwargs, tmp_files
+
+
+JSON_MEDIA_TYPES = ("application/json", "*/*")
+
+
+def _get_accept_choices(accept_field):
+    """Get the media types that the model can produce, and the default one.
+
+    Models can declare an ``accept`` argument whose value is taken from the
+    ``Accept`` HTTP header of the request, as in DEEPaaS v2.
+
+    :returns: a tuple ``(choices, default)``.
+    """
+    choices = []
+    validators = accept_field.validate
+    if validators is not None:
+        if not isinstance(validators, (list, tuple)):
+            validators = [validators]
+        for v in validators:
+            choices.extend(getattr(v, "choices", []))
+
+    default = accept_field.load_default
+    if default is marshmallow.missing or default is None:
+        default = choices[0] if choices else "application/json"
+    return choices, default
+
+
+def _negotiate_accept(header, choices, default):
+    """Choose the media type that the model will produce.
+
+    :param header: value of the ``Accept`` header of the request.
+    :param choices: media types the model can produce (empty means any).
+    :param default: media type to use if the client accepts any.
+    :raises fastapi.HTTPException: if no acceptable media type is found.
+    """
+    if not header:
+        return default
+
+    accepted = [m.split(";")[0].strip() for m in header.split(",")]
+    accepted = [m for m in accepted if m]
+    for media_type in accepted:
+        if media_type == "*/*":
+            return default
+        if not choices or media_type in choices:
+            return media_type
+
+    raise fastapi.HTTPException(
+        status_code=406,
+        detail=f"Not acceptable, supported media types are: {', '.join(choices)}",
+    )
+
+
+def _get_media_type(accept, filename=None):
+    """Get a concrete media type for a response.
+
+    If the requested type contains wildcards (e.g. ``image/*``) we try to guess
+    the real one from the returned file name.
+    """
+    if "*" in accept:
+        guessed = mimetypes.guess_type(filename)[0] if filename else None
+        return guessed or "application/octet-stream"
+    return accept
 
 
 def _remove_files(files):
@@ -93,7 +160,16 @@ def _get_handler_for_model(model_name, model_obj):
 
     """
 
-    user_declared_args = model_obj.get_predict_args()
+    user_declared_args = dict(model_obj.get_predict_args())
+
+    # NOTE(aloga): the "accept" argument is special, as in v2 it is taken from
+    # the Accept header of the request, not from the request parameters.
+    accept_field = user_declared_args.pop("accept", None)
+    if accept_field is not None:
+        accept_choices, accept_default = _get_accept_choices(accept_field)
+    else:
+        accept_choices, accept_default = [], "application/json"
+
     pydantic_schema = utils.get_pydantic_schema_from_marshmallow_fields(
         "PydanticSchema",
         user_declared_args,
@@ -110,11 +186,21 @@ def _get_handler_for_model(model_name, model_obj):
             self.model_obj = model_obj
 
         async def predict(
-            self, args: pydantic_schema = fastapi.Depends()  # noqa(B008)
+            self,
+            request: fastapi.Request,
+            args: pydantic_schema = fastapi.Depends(),  # noqa(B008)
         ):
             """Make a prediction given the input data."""
 
-            kwargs, tmp_files = _save_uploaded_files(args.model_dump(by_alias=True))
+            kwargs = args.model_dump(by_alias=True)
+            accept = "application/json"
+            if accept_field is not None:
+                accept = _negotiate_accept(
+                    request.headers.get("accept"), accept_choices, accept_default
+                )
+                kwargs["accept"] = accept
+
+            kwargs, tmp_files = _save_uploaded_files(kwargs)
             # Temporary files are removed once the response has been sent, as
             # the model may return one of them (e.g. the uploaded image).
             cleanup = starlette.background.BackgroundTask(_remove_files, tmp_files)
@@ -123,7 +209,21 @@ def _get_handler_for_model(model_name, model_obj):
                 ret = await self.model_obj.predict(**kwargs)
 
                 if isinstance(ret, model.v2.wrapper.ReturnedFile):
-                    ret = open(ret.filename, "rb")
+                    return fastapi.responses.FileResponse(
+                        ret.filename,
+                        media_type=_get_media_type(accept, ret.filename),
+                        background=cleanup,
+                    )
+
+                if accept not in JSON_MEDIA_TYPES:
+                    if isinstance(ret, io.IOBase):
+                        with ret:
+                            ret = ret.read()
+                    return fastapi.responses.Response(
+                        content=ret,
+                        media_type=_get_media_type(accept),
+                        background=cleanup,
+                    )
 
                 if self.model_obj.has_schema:
                     # FIXME(aloga): Validation does not work, as we are converting
@@ -146,11 +246,22 @@ def _get_handler_for_model(model_name, model_obj):
 
             response = _get_model_response(self.model_name, self.model_obj)
 
+            # Document the media types that the model can produce, so that
+            # clients (e.g. Swagger UI) can choose them via the Accept header.
+            extra_responses = {}
+            other_types = [m for m in accept_choices if m not in JSON_MEDIA_TYPES]
+            if other_types:
+                extra_responses = {
+                    200: {"content": {m: {} for m in other_types}},
+                    406: {"description": "Requested media type not supported"},
+                }
+
             router.add_api_route(
                 f"/{self.model_name}/predict",
                 self.predict,
                 methods=["POST"],
                 response_model=response,
+                responses=extra_responses,
                 tags=["models", "predict"],
             )
 

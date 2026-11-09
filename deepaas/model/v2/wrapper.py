@@ -217,6 +217,7 @@ class ModelWrapper(object):
         """
         ret = predict_func(*args, **kwargs)
         if isinstance(ret, io.BufferedReader):
+            ret.close()
             ret = ReturnedFile(filename=ret.name)
 
         return ret
