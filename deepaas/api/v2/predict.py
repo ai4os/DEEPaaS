@@ -25,6 +25,7 @@ import fastapi.encoders
 import fastapi.exceptions
 import marshmallow
 import starlette.background
+import starlette.concurrency
 import starlette.datastructures
 
 from deepaas.api.v2 import responses
@@ -200,7 +201,9 @@ def _get_handler_for_model(model_name, model_obj):
                 )
                 kwargs["accept"] = accept
 
-            kwargs, tmp_files = _save_uploaded_files(kwargs)
+            kwargs, tmp_files = await starlette.concurrency.run_in_threadpool(
+                _save_uploaded_files, kwargs
+            )
             # Temporary files are removed once the response has been sent, as
             # the model may return one of them (e.g. the uploaded image).
             cleanup = starlette.background.BackgroundTask(_remove_files, tmp_files)
