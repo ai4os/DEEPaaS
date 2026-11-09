@@ -22,9 +22,14 @@ model.  The ``client`` fixture is provided by ``conftest.py``.
 """
 
 import io
+import os
 
 import pytest
+import starlette.datastructures
 
+from deepaas.api.v2 import predict as v2_predict
+from deepaas import model
+from deepaas.model.v2 import wrapper as v2_wrapper
 from deepaas.tests.conftest import TEST_MODEL_NAME
 
 # ---------------------------------------------------------------------------
@@ -298,3 +303,83 @@ class TestSpecEndpoints:
     def test_redoc_endpoint_accessible(self, client):
         r = client.get("/redoc")
         assert r.status_code == 200
+
+
+# ---------------------------------------------------------------------------
+# Uploaded files
+# ---------------------------------------------------------------------------
+
+
+class TestUploadedFiles:
+    """Uploaded files must reach the model as ``UploadedFile`` objects."""
+
+    def test_save_uploaded_files(self):
+        upload = starlette.datastructures.UploadFile(
+            io.BytesIO(b"some content"),
+            filename="original.txt",
+            headers=starlette.datastructures.Headers({"content-type": "text/plain"}),
+        )
+        kwargs, tmp_files = v2_predict._save_uploaded_files(
+            {"data": upload, "parameter": 1}
+        )
+        try:
+            assert kwargs["parameter"] == 1
+            f = kwargs["data"]
+            assert isinstance(f, v2_wrapper.UploadedFile)
+            assert f.name == "data"
+            assert f.content_type == "text/plain"
+            assert f.original_filename == "original.txt"
+            assert tmp_files == [f.filename]
+            with open(f.filename, "rb") as fd:
+                assert fd.read() == b"some content"
+        finally:
+            v2_predict._remove_files(tmp_files)
+        assert not os.path.exists(f.filename)
+
+    def test_remove_files_ignores_missing(self, tmp_path):
+        v2_predict._remove_files([str(tmp_path / "does-not-exist")])
+
+    def test_model_receives_uploaded_file(self, client, monkeypatch):
+        received = {}
+
+        def predict(**kwargs):
+            f = kwargs["data"]
+            received["data"] = f
+            received["exists"] = os.path.exists(f.filename)
+            with open(f.filename, "rb") as fd:
+                received["content"] = fd.read()
+            return {"date": "2019-01-1", "labels": []}
+
+        monkeypatch.setattr(model.V2_MODEL.model_obj, "predict", predict)
+
+        r = client.post(
+            f"/v2/models/{TEST_MODEL_NAME}/predict",
+            files={"data": ("test.bin", io.BytesIO(b"dummy"), "text/plain")},
+            data={"parameter": "1"},
+        )
+        assert r.status_code == 200
+        f = received["data"]
+        assert isinstance(f, v2_wrapper.UploadedFile)
+        assert f.original_filename == "test.bin"
+        assert f.content_type == "text/plain"
+        assert received["exists"]
+        assert received["content"] == b"dummy"
+        # Temporary files are removed once the response has been sent
+        assert not os.path.exists(f.filename)
+
+    def test_tmp_files_removed_on_error(self, client, monkeypatch):
+        received = {}
+
+        def predict(**kwargs):
+            received["data"] = kwargs["data"]
+            raise Exception("model error")
+
+        monkeypatch.setattr(model.V2_MODEL.model_obj, "predict", predict)
+
+        r = client.post(
+            f"/v2/models/{TEST_MODEL_NAME}/predict",
+            files={"data": ("test.bin", io.BytesIO(b"dummy"), "text/plain")},
+            data={"parameter": "1"},
+        )
+        assert r.status_code == 500
+        assert not os.path.exists(received["data"].filename)

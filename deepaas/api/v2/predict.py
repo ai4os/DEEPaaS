@@ -14,13 +14,22 @@
 # License for the specific language governing permissions and limitations
 # under the License.
 
+import os
+import shutil
+import tempfile
+
 import fastapi
 import fastapi.encoders
 import fastapi.exceptions
+import starlette.background
+import starlette.datastructures
 
 from deepaas.api.v2 import responses
 from deepaas.api.v2 import utils
+from deepaas import log
 from deepaas import model
+
+LOG = log.getLogger(__name__)
 
 
 def _get_model_response(model_name, model_obj):
@@ -33,6 +42,47 @@ def _get_model_response(model_name, model_obj):
 
 
 router = fastapi.APIRouter(prefix="/models")
+
+
+def _save_uploaded_files(kwargs):
+    """Store uploaded files on disk and pass them to the model as UploadedFile.
+
+    Models expect to receive uploaded files as
+    :py:class:`deepaas.model.v2.wrapper.UploadedFile` objects, whose
+    ``filename`` attribute points to a file in the local filesystem, so we
+    store every upload in a temporary file.
+
+    :returns: a tuple with the new arguments and the list of temporary files
+        created, that have to be removed once the request has been served.
+    """
+    tmp_files = []
+    new_kwargs = {}
+    for key, val in kwargs.items():
+        if isinstance(val, starlette.datastructures.UploadFile):
+            fd, name = tempfile.mkstemp()
+            tmp_files.append(name)
+            with os.fdopen(fd, "w+b") as f:
+                val.file.seek(0)
+                shutil.copyfileobj(val.file, f)
+            val = model.v2.wrapper.UploadedFile(
+                name=key,
+                filename=name,
+                content_type=val.content_type,
+                original_filename=val.filename,
+            )
+        new_kwargs[key] = val
+    return new_kwargs, tmp_files
+
+
+def _remove_files(files):
+    """Remove the given files, ignoring the ones that do not exist."""
+    for f in files:
+        try:
+            os.remove(f)
+        except FileNotFoundError:
+            pass
+        except OSError as e:
+            LOG.warning("Could not remove temporary file %s: %s", f, e)
 
 
 def _get_handler_for_model(model_name, model_obj):
@@ -64,20 +114,32 @@ def _get_handler_for_model(model_name, model_obj):
         ):
             """Make a prediction given the input data."""
 
-            ret = await self.model_obj.predict(**args.model_dump(by_alias=True))
+            kwargs, tmp_files = _save_uploaded_files(args.model_dump(by_alias=True))
+            # Temporary files are removed once the response has been sent, as
+            # the model may return one of them (e.g. the uploaded image).
+            cleanup = starlette.background.BackgroundTask(_remove_files, tmp_files)
 
-            if isinstance(ret, model.v2.wrapper.ReturnedFile):
-                ret = open(ret.filename, "rb")
+            try:
+                ret = await self.model_obj.predict(**kwargs)
 
-            if self.model_obj.has_schema:
-                # FIXME(aloga): Validation does not work, as we are converting from
-                # Marshmallow to Pydantic, check this as son as possible.
-                # self.model_obj.validate_response(ret)
-                return fastapi.responses.JSONResponse(content=ret)
+                if isinstance(ret, model.v2.wrapper.ReturnedFile):
+                    ret = open(ret.filename, "rb")
 
-            return fastapi.responses.JSONResponse(
-                content={"status": "OK", "predictions": ret}
-            )
+                if self.model_obj.has_schema:
+                    # FIXME(aloga): Validation does not work, as we are converting
+                    # from Marshmallow to Pydantic, check this as son as possible.
+                    # self.model_obj.validate_response(ret)
+                    return fastapi.responses.JSONResponse(
+                        content=ret, background=cleanup
+                    )
+
+                return fastapi.responses.JSONResponse(
+                    content={"status": "OK", "predictions": ret},
+                    background=cleanup,
+                )
+            except BaseException:
+                _remove_files(tmp_files)
+                raise
 
         def register_routes(self, router):
             """Register the routes in the router."""
