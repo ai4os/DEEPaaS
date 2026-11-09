@@ -1,0 +1,6 @@
+---
+fixes:
+  - |
+    JSON predictions are validated again against the response ``schema``
+    declared by the model, as in previous versions, returning a 500 error if
+    the response does not match it.

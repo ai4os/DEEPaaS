@@ -118,6 +118,10 @@ class ModelWrapper(object):
         else:
             self.has_schema = False
 
+        # NOTE(aloga): responses are validated with the marshmallow schema, as
+        # in v2, the pydantic schema is only used to document the response.
+        self._marshmallow_schema = schema
+
         # Now convert to pydantic schema...
         if schema is not None:
             try:
@@ -159,9 +163,12 @@ class ModelWrapper(object):
             raise exceptions.MissingModelSchemaError()
 
         try:
-            self.response_schema(**response)
+            errors = self._marshmallow_schema().validate(response)
         except Exception as e:
             LOG.exception(e)
+            raise exceptions.ModelResponseValidationError()
+        if errors:
+            LOG.error("Invalid response from model '%s': %s", self.name, errors)
             raise exceptions.ModelResponseValidationError()
 
         return True
