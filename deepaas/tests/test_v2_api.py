@@ -814,3 +814,12 @@ class TestModelHTTPErrors:
     def test_other_error(self, client, monkeypatch):
         r = self._post(client, monkeypatch, ValueError("boom"))
         assert r.status_code == 500
+
+
+def test_routers_do_not_accumulate_routes(client):
+    from deepaas.api.v2 import models as v2_models
+
+    for module in (v2_models, v2_predict):
+        first, second = module.get_router(), module.get_router()
+        assert first is not second
+        assert len(first.routes) == len(second.routes)

@@ -20,17 +20,6 @@ from deepaas.api.v2 import responses
 from deepaas import model
 
 
-router = fastapi.APIRouter(prefix="/models")
-
-
-@router.get(
-    "/",
-    summary="Return loaded models and its information",
-    description="Return list of DEEPaaS loaded models. In previous versions, DEEPaaS "
-    "could load several models and serve them on the same endpoint.",
-    tags=["models"],
-    response_model=responses.ModelList,
-)
 async def index_models(
     request: fastapi.Request,
 ):
@@ -120,6 +109,19 @@ def get_router() -> fastapi.APIRouter:
     """
     model_name = model.V2_MODEL_NAME
     model_obj = model.V2_MODEL
+
+    # NOTE(aloga): create a new router each time, so that routes are not
+    # accumulated if several applications are created (e.g. in tests)
+    router = fastapi.APIRouter(prefix="/models")
+    router.add_api_route(
+        "/",
+        index_models,
+        summary="Return loaded models and its information",
+        description="Return list of DEEPaaS loaded models. In previous versions, "
+        "DEEPaaS could load several models and serve them on the same endpoint.",
+        tags=["models"],
+        response_model=responses.ModelList,
+    )
 
     hdlr = _get_handler_for_model(model_name, model_obj)
     hdlr.register_routes(router)
