@@ -17,6 +17,7 @@
 """Tests for the deepaas-cli command."""
 
 import json
+import os
 import types
 
 import pytest
@@ -101,6 +102,8 @@ def test_predict(models, data_file, capsys, monkeypatch):
     assert f.name == "data"
     assert f.original_filename == data_file
     assert f.content_type == "text/plain"
+    # The temporary copy of the file is removed
+    assert not os.path.exists(f.filename)
 
 
 def test_predict_missing_required(models, data_file, capsys):
@@ -190,3 +193,16 @@ def test_model_without_predict_args(models, capsys, model):
     models["other"] = model
     cli.main(["get_metadata"])
     assert json.loads(capsys.readouterr().out) == {"name": "other"}
+
+
+def test_tmp_files_removed_on_error(models, data_file, monkeypatch):
+    received = {}
+
+    def predict(self, **kwargs):
+        received.update(kwargs)
+        raise Exception("model error")
+
+    monkeypatch.setattr(fake_v2_model.TestModel, "predict", predict)
+    with pytest.raises(Exception, match="model error"):
+        cli.main(["predict", "--data", data_file, "--parameter", "1"])
+    assert not os.path.exists(received["data"].filename)
