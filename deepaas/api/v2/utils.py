@@ -84,7 +84,6 @@ def is_custom_field(field):
     assume its a custom field"""
     ftype = type(field)
     if issubclass(ftype, marshmallow.fields.Field) and ftype not in FIELD_CONVERTERS:
-        print("     Custom field")
         return True
     return False
 
@@ -92,7 +91,6 @@ def is_custom_field(field):
 def is_file_field(field):
     """If this is a file field, we need to handle it differently."""
     if field is not None and field.metadata.get("type") == "file":
-        print("     File field")
         return True
     return False
 
@@ -123,7 +121,6 @@ def get_pydantic_type(field, optional=True):
         else:
             pyd_type = typing.Optional[pyd_type]
 
-    # FIXME(aloga): we need to handle enums
     return pyd_type
 
 

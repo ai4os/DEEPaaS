@@ -39,14 +39,17 @@ provide logging information about the API itself.
         "doc-endpoint",
         default=True,
         help="""
-Enable documentation endpoint. If set we will provide the documentation
-through the "/api" endpoint. Default is to provide this information.
+Enable documentation endpoints. If set we will provide the documentation
+through the "/docs" (Swagger UI) and "/redoc" (ReDoc) endpoints. Default is to
+provide this information.
 """,
     ),
     cfg.IntOpt(
         "workers",
         short="p",
         default=1,
+        deprecated_for_removal=True,
+        deprecated_reason="This option is ignored since DEEPaaS 3.0.0.",
         help="""
 Specify the number of workers to spawn. If using a CPU you probably want to
 increase this number, if using a GPU probably you want to leave it to 1.
@@ -57,6 +60,8 @@ increase this number, if using a GPU probably you want to leave it to 1.
         "client-max-size",
         default=0,
         min=0,
+        deprecated_for_removal=True,
+        deprecated_reason="This option is ignored since DEEPaaS 3.0.0.",
         help="""
 Client’s maximum size in a request, in bytes. If a POST request exceeds this
 value, it raises an HTTPRequestEntityTooLarge exception. If set to 0, no
