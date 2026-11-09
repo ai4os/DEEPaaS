@@ -304,4 +304,12 @@ def get_pydantic_schema_from_marshmallow_fields(
             result[key] = getattr(self, sanitized_name, None)
         return result
 
-    return type(name, (), {"__init__": __init__, "model_dump": model_dump, "_field_mapping": field_mapping})
+    return type(
+        name,
+        (),
+        {
+            "__init__": __init__,
+            "model_dump": model_dump,
+            "_field_mapping": field_mapping,
+        },
+    )

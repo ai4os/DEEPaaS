@@ -167,11 +167,7 @@ class TestModelMetaEndpoint:
 
     def test_get_model_self_link_points_to_model(self, client):
         data = client.get(f"/v2/models/{TEST_MODEL_NAME}").json()
-        self_links = [
-            link["href"]
-            for link in data["links"]
-            if link["rel"] == "self"
-        ]
+        self_links = [link["href"] for link in data["links"] if link["rel"] == "self"]
         assert len(self_links) >= 1
         assert TEST_MODEL_NAME in self_links[0]
 
