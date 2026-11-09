@@ -27,12 +27,14 @@ import os
 import time
 
 import fastapi
+from fastapi.testclient import TestClient
 import httpx
 from marshmallow import fields as m_fields
 from marshmallow import validate
 import pytest
 import starlette.datastructures
 
+from deepaas import api as api_module
 from deepaas.api.v2 import predict as v2_predict
 from deepaas import model
 from deepaas.model.v2 import wrapper as v2_wrapper
@@ -45,6 +47,43 @@ from deepaas.tests.conftest import TEST_MODEL_NAME
 
 class TestRootEndpoint:
     """Tests for ``GET /``."""
+
+    def test_get_root_links(self, client):
+        links = client.get("/").json()["links"]
+        assert [link["href"] for link in links] == [
+            "http://testserver/docs",
+            "http://testserver/redoc",
+            "http://testserver/openapi.json",
+        ]
+
+    @pytest.mark.parametrize(
+        "enable_doc,expected",
+        [
+            (
+                True,
+                [
+                    "http://testserver/api/docs",
+                    "http://testserver/api/redoc",
+                    "http://testserver/api/openapi.json",
+                ],
+            ),
+            (False, ["http://testserver/api/openapi.json"]),
+        ],
+    )
+    def test_get_root_links_with_base_path(
+        self, client, monkeypatch, enable_doc, expected
+    ):
+        # Build a new application, restoring the original singleton afterwards
+        monkeypatch.setattr(api_module, "APP", None)
+        monkeypatch.setattr(api_module, "VERSIONS", {})
+        app = api_module.get_fastapi_app(enable_doc=enable_doc, base_path="/api")
+        with TestClient(app) as c:
+            r = c.get("/api/")
+            assert r.status_code == 200
+            links = r.json()["links"]
+            assert [link["href"] for link in links] == expected
+            for href in expected:
+                assert c.get(href).status_code == 200
 
     def test_get_root_status(self, client):
         r = client.get("/")

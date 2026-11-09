@@ -112,29 +112,30 @@ async def get_root(request: fastapi.Request) -> fastapi.responses.JSONResponse:
         resp = await info(request)
         versions.append(json.loads(resp.body))
 
-    root = str(request.url_for("get_root"))
+    # NOTE(aloga): the documentation URLs already include the base path, so
+    # build the links from the base URL of the request (that includes the
+    # root path if we are behind a proxy), not from the root endpoint URL.
+    base_url = str(request.base_url).rstrip("/")
+    app = request.app
 
     response = {"versions": versions, "links": []}
 
-    if APP.docs_url:
-        doc = APP.docs_url[1:]
+    if app.docs_url:
         response["links"].append(
-            {"rel": "help", "type": "text/html", "href": f"{root}{doc}"}
+            {"rel": "help", "type": "text/html", "href": f"{base_url}{app.docs_url}"}
         )
 
-    if APP.redoc_url:
-        redoc = APP.redoc_url[1:]
+    if app.redoc_url:
         response["links"].append(
-            {"rel": "help", "type": "text/html", "href": f"{root}{redoc}"}
+            {"rel": "help", "type": "text/html", "href": f"{base_url}{app.redoc_url}"}
         )
 
-    if APP.openapi_url:
-        spec = APP.openapi_url[1:]
+    if app.openapi_url:
         response["links"].append(
             {
                 "rel": "describedby",
                 "type": "application/json",
-                "href": f"{root}{spec}",
+                "href": f"{base_url}{app.openapi_url}",
             }
         )
 
