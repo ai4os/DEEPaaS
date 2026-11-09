@@ -18,6 +18,7 @@
 
 import argparse
 import ast
+import io
 import json
 import mimetypes
 import multiprocessing as mp
@@ -342,7 +343,8 @@ def main(argv=None):
 
             # create tmp file as later it supposed
             # to be deleted by the application
-            temp = tempfile.NamedTemporaryFile()
+            # (keeping the extension, so that the file type can be guessed)
+            temp = tempfile.NamedTemporaryFile(suffix=os.path.splitext(fpath)[1])
             temp.close()
             tmp_files.append(temp.name)
             # copy original file into tmp file
@@ -398,6 +400,12 @@ def _run_method(method, model_obj, conf_vars, predict_args):
         predict_vars = _get_subdict(conf_vars, predict_args)
         task = model_obj.predict(**predict_vars)
 
+        # The model may return a file (e.g. an image or a zip file)
+        result_path = None
+        if isinstance(task, io.IOBase) and hasattr(task, "name"):
+            task.close()
+            result_path = task.name
+
         if CONF.deepaas_method_output:
             out_file = CONF.deepaas_method_output
             out_path = os.path.dirname(os.path.abspath(out_file))
@@ -412,6 +420,9 @@ def _run_method(method, model_obj, conf_vars, predict_args):
             # check what is asked to return by the application (if --accept)
             if conf_vars.get("accept"):
                 extension = mimetypes.guess_extension(conf_vars["accept"])
+            # wildcards (e.g. image/*) have no extension, use the file's one
+            if extension is None and result_path is not None:
+                extension = os.path.splitext(result_path)[1] or None
 
             if (
                 extension is not None
@@ -426,17 +437,24 @@ def _run_method(method, model_obj, conf_vars, predict_args):
                     "===================> "
                     "New output is {}".format(extension, out_extension, out_file)
                 )
-            if extension == ".json" or extension is None:
+            if result_path is not None:
+                shutil.copy(result_path, out_file)
+            elif isinstance(task, (bytes, str)) and extension != ".json":
+                with open(out_file, "wb" if isinstance(task, bytes) else "w") as f:
+                    f.write(task)
+            else:
                 results_json = json.dumps(task)
                 LOG.debug("[DEBUG, predict, Output]: {}".format(results_json))
                 f = open(out_file, "w+")
                 f.write(results_json)
                 f.close()
-            else:
-                out_results = task.name
-                shutil.copy(out_results, out_file)
 
             LOG.info("[INFO, Output] Output is saved in {}".format(out_file))
+        elif result_path is not None:
+            # Write returned files to stdout when no output file is specified
+            sys.stdout.flush()
+            with open(result_path, "rb") as f:
+                shutil.copyfileobj(f, sys.stdout.buffer)
         else:
             # Print output to stdout when no output file is specified
             # Default to JSON output when no file is specified

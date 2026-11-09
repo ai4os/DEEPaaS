@@ -226,3 +226,42 @@ def test_uploaded_file_name(models, data_file):
     models["model"] = Model
     cli.main(["predict", "--image", data_file])
     assert received["image"].name == "image"
+
+
+def test_predict_returns_bytes(models, data_file, tmp_path):
+    out = tmp_path / "logo.png"
+    cli.main(
+        [
+            "--deepaas_method_output",
+            str(out),
+            "predict",
+            "--data",
+            data_file,
+            "--parameter",
+            "1",
+            "--accept",
+            "image/png",
+        ]
+    )
+    assert out.read_bytes().startswith(b"\x89PNG")
+
+
+@pytest.mark.parametrize("accept,suffix", [("image/*", ".png"), ("image/png", "")])
+def test_predict_returns_file(
+    models, data_file, tmp_path, monkeypatch, capsysbinary, accept, suffix
+):
+    result = tmp_path / "result.png"
+    result.write_bytes(b"\x89PNG result")
+    monkeypatch.setattr(
+        fake_v2_model.TestModel, "predict", lambda self, **kw: open(result, "rb")
+    )
+    args = ["predict", "--data", data_file, "--parameter", "1", "--accept", accept]
+
+    # To stdout
+    cli.main(args)
+    assert capsysbinary.readouterr().out == b"\x89PNG result"
+
+    # To a file, guessing the extension from the returned file
+    out = tmp_path / "out"
+    cli.main(["--deepaas_method_output", str(out), *args])
+    assert (tmp_path / "out.png").read_bytes() == b"\x89PNG result"

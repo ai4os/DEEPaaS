@@ -1,0 +1,8 @@
+---
+fixes:
+  - |
+    ``deepaas-cli`` now handles the files returned by the model when the
+    requested media type has no known extension (e.g. ``--accept image/*``),
+    taking the extension from the returned file, and when no output file is
+    given, writing the file contents to the standard output. Text or bytes
+    returned for a non JSON media type are also stored as they are.
