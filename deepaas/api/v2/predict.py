@@ -45,9 +45,6 @@ def _get_model_response(model_name, model_obj):
     return responses.Prediction
 
 
-router = fastapi.APIRouter(prefix="/models")
-
-
 def _save_uploaded_files(kwargs):
     """Store uploaded files on disk and pass them to the model as UploadedFile.
 
@@ -287,6 +284,10 @@ def get_router():
     """
     model_name = model.V2_MODEL_NAME
     model_obj = model.V2_MODEL
+
+    # NOTE(aloga): create a new router each time, so that routes are not
+    # accumulated if several applications are created (e.g. in tests)
+    router = fastapi.APIRouter(prefix="/models")
 
     hdlr = _get_handler_for_model(model_name, model_obj)
     hdlr.register_routes(router)
