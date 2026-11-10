@@ -139,10 +139,10 @@ def model():
 def test_dummy_model(model, mocks):
     pred = model.predict()
     pred.pop("data")
-    assert pred == {
+    assert {
         "date": "2019-01-1",
         "labels": [{"label": "foo", "probability": 1.0}],
-    }
+    } == pred
 
     meta = model.get_metadata()
     assert "description" in meta
@@ -160,10 +160,10 @@ async def test_dummy_model_with_wrapper(model, mocks):
 
     ret = await w.predict()
     del ret["data"]
-    assert ret == {
+    assert {
         "date": "2019-01-1",
         "labels": [{"label": "foo", "probability": 1.0}],
-    }
+    } == ret
 
     meta = w.get_metadata()
     assert "description" in meta
