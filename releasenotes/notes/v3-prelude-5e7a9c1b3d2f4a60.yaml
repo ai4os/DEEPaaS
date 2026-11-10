@@ -1,0 +1,9 @@
+---
+prelude: >
+  DEEPaaS 3.0.0 replaces aiohttp with FastAPI as the web framework, and
+  oslo.config with a lightweight configuration module. Existing models keep
+  working without changes: the model API, the v2 API paths, the command line
+  options and the configuration files are the same. The training endpoints
+  have been removed, the OpenAPI specification is now OpenAPI 3.1 (clients
+  such as deepaas_ui must support it), and the API documentation is served at
+  /docs. Check the upgrade notes before upgrading.

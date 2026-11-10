@@ -1,8 +1,4 @@
 ---
-prelude: >
-  DEEPaaS no longer depends on ``oslo.config``. The command line options,
-  configuration files and environment variables of previous versions are
-  still supported.
 features:
   - |
     All the options can be set with environment variables named
