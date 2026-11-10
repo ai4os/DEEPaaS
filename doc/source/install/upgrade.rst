@@ -24,7 +24,10 @@ account the following:
   raise :py:class:`fastapi.HTTPException` instead (e.g.
   ``raise fastapi.HTTPException(status_code=400, detail="Invalid input")``),
   or add ``aiohttp`` to your own requirements.
-* The ``workers`` and ``client-max-size`` options are deprecated and ignored.
+* The ``workers`` option sets the maximum number of predictions executed at
+  the same time (default 1, as before). Predictions are executed in threads
+  instead of in separate processes, so the model is loaded only once.
+* The ``client-max-size`` option is deprecated and ignored.
 * ``oslo.config`` is no longer used. The command line options and the
   configuration files are the same, but the ``OS_DEFAULT__<OPTION>``
   environment variables are deprecated in favour of ``DEEPAAS_<OPTION>`` (e.g.

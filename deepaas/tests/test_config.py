@@ -85,6 +85,7 @@ def test_bool_flags_are_exclusive(capsys):
         ["--listen-port", "foo"],
         ["--listen-port", "65536"],
         ["--client-max-size", "-1"],
+        ["--workers", "0"],
         ["--unknown-option"],
     ],
 )
@@ -206,8 +207,8 @@ def test_invalid_config_file(tmp_path, content, capsys):
 
 
 def test_deprecated_option():
-    with pytest.warns(DeprecationWarning, match="workers"):
-        _parse("--workers", "2")
+    with pytest.warns(DeprecationWarning, match="client_max_size"):
+        _parse("--client-max-size", "2")
 
 
 def test_find_config_files(tmp_path, monkeypatch):

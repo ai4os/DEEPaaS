@@ -14,14 +14,17 @@
 # License for the specific language governing permissions and limitations
 # under the License.
 
+import asyncio
 import collections
 import contextlib
+import functools
 import io
 import warnings
 
+import anyio
+import anyio.to_thread
 import fastapi
 import marshmallow
-import starlette.concurrency
 
 from deepaas import config
 from deepaas.api.v2 import utils
@@ -126,6 +129,8 @@ class ModelWrapper(object):
     def __init__(self, name, model_obj):
         self.name = name
         self.model_obj = model_obj
+        # Limiter of concurrent predictions, created when the loop is running
+        self._limiter = None
 
         schema = getattr(self.model_obj, "schema", None)
 
@@ -266,6 +271,17 @@ class ModelWrapper(object):
 
         return ret
 
+    def _get_limiter(self):
+        """Get the limiter of concurrent predictions for the running loop.
+
+        anyio limiters cannot be shared between event loops, so we create one
+        for each loop (in practice, there is only one, except in tests).
+        """
+        loop = asyncio.get_running_loop()
+        if self._limiter is None or self._limiter[0] is not loop:
+            self._limiter = (loop, anyio.CapacityLimiter(CONF.workers))
+        return self._limiter[1]
+
     async def predict(self, *args, **kwargs):
         """Perform a prediction on wrapped model's ``predict`` method.
 
@@ -277,12 +293,16 @@ class ModelWrapper(object):
             error, already wrapped as a HTTPException
 
         The model's ``predict`` method is a blocking call, therefore it is
-        executed in a worker thread so that the event loop is not blocked.
+        executed in a worker thread so that the event loop is not blocked. At
+        most ``workers`` predictions are executed at the same time, as in
+        DEEPaaS 2.x (where they were executed in a pool of ``workers``
+        processes), further requests wait for a free slot.
         """
         with self._catch_error():
-            return await starlette.concurrency.run_in_threadpool(
+            fn = functools.partial(
                 self.predict_wrap, self.model_obj.predict, *args, **kwargs
             )
+            return await anyio.to_thread.run_sync(fn, limiter=self._get_limiter())
 
     def get_predict_args(self):
         """Add predict arguments into the predict parser.

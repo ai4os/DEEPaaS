@@ -8,8 +8,8 @@ upgrade:
     not declare in its ``accept`` argument now returns a 406 error.
 deprecations:
   - |
-    The ``workers`` and ``client-max-size`` options are deprecated, as they
-    are ignored by the FastAPI based server.
+    The ``client-max-size`` option is deprecated, as it is ignored by the
+    FastAPI based server.
 fixes:
   - |
     Temporary files created for the uploaded files are now removed once the

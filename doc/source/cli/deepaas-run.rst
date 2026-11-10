@@ -61,6 +61,13 @@ complete list.
 
    Serve the documentation at ``/docs`` and ``/redoc`` (default: enabled).
 
+.. option:: --workers WORKERS, -p WORKERS
+
+   Maximum number of predictions executed at the same time (default: 1).
+   Further requests wait until a prediction finishes. Most models are not
+   thread safe, or cannot hold several predictions in memory (e.g. in a GPU),
+   so only increase it if your model supports concurrent predictions.
+
 .. option:: --warm, --nowarm
 
    Warm (i.e. initialize) the model before serving it (default: enabled).
