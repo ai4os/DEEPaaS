@@ -1,0 +1,9 @@
+---
+upgrade:
+  - |
+    Predictions are executed in threads instead of in a pool of processes.
+    The ``workers`` option (``-p``) keeps setting how many predictions are
+    executed at the same time (1 by default, as most models are not thread
+    safe or cannot hold several predictions in memory); further requests
+    wait for a free slot. As there is a single process, the model is loaded
+    and warmed only once, whatever the number of workers.

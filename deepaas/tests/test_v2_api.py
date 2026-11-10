@@ -26,6 +26,7 @@ import io
 import logging
 import os
 import sys
+import threading
 import time
 
 import aiohttp.web
@@ -654,32 +655,66 @@ class TestPredictDoesNotBlock:
         assert r.status_code == 200
         assert received["in_loop"] is False
 
-    async def test_concurrent_requests(self, test_app, monkeypatch):
+    @pytest.fixture
+    def slow_predict(self, monkeypatch):
+        """Make predictions slow, recording how many run at the same time."""
+        state = {"running": 0, "max_running": 0}
+        lock = threading.Lock()
+
         def predict(**kwargs):
-            time.sleep(0.5)
+            with lock:
+                state["running"] += 1
+                state["max_running"] = max(state["max_running"], state["running"])
+            time.sleep(0.3)
+            with lock:
+                state["running"] -= 1
             return {"date": "2019-01-1", "labels": []}
 
         monkeypatch.setattr(model.V2_MODEL.model_obj, "predict", predict)
+        # Do not reuse the limiter of the session application
+        monkeypatch.setattr(model.V2_MODEL, "_limiter", None, raising=False)
+        return state
 
+    @staticmethod
+    async def _predict(client):
+        return await client.post(
+            f"/v2/models/{TEST_MODEL_NAME}/predict/",
+            files={"data": ("t.bin", b"dummy", "text/plain")},
+            data={"parameter": "1"},
+        )
+
+    async def test_other_requests_are_served(self, test_app, slow_predict):
         transport = httpx.ASGITransport(app=test_app)
         async with httpx.AsyncClient(
             transport=transport, base_url="http://test"
         ) as client:
-
-            async def slow():
-                return await client.post(
-                    f"/v2/models/{TEST_MODEL_NAME}/predict",
-                    files={"data": ("t.bin", b"dummy", "text/plain")},
-                    data={"parameter": "1"},
-                )
+            prediction = asyncio.ensure_future(self._predict(client))
+            await asyncio.sleep(0.05)
 
             start = time.monotonic()
-            responses = await asyncio.gather(slow(), slow())
+            r = await client.get("/v2/")
             elapsed = time.monotonic() - start
-            assert [r.status_code for r in responses] == [200, 200]
-            # If predictions blocked the event loop, they would run one after
-            # the other, taking at least 1 second.
-            assert elapsed < 0.9
+
+            assert r.status_code == 200
+            assert not prediction.done()
+            # The request is served while the prediction is running
+            assert elapsed < 0.2
+            assert (await prediction).status_code == 200
+
+    @pytest.mark.parametrize("workers", [1, 2])
+    async def test_concurrent_predictions(
+        self, test_app, slow_predict, monkeypatch, workers
+    ):
+        monkeypatch.setattr(config.CONF, "workers", workers)
+        transport = httpx.ASGITransport(app=test_app)
+        async with httpx.AsyncClient(
+            transport=transport, base_url="http://test"
+        ) as client:
+            responses = await asyncio.gather(*[self._predict(client) for _ in range(4)])
+
+        assert [r.status_code for r in responses] == [200] * 4
+        # As in v2, at most "workers" predictions are executed at the same time
+        assert slow_predict["max_running"] == workers
 
 
 # ---------------------------------------------------------------------------

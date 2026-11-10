@@ -436,11 +436,13 @@ provide this information.
         type=int,
         short="p",
         default=1,
-        deprecated_reason="This option is ignored since DEEPaaS 3.0.0.",
+        min=1,
         help="""
-Specify the number of workers to spawn. If using a CPU you probably want to
-increase this number, if using a GPU probably you want to leave it to 1.
-(defaults to 1)
+Maximum number of predictions that are executed at the same time. Further
+requests wait until a prediction finishes. Most models are not thread safe, or
+cannot hold several predictions in memory (e.g. in a GPU), so leave it to 1
+unless you know that your model supports concurrent predictions. (defaults to
+1)
 """,
     ),
     Opt(
