@@ -258,7 +258,7 @@ class TestModelMetaEndpoint:
 class TestPredictEndpoint:
     """Tests for ``POST /v2/models/{model_name}/predict``."""
 
-    @pytest.fixture()
+    @pytest.fixture
     def upload_file(self):
         return ("test.bin", io.BytesIO(b"dummy content"), "application/octet-stream")
 
