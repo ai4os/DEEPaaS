@@ -1,0 +1,6 @@
+---
+fixes:
+  - |
+    The ``format`` of the fields of the model response schema (e.g.
+    ``password``) is documented again in the OpenAPI specification, as in
+    previous versions.

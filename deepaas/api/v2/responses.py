@@ -14,59 +14,73 @@
 # License for the specific language governing permissions and limitations
 # under the License.
 
-import marshmallow
-from marshmallow import fields
-from marshmallow import validate
+import typing
+
+import pydantic
 
 
-class Location(marshmallow.Schema):
-    rel = fields.Str(required=True)
-    href = fields.Url(required=True)
-    type = fields.Str(required=True)
+class Version(pydantic.BaseModel):
+    version: str
+    id: str
+    type: str = "application/json"
 
 
-class Version(marshmallow.Schema):
-    version = fields.Str(required="True")
-    id = fields.Str(required="True")
-    links = fields.Nested(Location)
-    type = fields.Str()
+class Versions(pydantic.BaseModel):
+    versions: typing.List[Version]
 
 
-class Versions(marshmallow.Schema):
-    versions = fields.List(fields.Nested(Version))
+class Location(pydantic.BaseModel):
+    rel: str
+    href: pydantic.AnyHttpUrl
+    type: str = "application/json"
 
 
-class Failure(marshmallow.Schema):
-    message = fields.Str(required=True, description="Failure message")
+class VersionsAndLinks(pydantic.BaseModel):
+    versions: typing.List[Version]
+    links: typing.List[Location]
 
 
-class Prediction(marshmallow.Schema):
-    status = fields.String(required=True, description="Response status message")
-    predictions = fields.Str(required=True, description="String containing predictions")
+class ModelMeta(pydantic.BaseModel):
+    """ "V2 model metadata.
 
+    This class is used to represent the metadata of a model in the V2 API, as we were
+    doing in previous versions.
+    """
 
-class ModelMeta(marshmallow.Schema):
-    id = fields.Str(required=True, description="Model identifier")  # noqa
-    name = fields.Str(required=True, description="Model name")
-    description = fields.Str(required=True, description="Model description")
-    license = fields.Str(required=False, description="Model license")
-    author = fields.Str(required=False, description="Model author")
-    version = fields.Str(required=False, description="Model version")
-    url = fields.Str(required=False, description="Model url")
-    links = fields.List(fields.Nested(Location))
-
-
-class Training(marshmallow.Schema):
-    uuid = fields.UUID(required=True, description="Training identifier")
-    date = fields.DateTime(required=True, description="Training start time")
-    status = fields.Str(
-        required=True,
-        description="Training status",
-        enum=["running", "error", "completed", "cancelled"],
-        validate=validate.OneOf(["running", "error", "completed", "cancelled"]),
+    id: str = pydantic.Field(..., description="Model identifier")  # noqa
+    name: str = pydantic.Field(..., description="Model name")
+    description: typing.Optional[str] = pydantic.Field(
+        description="Model description", default=None
     )
-    message = fields.Str(description="Optional message explaining status")
+    summary: typing.Optional[str] = pydantic.Field(
+        description="Model summary", default=None
+    )
+    license: typing.Optional[str] = pydantic.Field(
+        description="Model license", default=None
+    )
+    author: typing.Optional[str] = pydantic.Field(
+        description="Model author", default=None
+    )
+    version: typing.Optional[str] = pydantic.Field(
+        description="Model version", default=None
+    )
+    url: typing.Optional[str] = pydantic.Field(description="Model url", default=None)
+    # Links can be alist of Locations, or an empty list
+    links: typing.List[Location] = pydantic.Field(
+        description="Model links",
+    )
 
 
-class TrainingList(marshmallow.Schema):
-    trainings = fields.List(fields.Nested(Training))
+class ModelList(pydantic.BaseModel):
+    models: typing.List[ModelMeta] = pydantic.Field(
+        ..., description="List of loaded models"
+    )
+
+
+class Prediction(pydantic.BaseModel):
+    status: str = pydantic.Field(description="Response status message")
+    predictions: str = pydantic.Field(description="String containing predictions")
+
+
+class Failure(pydantic.BaseModel):
+    message: str = pydantic.Field(description="Failure message")

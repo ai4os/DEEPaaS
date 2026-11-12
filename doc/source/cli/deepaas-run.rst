@@ -5,7 +5,7 @@ deepaas-run
 Synopsis
 ========
 
-:program:`deepaas-api` [options]
+:program:`deepaas-run` [options]
 
 Description
 ===========
@@ -16,57 +16,75 @@ Description
 Options
 =======
 
+All the options can also be set with ``DEEPAAS_<OPTION>`` environment
+variables or in a configuration file. Check the
+:doc:`configuration reference </install/configuration/config>` for the
+complete list.
+
+.. option:: --config-file PATH
+
+   Path to a configuration file to use. It can be given several times.
+
+.. option:: --config-dir DIR
+
+   Path to a directory with configuration files (``*.conf``).
+
 .. option:: --model-name MODEL_NAME
 
-    Specify the model to be used. If not specified, DEEPaaS will fail if there are
-    more than only one models available.
-
-.. option:: --debug, -d
-
-   If set to true, the logging level will be set to DEBUG instead of the
-   default INFO level.
-
-.. option:: --predict-endpoint
-
-   Specify whether DEEPaaS should provide a train endpoint (default: True).
-
-.. option:: --train-endpoint
-
-   Specify whether DEEPaaS should provide a train endpoint (default: True).
-
-.. option:: --debug-endpoint
-
-   Enable debug endpoint. If set we will provide all the information that you
-   print to the standard output and error (i.e. stdout and stderr) through the
-   ``/debug`` endpoint. Default is to not provide this information. This will
-   not provide logging information about the API itself.
+   Specify the model to be used. If not specified, DEEPaaS will fail if there
+   are more than only one models available.
 
 .. option:: --listen-ip LISTEN_IP
 
-   IP address on which the DEEPaaS API will listen. The DEEPaaS API service
-   listens on this IP address for incoming requests.
+   IP address on which the DEEPaaS API will listen (default: ``127.0.0.1``).
 
 .. option:: --listen-port LISTEN_PORT
 
-   Port on which the DEEPaaS API will listen. The DEEPaaS API service listens
-   on this port number for incoming requests.
+   Port on which the DEEPaaS API will listen (default: ``5000``).
 
-.. option:: --predict-workers PREDICT_WORKERS, -p PREDICT_WORKERS
+.. option:: --base-path BASE_PATH
 
-   Specify the number of workers to spawn for prediction tasks. If using a CPU
-   you probably want to increase this number, if using a GPU probably you want
-   to leave it to 1. (defaults to 1)
+   Base path for the API, when it is served behind a reverse proxy that is
+   not at the root of the domain (e.g. ``/deepaas``).
 
-.. option:: --train-workers TRAIN_WORKERS
+.. option:: --debug, -d, --nodebug
 
-   Specify the number of workers to spawn for training tasks. Unless you know
-   what you are doing you should leave this number to 1. (defaults to 1)
+   If set, the logging level will be set to DEBUG instead of the default INFO
+   level.
 
+.. option:: --debug-endpoint, --nodebug-endpoint
+
+   Enable the ``/v2/debug/`` endpoint, that returns what is printed to the
+   standard output and error (default: disabled).
+
+.. option:: --doc-endpoint, --nodoc-endpoint
+
+   Serve the documentation at ``/docs`` and ``/redoc`` (default: enabled).
+
+.. option:: --workers WORKERS, -p WORKERS
+
+   Maximum number of predictions executed at the same time (default: 1).
+   Further requests wait until a prediction finishes. Most models are not
+   thread safe, or cannot hold several predictions in memory (e.g. in a GPU),
+   so only increase it if your model supports concurrent predictions.
+
+.. option:: --warm, --nowarm
+
+   Warm (i.e. initialize) the model before serving it (default: enabled).
+
+.. option:: --auth-bearer-token TOKEN
+
+   Require this bearer token to access the model endpoints. Prefer the
+   ``DEEPAAS_AUTH_BEARER_TOKEN`` environment variable, as command line
+   arguments are visible in the process list. See :ref:`authentication`.
 
 Files
 =====
 
-None
+``deepaas.conf`` and ``deepaas-run.conf`` in ``~/.deepaas/``, ``~/``,
+``/etc/deepaas/`` or ``/etc/``, and ``*.conf`` files in the
+``deepaas.conf.d`` directories in the same locations.
+
 
 See Also
 ========

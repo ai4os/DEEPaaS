@@ -18,17 +18,17 @@
 import pathlib
 import sys
 
-from aiohttp import web
-from oslo_config import cfg
+import uvicorn
 
 import deepaas
 from deepaas import api
 import deepaas.log
 from deepaas.cmd import _shutdown
 from deepaas import config
+from deepaas import exceptions
 
 cli_opts = [
-    cfg.StrOpt(
+    config.Opt(
         "listen-ip",
         default="127.0.0.1",
         help="""
@@ -38,7 +38,7 @@ The DEEPaaS API service listens on this IP address for incoming
 requests.
 """,
     ),
-    cfg.PortOpt(
+    config.PortOpt(
         "listen-port",
         default=5000,
         help="""
@@ -49,7 +49,7 @@ requests.
 """,
     ),
     # Allow to define base path for the API
-    cfg.StrOpt(
+    config.Opt(
         "base-path",
         default="",
         help="""
@@ -61,8 +61,8 @@ should be set to /deepaas. Defaults to the root of the domain.
     ),
 ]
 
-CONF = cfg.CONF
-CONF.register_cli_opts(cli_opts)
+CONF = config.CONF
+CONF.register_opts(cli_opts)
 
 INTRO = """
          ##         ###
@@ -79,6 +79,7 @@ Welcome to the DEEPaaS API API endpoint. You can directly browse to the
 API documentation endpoint to check the API using the builtin Swagger UI
 or you can use any of our endpoints.
 
+    API documentation: {}
     API documentation: {}
     API specification: {}
           V2 endpoint: {}
@@ -104,26 +105,45 @@ def main():
         base_path = ""
 
     base = "http://{}:{}{}".format(CONF.listen_ip, CONF.listen_port, base_path)
-    spec = "{}/swagger.json".format(base)
-    docs = "{}/api".format(base)
+    spec = "{}/openapi.json".format(base)
+    docs = "{}/docs".format(base)
+    redoc = "{}/redoc".format(base)
     v2 = "{}/v2".format(base)
 
     print(INTRO)
-    print(BANNER.format(docs, spec, v2))
+    print(BANNER.format(docs, redoc, spec, v2))
 
-    log.info("Starting DEEPaaS version %s", deepaas.extract_version())
+    log.info(
+        "Starting DEEPaaS version %s with FastAPI backend",
+        deepaas.extract_version(),
+    )
 
-    app = api.get_app(
-        enable_doc=CONF.doc_endpoint,
-        enable_train=CONF.train_endpoint,
-        enable_predict=CONF.predict_endpoint,
-        base_path=CONF.base_path,
-    )
-    web.run_app(
-        app,
-        host=CONF.listen_ip,
-        port=CONF.listen_port,
-    )
+    print("Press Ctrl+C to stop the server.")
+    try:
+        app = api.get_fastapi_app(
+            enable_doc=CONF.doc_endpoint,
+            base_path=base_path,
+        )
+    except exceptions.NoModelsAvailable:
+        print(
+            "ERROR: No models found. Install a model that provides a "
+            "'deepaas.v2.model' entry point, e.g. the demo application: "
+            "https://github.com/ai4os-hub/ai4os-demo-app",
+            file=sys.stderr,
+        )
+        sys.exit(1)
+    except exceptions.MultipleModelsFound:
+        print(
+            "ERROR: Several models found. Choose the model to serve with the "
+            "--model-name option.",
+            file=sys.stderr,
+        )
+        sys.exit(1)
+    except exceptions.ModuleNotFoundError as e:
+        print(f"ERROR: {e}", file=sys.stderr)
+        sys.exit(1)
+    uvicorn.run(app, host=CONF.listen_ip, port=CONF.listen_port)
+    log.debug("Shutting down")
 
 
 if __name__ == "__main__":

@@ -1,0 +1,6 @@
+---
+fixes:
+  - |
+    File arguments are documented in the OpenAPI specification with their
+    names, so that clients generated from it (e.g. the Swagger UI) can upload
+    them.

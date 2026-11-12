@@ -35,8 +35,6 @@ sys.path.insert(0, os.path.abspath('./'))
 
 extensions = [
     'sphinx.ext.autodoc',
-    'oslo_config.sphinxconfiggen',
-    'oslo_config.sphinxext',
     "reno.sphinxext",
     "recommonmark",
 ]
@@ -44,8 +42,50 @@ extensions = [
 # Add any paths that contain templates here, relative to this directory.
 templates_path = ['_templates']
 
-config_generator_config_file = '../../etc/deepaas-config-generator.conf'
-sample_config_basename = '_static/deepaas'
+
+
+def _generate_config_docs():
+    """Generate the sample configuration file and the options reference."""
+    import textwrap
+
+    from deepaas import opts
+
+    here = os.path.dirname(os.path.abspath(__file__))
+    with open(os.path.join(here, "_static", "deepaas.conf.sample"), "w") as f:
+        f.write(opts.generate_sample())
+
+    lines = []
+    for _, group in opts.list_opts():
+        for opt in group:
+            lines.append(f".. option:: {opt.dest}")
+            lines.append("")
+            meta = [
+                f"Type: ``{opt.type.__name__}``",
+                f"Default: ``{opt.default!r}``",
+                f"Command line: ``--{opt.name}``"
+                + (f", ``--no{opt.name}``" if opt.type is bool else ""),
+                f"Environment variable: ``{opt.env_vars[0]}``",
+            ]
+            if opt.choices:
+                meta.append(
+                    "Allowed values: " + ", ".join(f"``{c}``" for c in opt.choices)
+                )
+            for m in meta:
+                lines.append(f"   * {m}")
+            lines.append("")
+            if opt.deprecated_reason:
+                lines.append(f"   .. warning:: Deprecated. {opt.deprecated_reason}")
+                lines.append("")
+            lines.extend(
+                textwrap.indent(" ".join(opt.help.split()), "   ").splitlines()
+            )
+            lines.append("")
+    path = os.path.join(here, "install", "configuration", "options.inc")
+    with open(path, "w") as f:
+        f.write("\n".join(lines))
+
+
+_generate_config_docs()
 
 todo_include_todos = True
 

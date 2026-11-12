@@ -1,0 +1,8 @@
+---
+deprecations:
+  - |
+    ``aiohttp`` is still installed with DEEPaaS, so that existing models
+    importing it (e.g. ``from aiohttp.web import HTTPBadRequest``) keep
+    working, but it is deprecated and it will be removed in a future release.
+    Models should raise ``fastapi.HTTPException`` instead, or declare
+    ``aiohttp`` as their own dependency.

@@ -12,9 +12,11 @@ The best way to quickly try the DEEPaaS API is by issuing the following command
 
 This command will create a `Python virtualenv
 <https://virtualenv.pypa.io/en/latest/>`_ (in the ``virtualenv`` directory)
-with DEEPaaS along all its dependencies. Then it will run the DEEPaaS REST API,
-listening on ``http://127.0.0.1:5000``. If you browse to that URL you will get
-the Swagger UI documentation page.
+with DEEPaaS along all its dependencies, and it will install the `AI4OS demo
+application <https://github.com/ai4os-hub/ai4os-demo-app>`_ as the model to
+serve. Then it will run the DEEPaaS REST API, listening on
+``http://127.0.0.1:5000``. If you browse to ``http://127.0.0.1:5000/docs`` you
+will get the Swagger UI documentation page, where you can try the API.
 
 If you want to run the code in the editable or develop mode (i.e. the same
 environment that you would get with ``pip install -e``), you can issue the

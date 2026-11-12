@@ -14,6 +14,8 @@
 # License for the specific language governing permissions and limitations
 # under the License.
 
+import inspect
+
 from deepaas import config
 from deepaas import exceptions
 from deepaas import log
@@ -25,15 +27,27 @@ LOG = log.getLogger(__name__)
 CONF = config.CONF
 
 # Model registry
-MODELS = {}
-MODELS_LOADED = False
+MODEL = None
+MODEL_NAME = ""
 
 
-def register_models(app):
-    global MODELS
-    global MODELS_LOADED
+def _instantiate(plugin):
+    """Get the object that implements the model API from an entry point.
 
-    if MODELS_LOADED:
+    Entry points can point either to a module (e.g. ``package.module``) or to a
+    class (e.g. ``package.module:Class``). Classes are instantiated, whereas
+    modules (or any other object) are used as they are.
+    """
+    if inspect.isclass(plugin):
+        return plugin()
+    return plugin
+
+
+def load_model():
+    global MODEL
+    global MODEL_NAME
+
+    if MODEL:
         return
 
     if CONF.model_name:
@@ -53,16 +67,14 @@ def register_models(app):
             raise exceptions.MultipleModelsFound()
 
     try:
-        MODELS[model_name] = wrapper.ModelWrapper(
+        MODEL = wrapper.ModelWrapper(
             model_name,
-            loading.get_model_by_name(model_name, "v2"),
-            app,
+            _instantiate(loading.get_model_by_name(model_name, "v2")),
         )
+        MODEL_NAME = model_name
     except exceptions.ModuleNotFoundError:
         LOG.error("Model not found: %s", model_name)
         raise
     except Exception as e:
         LOG.exception("Error loading model: %s", e)
         raise e
-
-    MODELS_LOADED = True

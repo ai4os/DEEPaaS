@@ -21,6 +21,17 @@ import deepaas.config
 
 
 def list_opts():
+    """List all the options of the DEEPaaS API server, grouped by section."""
     return [
         ("DEFAULT", itertools.chain(deepaas.cmd.run.cli_opts, deepaas.config.opts)),
     ]
+
+
+def generate_sample():
+    """Generate a sample configuration file for the DEEPaaS API server."""
+    opts = list(itertools.chain.from_iterable(o for _, o in list_opts()))
+    return deepaas.config.generate_sample(opts)
+
+
+if __name__ == "__main__":
+    print(generate_sample())

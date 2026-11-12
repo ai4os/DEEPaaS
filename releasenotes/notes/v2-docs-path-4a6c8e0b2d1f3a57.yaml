@@ -1,0 +1,5 @@
+---
+upgrade:
+  - |
+    The API documentation (Swagger UI) is now served at ``/docs`` (and ReDoc
+    at ``/redoc``). The old ``/api`` path redirects to ``/docs``.

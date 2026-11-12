@@ -16,10 +16,9 @@
 # under the License.
 
 
-# import asyncio
 import argparse
 import ast
-import deepaas
+import io
 import json
 import mimetypes
 import multiprocessing as mp
@@ -28,15 +27,13 @@ import re
 import shutil
 import sys
 import tempfile
-import uuid
 
-from datetime import datetime
 from marshmallow import fields
-from oslo_config import cfg
 
 from deepaas import config
 from deepaas import log
 from deepaas.model import loading
+import deepaas.model.v2
 from deepaas.model.v2 import wrapper as v2_wrapper
 
 CONF = config.CONF
@@ -165,16 +162,17 @@ def _get_model_name(model_name=None):
             )
             sys.exit(1)
 
-        return model_name, model_obj
+        return model_name, deepaas.model.v2._instantiate(model_obj)
 
     elif len(models) == 1:
-        return models.popitem()
+        model_name, model_obj = models.popitem()
+        return model_name, deepaas.model.v2._instantiate(model_obj)
 
     else:
         sys.stderr.write(
             "[ERROR]: There are several models available ({}).\n"
-            "You have to choose one and set it in the DEEPAAS_V2_MODEL "
-            "environment variable or using the --mode-name option"
+            "You have to choose one and set it in the DEEPAAS_MODEL_NAME "
+            "environment variable or using the --model-name option"
             ".\n".format(list(models.keys()))
         )
         sys.exit(1)
@@ -192,30 +190,9 @@ def _get_file_args(fields_in):
     return file_fields
 
 
-# Get the model name
-model_name = CONF.model_name
-
-model_name, model_obj = _get_model_name(model_name)
-
-# use deepaas.model.v2.wrapper.ModelWrapper(). deepaas>1.2.1dev4
-# model_obj = v2_wrapper.ModelWrapper(name=model_name,
-#                                    model_obj=model_obj)
-
-# Once we know the model name,
-# we get arguments for predict and train as dictionaries
-predict_args = _fields_to_dict(model_obj.get_predict_args())
-train_args = _fields_to_dict(model_obj.get_train_args())
-
-# Find which of the arguments are going to be files
-file_args = {}
-file_args["predict"] = _get_file_args(model_obj.get_predict_args())
-file_args["train"] = _get_file_args(model_obj.get_train_args())
-
-
-# Function to add later these arguments to CONF via SubCommandOpt
-def _add_methods(subparsers):
-    """Function to add argparse subparsers via SubCommandOpt (see below)
-    for DEEPaaS methods get_metadata, warm, predict, train
+def _add_methods(subparsers, predict_args):
+    """Function to add argparse subparsers
+    for DEEPaaS methods get_metadata, warm, predict
     """
 
     # Use RawTextHelpFormatter to allow for line breaks in argparse help messages.
@@ -252,50 +229,51 @@ def _add_methods(subparsers):
             help=val["help"],
             required=val["required"],
         )
-    # get train arguments configured
-    train_parser = subparsers.add_parser(
-        "train",
-        help="train method, use " "train --help for the full list",
-        formatter_class=help_formatter,
-    )
-
-    for key, val in train_args.items():
-        train_parser.add_argument(
-            "--%s" % key,
-            default=val["default"],
-            type=val["type"],
-            help=val["help"],
-            required=val["required"],
-        )
 
 
-# Now options to be registered with oslo_config
 cli_opts = [
-    # intentionally long to avoid a conflict with opts from predict, train etc
-    cfg.StrOpt(
+    # intentionally long to avoid a conflict with opts from predict, etc
+    config.Opt(
         "deepaas_method_output",
         help="Define an output file, if needed",
     ),
-    cfg.BoolOpt(
+    config.Opt(
         "deepaas_with_multiprocessing",
+        type=bool,
         default=True,
         help="Activate multiprocessing; default is True",
     ),
-    cfg.SubCommandOpt(
-        "methods",
-        title="methods",
-        handler=_add_methods,
-        help='Use "<method> --help" to get '
-        "more info about options for "
-        "each method",
-    ),
 ]
 
+CONF.register_opts(cli_opts)
 
-CONF = cfg.CONF
-CONF.register_cli_opts(cli_opts)
+# NOTE(aloga): deepaas-cli only uses these options from the DEEPaaS config
+_OPTS = [o for o in config.opts if o.dest in ("model_name", "debug", "log_level")]
 
-LOG = log.get_logger(__name__)
+
+def _get_parser(predict_args=None, add_help=True):
+    """Get the command line parser.
+
+    The arguments of the predict method depend on the model, so the parser is
+    built in two steps: first, we parse the general options (e.g.
+    --model-name) without the methods, and then we build the complete parser
+    with the arguments of the selected model.
+    """
+    parser = config.build_parser(
+        _OPTS + cli_opts, prog="deepaas-cli", add_help=add_help
+    )
+    if predict_args is not None:
+        subparsers = parser.add_subparsers(
+            title="methods",
+            dest="method",
+            help='Use "<method> --help" to get more info about options for '
+            "each method",
+        )
+        _add_methods(subparsers, predict_args)
+    return parser
+
+
+LOG = log.getLogger(__name__)
 
 
 # store DEEPAAS_METHOD output in a file
@@ -316,32 +294,59 @@ def _store_output(results, out_file):
     LOG.info("[INFO, Output] Output is saved in {}".format(out_file))
 
 
-# async def main():
-def main():
+def main(argv=None):
     """Executes model's methods with corresponding parameters"""
 
-    # we may add deepaas config, but then too many options...
-    # config.setup(sys.argv)
+    if argv is None:
+        argv = sys.argv[1:]
 
-    CONF(sys.argv[1:], project="deepaas", version=deepaas.extract_version())
+    # First, get the general options to know which model to load
+    pre_parser = _get_parser(add_help=False)
+    namespace, _ = pre_parser.parse_known_args(argv)
+    try:
+        config.load(namespace, _OPTS + cli_opts, prog="deepaas-cli")
+    except config.ConfigError as e:
+        pre_parser.error(str(e))
 
-    LOG.info("[INFO, Method] {} was called.".format(CONF.methods.name))
+    model_name, model_obj = _get_model_name(CONF.model_name)
+
+    # Once we know the model name,
+    # we get arguments for predict as dictionaries
+    try:
+        model_args = model_obj.get_predict_args()
+    except (AttributeError, NotImplementedError):
+        # The model does not define any argument
+        model_args = {}
+    predict_args = _fields_to_dict(model_args)
+
+    # Find which of the arguments are going to be files
+    file_args = {}
+    file_args["predict"] = _get_file_args(model_args)
+
+    # Now parse the complete command line
+    namespace = _get_parser(predict_args).parse_args(argv)
+    method = namespace.method
+
+    LOG.info("[INFO, Method] {} was called.".format(method))
 
     # put all variables in dict, makes life easier...
-    conf_vars = vars(CONF._namespace)
+    conf_vars = vars(namespace)
 
     if CONF.deepaas_with_multiprocessing:
         mp.set_start_method("spawn", force=True)
 
     # Create file wrapper for file args (if provided)
-    for farg in file_args[CONF.methods.name]:
-        if getattr(CONF.methods, farg, None):
+    tmp_files = []
+    for farg in file_args.get(method, []):
+        if conf_vars.get(farg):
             fpath = conf_vars[farg]
 
             # create tmp file as later it supposed
             # to be deleted by the application
-            temp = tempfile.NamedTemporaryFile()
+            # (keeping the extension, so that the file type can be guessed)
+            temp = tempfile.NamedTemporaryFile(suffix=os.path.splitext(fpath)[1])
             temp.close()
+            tmp_files.append(temp.name)
             # copy original file into tmp file
             with open(fpath, "rb") as f:
                 with open(temp.name, "wb") as f_tmp:
@@ -351,7 +356,7 @@ def main():
             # create file object
             file_type = mimetypes.MimeTypes().guess_type(fpath)[0]
             file_obj = v2_wrapper.UploadedFile(
-                name="data",
+                name=farg,
                 filename=temp.name,
                 content_type=file_type,
                 original_filename=fpath,
@@ -362,24 +367,44 @@ def main():
     # debug of input parameters
     LOG.debug("[DEBUG provided options, conf_vars]: {}".format(conf_vars))
 
-    if CONF.methods.name == "get_metadata":
+    try:
+        _run_method(method, model_obj, conf_vars, predict_args)
+    finally:
+        # remove the temporary copies of the input files
+        for tmp_file in tmp_files:
+            try:
+                os.remove(tmp_file)
+            except OSError:
+                pass
+
+
+def _run_method(method, model_obj, conf_vars, predict_args):
+    """Run the given method of the model, storing or printing its output."""
+    if method == "get_metadata":
         meta = model_obj.get_metadata()
         meta_json = json.dumps(meta)
         LOG.debug("[DEBUG, get_metadata, Output]: {}".format(meta_json))
         if CONF.deepaas_method_output:
             _store_output(meta_json, CONF.deepaas_method_output)
+        else:
+            # Print output to stdout when no output file is specified
+            print(meta_json)
 
-        return meta_json
-
-    elif CONF.methods.name == "warm":
+    elif method == "warm":
         # await model_obj.warm()
         model_obj.warm()
         LOG.info("[INFO, warm] Finished warm() method")
 
-    elif CONF.methods.name == "predict":
+    elif method == "predict":
         # call predict method
         predict_vars = _get_subdict(conf_vars, predict_args)
         task = model_obj.predict(**predict_vars)
+
+        # The model may return a file (e.g. an image or a zip file)
+        result_path = None
+        if isinstance(task, io.IOBase) and hasattr(task, "name"):
+            task.close()
+            result_path = task.name
 
         if CONF.deepaas_method_output:
             out_file = CONF.deepaas_method_output
@@ -393,9 +418,11 @@ def main():
             # by the application to .json
             extension = ".json"
             # check what is asked to return by the application (if --accept)
-            if CONF.methods.__contains__("accept"):
-                if CONF.methods.accept:
-                    extension = mimetypes.guess_extension(CONF.methods.accept)
+            if conf_vars.get("accept"):
+                extension = mimetypes.guess_extension(conf_vars["accept"])
+            # wildcards (e.g. image/*) have no extension, use the file's one
+            if extension is None and result_path is not None:
+                extension = os.path.splitext(result_path)[1] or None
 
             if (
                 extension is not None
@@ -410,52 +437,37 @@ def main():
                     "===================> "
                     "New output is {}".format(extension, out_extension, out_file)
                 )
-            if extension == ".json" or extension is None:
+            if result_path is not None:
+                shutil.copy(result_path, out_file)
+            elif isinstance(task, (bytes, str)) and extension != ".json":
+                with open(out_file, "wb" if isinstance(task, bytes) else "w") as f:
+                    f.write(task)
+            else:
                 results_json = json.dumps(task)
                 LOG.debug("[DEBUG, predict, Output]: {}".format(results_json))
                 f = open(out_file, "w+")
                 f.write(results_json)
                 f.close()
-            else:
-                out_results = task.name
-                shutil.copy(out_results, out_file)
 
             LOG.info("[INFO, Output] Output is saved in {}".format(out_file))
-
-        return task
-
-    elif CONF.methods.name == "train":
-        train_vars = _get_subdict(conf_vars, train_args)
-        # structure of ret{} copied from api.v2.train.build_train_response !!!
-        # so far, one needs to sync manually the structures
-        start = datetime.now()
-        ret = {
-            "date": str(start),
-            "args": train_vars,
-            "status": "done",
-            "uuid": uuid.uuid4().hex,
-            "result": {},
-        }
-        task = model_obj.train(**train_vars)
-        end = datetime.now()
-        ret["result"]["finish_date"] = str(end)
-        ret["result"]["duration"] = str(end - start)
-        # we assume that train always returns JSON
-        ret["result"]["output"] = task
-        results_json = json.dumps(ret)
-        LOG.info("[INFO] Elapsed time:  %s", str(end - start))
-        LOG.debug("[DEBUG, train, Output]: {}".format(results_json))
-        if CONF.deepaas_method_output:
-            _store_output(results_json, CONF.deepaas_method_output)
-        return results_json
+        elif result_path is not None:
+            # Write returned files to stdout when no output file is specified
+            sys.stdout.flush()
+            with open(result_path, "rb") as f:
+                shutil.copyfileobj(f, sys.stdout.buffer)
+        else:
+            # Print output to stdout when no output file is specified
+            # Default to JSON output when no file is specified
+            results_json = json.dumps(task)
+            LOG.debug("[DEBUG, predict, Output]: {}".format(results_json))
+            print(results_json)
 
     else:
         LOG.warn("[WARNING] No Method was requested! Return get_metadata()")
         meta = model_obj.get_metadata()
         meta_json = json.dumps(meta)
         LOG.debug("[DEBUG, get_metadata, Output]: {}".format(meta_json))
-
-        return meta_json
+        print(meta_json)
 
 
 if __name__ == "__main__":

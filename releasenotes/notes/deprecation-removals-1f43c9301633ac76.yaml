@@ -7,3 +7,8 @@ upgrade:
     Removed the loading of various models, now only a single model can be served. If you
     have more than one model available in the system please specify a single one via
     the command line option ``--model-name``.
+  - |
+    The /training endpoint has been deprecated. It is no longer possible to
+    train a model via the API, as the feature was not widely used and the cost
+    of maintaining the code was large. Models relying on this feature will
+    still work for prediction.

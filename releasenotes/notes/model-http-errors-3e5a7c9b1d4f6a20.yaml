@@ -1,0 +1,9 @@
+---
+fixes:
+  - |
+    HTTP errors raised by the models are returned to the client with their
+    status code, instead of a 500 error. Models should raise
+    ``fastapi.HTTPException`` (e.g. ``fastapi.HTTPException(status_code=400,
+    detail="Invalid input")``). The aiohttp web exceptions documented for
+    DEEPaaS 2.x (e.g. ``aiohttp.web.HTTPBadRequest``) are still supported, but
+    deprecated.

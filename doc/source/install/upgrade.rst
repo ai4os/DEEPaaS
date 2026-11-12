@@ -3,6 +3,42 @@
 Upgrade notes
 =============
 
+Upgrading to version 3.0.0
+--------------------------
+
+The release ``3.0.0`` drops the support for the training endpoints of the API. Before
+upgrading your code and deploying into production please ensure that you are no
+longer using the training endpoints of the API.
+
+The release ``3.0.0`` also replaces `aiohttp <https://docs.aiohttp.org/>`_ with
+`FastAPI <https://fastapi.tiangolo.com/>`_ as the web framework. The model API
+(``get_metadata``, ``warm``, ``get_predict_args``, ``predict`` and ``schema``)
+does not change, uploaded files are still passed as
+:py:class:`deepaas.model.v2.wrapper.UploadedFile` objects and arguments can
+still be sent in the query string or as form fields. However, please take into
+account the following:
+
+* ``aiohttp`` is still installed with DEEPaaS for compatibility, but it is
+  deprecated and it will be removed in a future release. If your model raises
+  ``aiohttp`` web exceptions (e.g. ``from aiohttp.web import HTTPBadRequest``),
+  raise :py:class:`fastapi.HTTPException` instead (e.g.
+  ``raise fastapi.HTTPException(status_code=400, detail="Invalid input")``),
+  or add ``aiohttp`` to your own requirements.
+* The ``workers`` option sets the maximum number of predictions executed at
+  the same time (default 1, as before). Predictions are executed in threads
+  instead of in separate processes, so the model is loaded only once.
+* The ``client-max-size`` option is deprecated and ignored.
+* ``oslo.config`` is no longer used. The command line options and the
+  configuration files are the same, but the ``OS_DEFAULT__<OPTION>``
+  environment variables are deprecated in favour of ``DEEPAAS_<OPTION>`` (e.g.
+  ``DEEPAAS_MODEL_NAME``), and ``oslo-config-generator`` can no longer be used
+  to generate a sample configuration file.
+* The documentation is served at ``/docs`` (Swagger UI) and ``/redoc``
+  (ReDoc), and the OpenAPI specification at ``/openapi.json``
+  (``/swagger.json`` is still served for compatibility).
+* Requesting a media type that the model does not declare in its ``accept``
+  argument returns a ``406 Not Acceptable`` error.
+
 Upgrading to version 2.0.0
 --------------------------
 

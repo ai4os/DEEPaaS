@@ -5,16 +5,16 @@ deepaas-cli
 Synopsis
 ========
 
-:program:`deepaas-cli` [options]
+:program:`deepaas-cli` [options] {get_metadata,warm,predict} [method options]
 
 Description
 ===========
 
 :program:`deepaas-cli` Command line interface (CLI) to DEEPaaS models
-    that are loaded through the ``deepaas.v2.models`` entrypoint API.
-    One gets access to the same get_metadata, warm, predict, and train
-    methods with all corresponding options as with DEEPaaS REST API.
-    To get available for the method options, one has to call
+    that are loaded through the ``deepaas.v2.models`` entrypoint API. One gets access
+    to the same get_metadata, warm, predict methods with all corresponding options as
+    with DEEPaaS REST API.  To get available for the method
+    options, one has to call
     ``deepaas-cli <method> --help``.
     Additional parameters are provided:
     ``--deepaas_method_output`` is to store the output in a pre-defined
@@ -22,7 +22,8 @@ Description
     ``--deepaas_with_multiprocessing`` is to activate multiprocessing
     support, default is True.
     If several models are available for loading, one has to provide
-    which one to load via DEEPAAS_V2_MODEL environment setting.
+    which one to load via the ``--model-name`` option or the
+    ``DEEPAAS_MODEL_NAME`` environment variable.
 
 Options
 =======
@@ -39,21 +40,26 @@ Options
 .. option:: predict
 
    Calls predict() method. The output can be stored via
-   --deepaas_method_output.
-
-.. option:: train
-
-   Calls train() method. The output can be stored via
-   --deepaas_method_output.
+   --deepaas_method_output. If the model returns a file (e.g. using
+   ``--accept image/*``) and no output file is given, its contents are
+   written to the standard output.
 
 .. option:: --deepaas_method_output
 
    To save the results to a local file, if needed. Available for
-   get_metadata, predict, train methods.
+   get_metadata, predict methods.
 
-.. option:: --deepaas_with_multiprocessing
+.. option:: --deepaas_with_multiprocessing, --nodeepaas_with_multiprocessing
 
    To activate multiprocessing support, default is True.
+
+.. option:: --debug, -d
+
+   Set the logging level to DEBUG.
+
+.. option:: --config-file PATH
+
+   Path to a configuration file to read the options from.
 
 .. option:: --model-name MODEL_NAME
 

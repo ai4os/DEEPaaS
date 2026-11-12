@@ -14,10 +14,9 @@
 # License for the specific language governing permissions and limitations
 # under the License.
 
-import itertools
+import types
 import uuid
 
-from aiohttp import web
 import marshmallow
 from marshmallow import fields as m_fields
 import pytest
@@ -32,16 +31,7 @@ from deepaas.tests import fake_v2_model
 
 
 @pytest.fixture
-async def application():
-    app = web.Application()
-    app.middlewares.append(web.normalize_path_middleware())
-
-    return app
-
-
-@pytest.fixture
-async def mocks(monkeypatch):
-    monkeypatch.setattr(v2_wrapper.ModelWrapper, "_setup_cleanup", lambda x: None)
+def mocks(monkeypatch):
     model_name = uuid.uuid4().hex
     monkeypatch.setattr(
         deepaas.model.loading,
@@ -58,8 +48,8 @@ async def mocks(monkeypatch):
         "get_model_by_name",
         lambda x, y: fake_v2_model.TestModel,
     )
-    monkeypatch.setattr(deepaas.model.v2, "MODELS_LOADED", False)
-    monkeypatch.setattr(deepaas.model.v2, "MODELS", {})
+    monkeypatch.setattr(deepaas.model.v2, "MODEL", None)
+    monkeypatch.setattr(deepaas.model.v2, "MODEL_NAME", "")
 
 
 def test_abc():
@@ -78,14 +68,8 @@ def test_not_implemented():
         def get_predict_args(self):
             super(Model, self).get_predict_args()
 
-        def train(self, **kwargs):
-            super(Model, self).train(**kwargs)
-
         def warm(self, **kwargs):
-            super(Model, self).train(**kwargs)
-
-        def get_train_args(self):
-            super(Model, self).get_train_args()
+            super(Model, self).warm(**kwargs)
 
     m = Model()
 
@@ -95,59 +79,55 @@ def test_not_implemented():
         m.predict()
     with pytest.raises(NotImplementedError):
         m.get_predict_args()
-    with pytest.raises(NotImplementedError):
-        m.train()
-    with pytest.raises(NotImplementedError):
-        m.get_train_args()
 
 
-async def test_bad_schema(application, mocks):
+def test_bad_schema(mocks):
     class Model(object):
         schema = []
 
-    with pytest.raises(web.HTTPInternalServerError):
-        v2_wrapper.ModelWrapper("test", Model(), application)
+    with pytest.raises(exceptions.ModelResponseValidationError):
+        v2_wrapper.ModelWrapper("test", Model())
 
 
-async def test_validate_no_schema(application, mocks):
+def test_validate_no_schema(mocks):
     class Model(object):
         schema = None
 
-    with pytest.raises(web.HTTPInternalServerError):
-        wrapper = v2_wrapper.ModelWrapper("test", Model(), application)
+    with pytest.raises(exceptions.MissingModelSchemaError):
+        wrapper = v2_wrapper.ModelWrapper("test", Model())
         wrapper.validate_response(None)
 
 
-async def test_invalid_schema(application, mocks):
+def test_invalid_schema(mocks):
     class Model(object):
         schema = object()
 
-    with pytest.raises(web.HTTPInternalServerError):
-        v2_wrapper.ModelWrapper("test", Model(), application)
+    with pytest.raises(exceptions.ModelResponseValidationError):
+        v2_wrapper.ModelWrapper("test", Model())
 
 
-async def test_marshmallow_schema(application, mocks):
+def test_marshmallow_schema(mocks):
     class Schema(marshmallow.Schema):
         foo = m_fields.Str()
 
     class Model(object):
         schema = Schema
 
-    wrapper = v2_wrapper.ModelWrapper("test", Model(), application)
+    wrapper = v2_wrapper.ModelWrapper("test", Model())
 
     assert wrapper.validate_response({"foo": "bar"})
-    with pytest.raises(web.HTTPInternalServerError):
+    with pytest.raises(exceptions.ModelResponseValidationError):
         wrapper.validate_response({"foo": 1.0})
 
 
-async def test_dict_schema(application, mocks):
+def test_dict_schema(mocks):
     class Model(object):
         schema = {"foo": m_fields.Str()}
 
-    wrapper = v2_wrapper.ModelWrapper("test", Model(), application)
+    wrapper = v2_wrapper.ModelWrapper("test", Model())
 
     assert wrapper.validate_response({"foo": "bar"})
-    with pytest.raises(web.HTTPInternalServerError):
+    with pytest.raises(exceptions.ModelResponseValidationError):
         wrapper.validate_response({"foo": 1.0})
 
 
@@ -156,15 +136,13 @@ def model():
     return fake_v2_model.TestModel()
 
 
-async def test_dummy_model(model, mocks):
+def test_dummy_model(model, mocks):
     pred = model.predict()
     pred.pop("data")
-    assert pred == {
+    assert {
         "date": "2019-01-1",
         "labels": [{"label": "foo", "probability": 1.0}],
-    }
-
-    assert model.train() is None
+    } == pred
 
     meta = model.get_metadata()
     assert "description" in meta
@@ -173,78 +151,141 @@ async def test_dummy_model(model, mocks):
     assert "Alvaro Lopez Garcia" == meta["author"]
 
     pargs = model.get_predict_args()
-    targs = model.get_train_args()
-    for _arg, val in itertools.chain(pargs.items(), targs.items()):
+    for _arg, val in pargs.items():
         assert isinstance(val, fields.Field)
 
 
-async def test_dummy_model_with_wrapper(application, model, mocks):
-    w = v2_wrapper.ModelWrapper("foo", model, application)
-    task = w.predict()
-    await task
-    ret = task.result()["output"]
+async def test_dummy_model_with_wrapper(model, mocks):
+    w = v2_wrapper.ModelWrapper("foo", model)
+
+    ret = await w.predict()
     del ret["data"]
-    assert ret == {
+    assert {
         "date": "2019-01-1",
         "labels": [{"label": "foo", "probability": 1.0}],
-    }
-    task = w.train(sleep=0)
-    await task
-    ret = task.result()
-    assert ret["output"] is None
+    } == ret
+
     meta = w.get_metadata()
     assert "description" in meta
     assert "id" in meta
     assert "name" in meta
+
     pargs = w.get_predict_args()
-    targs = w.get_train_args()
-    for _arg, val in itertools.chain(pargs.items(), targs.items()):
-        print(val)
-        print(fields.Field)
+    for _arg, val in pargs.items():
         assert isinstance(val, fields.Field)
 
 
-async def test_model_with_not_implemented_attributes_and_wrapper(application, mocks):
-    w = v2_wrapper.ModelWrapper("foo", object(), application)
+async def test_model_with_not_implemented_attributes_and_wrapper(mocks):
+    w = v2_wrapper.ModelWrapper("foo", object())
 
-    with pytest.raises(web.HTTPNotImplemented):
+    with pytest.raises(exceptions.ModelMethodNotImplementedError):
         await w.predict()
-    with pytest.raises(web.HTTPNotImplemented):
-        await w.train()
 
     meta = w.get_metadata()
     assert "description" in meta
     assert "id" in meta
     assert "name" in meta
     pargs = w.get_predict_args()
-    targs = w.get_train_args()
-    for _arg, val in itertools.chain(pargs.items(), targs.items()):
+    for _arg, val in pargs.items():
         assert isinstance(val, fields.Field)
 
 
-async def test_loading_ok(application, mocks):
-    deepaas.model.v2.register_models(application)
+def test_loading_ok(mocks):
+    deepaas.model.v2.load_model()
 
-    for m in deepaas.model.v2.MODELS.values():
-        assert isinstance(m, v2_wrapper.ModelWrapper)
+    m = deepaas.model.v2.MODEL
+    assert isinstance(m, v2_wrapper.ModelWrapper)
 
 
-async def test_loading_ok_singleton(application, mocks, monkeypatch):
-    deepaas.model.v2.register_models(application)
+@pytest.mark.parametrize(
+    "plugin",
+    [
+        types.SimpleNamespace(name="module"),
+        types.ModuleType("fake_model_module"),
+    ],
+)
+def test_loading_non_class_entry_point(plugin, mocks, monkeypatch):
+    monkeypatch.setattr(deepaas.model.v2, "MODEL", None)
+    monkeypatch.setattr(
+        deepaas.model.loading,
+        "get_model_by_name",
+        lambda name, version: plugin,
+    )
+    deepaas.model.v2.load_model()
+
+    assert deepaas.model.v2.MODEL.model_obj is plugin
+
+
+def test_loading_class_entry_point(mocks, monkeypatch):
+    monkeypatch.setattr(deepaas.model.v2, "MODEL", None)
+    deepaas.model.v2.load_model()
+
+    assert isinstance(deepaas.model.v2.MODEL.model_obj, fake_v2_model.TestModel)
+
+
+def test_loading_ok_singleton(mocks, monkeypatch):
+    deepaas.model.v2.load_model()
     new_model_name = uuid.uuid4().hex
     monkeypatch.setattr(
         deepaas.model.loading,
         "get_available_models",
         lambda x: {new_model_name: "barz"},
     )
-    deepaas.model.v2.register_models(application)
+    deepaas.model.v2.load_model()
 
-    for name, m in deepaas.model.v2.MODELS.items():
-        assert isinstance(m, v2_wrapper.ModelWrapper)
-        assert name != new_model_name
+    name = deepaas.model.v2.MODEL_NAME
+    assert name != new_model_name
+    m = deepaas.model.v2.MODEL
+    assert isinstance(m, v2_wrapper.ModelWrapper)
 
 
-def test_loading_error(application, monkeypatch):
-    monkeypatch.setattr(deepaas.model.loading, "get_available_models", lambda x: {})
+def test_loading_error(monkeypatch):
+    monkeypatch.setattr(deepaas.model.v2, "MODEL", None)
+    monkeypatch.setattr(
+        deepaas.model.loading,
+        "get_available_model_names",
+        lambda x: frozenset(),
+    )
     with pytest.raises(exceptions.NoModelsAvailable):
-        deepaas.model.v2.register_models(application)
+        deepaas.model.v2.load_model()
+
+
+def test_wrapper_warm(mocks):
+    class Model(object):
+        warmed = False
+
+        def warm(self):
+            self.warmed = True
+
+    m = Model()
+    v2_wrapper.ModelWrapper("test", m).warm()
+    assert m.warmed
+
+
+class _NotImplementedWarm(object):
+    def warm(self):
+        raise NotImplementedError()
+
+
+@pytest.mark.parametrize("model_obj", [object(), _NotImplementedWarm()])
+def test_wrapper_warm_not_implemented(mocks, model_obj):
+    # Models without warm, or raising NotImplementedError, can be served
+    v2_wrapper.ModelWrapper("test", model_obj).warm()
+
+
+def test_validate_partial_response(mocks):
+    class Model(object):
+        schema = {"foo": m_fields.Str(), "bar": m_fields.Int()}
+
+    wrapper = v2_wrapper.ModelWrapper("test", Model())
+    # As in v2, fields are not required unless declared so
+    assert wrapper.validate_response({"foo": "bar"})
+
+
+def test_validate_unknown_fields(mocks):
+    class Model(object):
+        schema = {"foo": m_fields.Str()}
+
+    wrapper = v2_wrapper.ModelWrapper("test", Model())
+    with pytest.raises(exceptions.ModelResponseValidationError):
+        wrapper.validate_response({"foo": "bar", "unknown": 1})

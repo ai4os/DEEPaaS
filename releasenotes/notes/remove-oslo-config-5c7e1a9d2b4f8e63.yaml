@@ -1,0 +1,28 @@
+---
+features:
+  - |
+    All the options can be set with environment variables named
+    ``DEEPAAS_<OPTION>`` (e.g. ``DEEPAAS_LISTEN_PORT=8080`` or
+    ``DEEPAAS_MODEL_NAME=my_model``). The precedence is: command line,
+    environment variables, configuration files and default values.
+upgrade:
+  - |
+    ``oslo.config`` has been replaced with a lightweight configuration module.
+    The same command line options (including the ``--no<option>`` flags to
+    disable boolean options, ``--config-file`` and ``--config-dir``) and
+    configuration files (``deepaas.conf`` in ``~/.deepaas/``, ``~/``,
+    ``/etc/deepaas/`` or ``/etc/``, with the options in the ``[DEFAULT]``
+    section) are supported. The ``oslo.config.opts`` entry point has been
+    removed, so ``oslo-config-generator`` can no longer be used to generate a
+    sample configuration.
+deprecations:
+  - |
+    The ``OS_DEFAULT__<OPTION>`` environment variables (read by
+    ``oslo.config``) are deprecated in favour of ``DEEPAAS_<OPTION>``. The
+    ``DEEPAAS_V2_MODEL`` environment variable is still supported to select the
+    model, but ``DEEPAAS_MODEL_NAME`` takes precedence.
+fixes:
+  - |
+    ``deepaas-cli`` now honours the ``--model-name`` option. Previously, only
+    the ``DEEPAAS_V2_MODEL`` environment variable worked, as the model was
+    selected before parsing the command line.

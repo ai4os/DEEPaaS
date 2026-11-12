@@ -1,0 +1,11 @@
+---
+fixes:
+  - |
+    Models using ``webargs`` 5.x (e.g. ``from webargs import fields``) failed
+    to load on Python 3.12 or newer in environments without ``setuptools``,
+    as ``webargs`` 5.x imports ``distutils``. ``setuptools`` is now installed
+    on those Python versions.
+upgrade:
+  - |
+    ``webargs`` versions up to 8.x are now allowed, as DEEPaaS does not use
+    its internals anymore. Models can keep using ``webargs`` 5.x.

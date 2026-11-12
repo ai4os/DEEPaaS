@@ -17,24 +17,23 @@
 import asyncio
 import collections
 import contextlib
-import datetime
 import functools
 import io
-import multiprocessing
-import multiprocessing.pool
-import os
-import signal
-import tempfile
+import warnings
 
-from aiohttp import web
+import anyio
+import anyio.to_thread
+import fastapi
 import marshmallow
-from oslo_config import cfg
 
+from deepaas import config
+from deepaas.api.v2 import utils
+from deepaas import exceptions
 from deepaas import log
 
 LOG = log.getLogger(__name__)
 
-CONF = cfg.CONF
+CONF = config.CONF
 
 
 UploadedFile = collections.namedtuple(
@@ -87,6 +86,33 @@ UploadedFile.__new__.__defaults__ = (None, None, None, None)
 ReturnedFile.__new__.__defaults__ = (None, None, None, None)
 
 
+def _from_aiohttp_error(error):
+    """Convert an aiohttp HTTP error raised by a model to a FastAPI one.
+
+    In DEEPaaS 2.x models were told to raise aiohttp web exceptions (e.g.
+    ``aiohttp.web.HTTPBadRequest``) to return HTTP errors, so we keep
+    supporting them (deprecated).
+
+    :returns: a ``fastapi.HTTPException``, or ``None`` if the error is not an
+        aiohttp HTTP error.
+    """
+    try:
+        import aiohttp.web
+    except ImportError:
+        return None
+
+    if not isinstance(error, aiohttp.web.HTTPException):
+        return None
+
+    warnings.warn(
+        "Raising aiohttp web exceptions from models is deprecated, raise "
+        "fastapi.HTTPException instead.",
+        DeprecationWarning,
+        stacklevel=2,
+    )
+    return fastapi.HTTPException(status_code=error.status, detail=error.reason)
+
+
 class ModelWrapper(object):
     """Class that will wrap the loaded models before exposing them.
 
@@ -100,18 +126,11 @@ class ModelWrapper(object):
         a response schema that is not JSON schema valid (DRAFT 4)
     """
 
-    def __init__(self, name, model_obj, app=None):
+    def __init__(self, name, model_obj):
         self.name = name
         self.model_obj = model_obj
-        self._app = app
-
-        self._loop = asyncio.get_event_loop()
-
-        self._workers = CONF.workers
-        self._executor = self._init_executor()
-
-        if self._app is not None:
-            self._setup_cleanup()
+        # Limiter of concurrent predictions, created when the loop is running
+        self._limiter = None
 
         schema = getattr(self.model_obj, "schema", None)
 
@@ -123,55 +142,53 @@ class ModelWrapper(object):
                 self.has_schema = True
             except Exception as e:
                 LOG.exception(e)
-                raise web.HTTPInternalServerError(
-                    reason=("Model defined schema is invalid, " "check server logs.")
-                )
+                raise exceptions.MissingModelSchemaError()
         elif schema is not None:
             try:
                 if issubclass(schema, marshmallow.Schema):
                     self.has_schema = True
             except TypeError:
-                raise web.HTTPInternalServerError(
-                    reason=("Model defined schema is invalid, " "check server logs.")
-                )
+                raise exceptions.ModelResponseValidationError()
         else:
             self.has_schema = False
 
-        self.response_schema = schema
+        # NOTE(aloga): responses are validated with the marshmallow schema, as
+        # in v2, the pydantic schema is only used to document the response.
+        self._marshmallow_schema = schema
 
-    def _setup_cleanup(self):
-        self._app.on_cleanup.append(self._close_executors)
-
-    async def _close_executors(self, app):
-        self._executor.shutdown()
-
-    def _init_executor(self):
-        n = self._workers
-        executor = CancellablePool(max_workers=n)
-        return executor
+        # Now convert to pydantic schema...
+        if schema is not None:
+            try:
+                self.response_schema = utils.pydantic_from_marshmallow(
+                    "ModelPredictionResponse", schema
+                )
+            except Exception as e:
+                LOG.exception(e)
+                raise exceptions.ModelResponseValidationError()
+        else:
+            self.response_schema = None
 
     @contextlib.contextmanager
     def _catch_error(self):
         name = self.name
         try:
             yield
-        except AttributeError:
-            raise web.HTTPNotImplemented(
-                reason=("Not implemented by underlying model (loaded '%s')" % name)
-            )
-        except NotImplementedError:
-            raise web.HTTPNotImplemented(
-                reason=("Model '%s' does not implement this functionality" % name)
-            )
+        except (AttributeError, NotImplementedError):
+            detail = f"Model '{name}' does not implement this functionality"
+            raise exceptions.ModelMethodNotImplementedError(detail=detail)
+        except fastapi.HTTPException:
+            # The model wants to return a specific HTTP error
+            raise
         except Exception as e:
+            http_error = _from_aiohttp_error(e)
+            if http_error is not None:
+                raise http_error
+
             LOG.error(
                 "An exception has happened when calling method on " "'%s' model." % name
             )
             LOG.exception(e)
-            if isinstance(e, web.HTTPException):
-                raise e
-            else:
-                raise web.HTTPInternalServerError(reason=e)
+            raise exceptions.ModelMethodUnexpectedError(reason=e)
 
     def validate_response(self, response):
         """Validate a response against the model's response schema, if set.
@@ -184,25 +201,16 @@ class ModelWrapper(object):
             validated.
         """
         if self.has_schema is not True:
-            raise web.HTTPInternalServerError(
-                reason=(
-                    "Trying to validate against a schema, but I do not "
-                    "have one defined"
-                )
-            )
+            raise exceptions.MissingModelSchemaError()
 
         try:
-            self.response_schema().load(response)
-        except marshmallow.ValidationError as e:
-            LOG.exception(e)
-            raise web.HTTPInternalServerError(
-                reason="ERROR validating model response, check server logs."
-            )
+            errors = self._marshmallow_schema().validate(response)
         except Exception as e:
             LOG.exception(e)
-            raise web.HTTPInternalServerError(
-                reason="Unknown ERROR validating response, check server logs."
-            )
+            raise exceptions.ModelResponseValidationError()
+        if errors:
+            LOG.error("Invalid response from model '%s': %s", self.name, errors)
+            raise exceptions.ModelResponseValidationError()
 
         return True
 
@@ -228,12 +236,7 @@ class ModelWrapper(object):
             }
         return d
 
-    def _run_in_pool(self, func, *args, **kwargs):
-        fn = functools.partial(func, *args, **kwargs)
-        ret = self._loop.create_task(self._executor.apply(fn))
-        return ret
-
-    async def warm(self):
+    def warm(self):
         """Warm (i.e. load, initialize) the underlying model.
 
         This method is called automatically when the model is loaded. You
@@ -249,10 +252,8 @@ class ModelWrapper(object):
             return
 
         try:
-            n = self._workers
-            LOG.debug("Warming '%s' model with %s workers" % (self.name, n))
-            fs = [self._run_in_pool(func) for _ in range(0, n)]
-            await asyncio.gather(*fs)
+            LOG.debug("Warming '%s' model" % self.name)
+            func()
             LOG.debug("Model '%s' has been warmed" % self.name)
         except NotImplementedError:
             LOG.debug("Cannot warm (initialize) model '%s'" % self.name)
@@ -265,11 +266,23 @@ class ModelWrapper(object):
         """
         ret = predict_func(*args, **kwargs)
         if isinstance(ret, io.BufferedReader):
+            ret.close()
             ret = ReturnedFile(filename=ret.name)
 
         return ret
 
-    def predict(self, *args, **kwargs):
+    def _get_limiter(self):
+        """Get the limiter of concurrent predictions for the running loop.
+
+        anyio limiters cannot be shared between event loops, so we create one
+        for each loop (in practice, there is only one, except in tests).
+        """
+        loop = asyncio.get_running_loop()
+        if self._limiter is None or self._limiter[0] is not loop:
+            self._limiter = (loop, anyio.CapacityLimiter(CONF.workers))
+        return self._limiter[1]
+
+    async def predict(self, *args, **kwargs):
         """Perform a prediction on wrapped model's ``predict`` method.
 
         :raises HTTPNotImplemented: If the method is not
@@ -278,53 +291,18 @@ class ModelWrapper(object):
             an error
         :raises HTTPException: If the call produces an
             error, already wrapped as a HTTPException
-        """
-        for key, val in kwargs.items():
-            if isinstance(val, web.FileField):
-                fd, name = tempfile.mkstemp()
-                fd = os.fdopen(fd, "w+b")
-                fd.write(val.file.read())
-                fd.close()
-                aux = UploadedFile(
-                    name=val.name,
-                    filename=name,
-                    content_type=val.content_type,
-                    original_filename=val.filename,
-                )
-                kwargs[key] = aux
-                # FIXME(aloga); cleanup of tmpfile here
 
+        The model's ``predict`` method is a blocking call, therefore it is
+        executed in a worker thread so that the event loop is not blocked. At
+        most ``workers`` predictions are executed at the same time, as in
+        DEEPaaS 2.x (where they were executed in a pool of ``workers``
+        processes), further requests wait for a free slot.
+        """
         with self._catch_error():
-            return self._run_in_pool(
+            fn = functools.partial(
                 self.predict_wrap, self.model_obj.predict, *args, **kwargs
             )
-
-    def train(self, *args, **kwargs):
-        """Perform a training on wrapped model's ``train`` method.
-
-        :raises HTTPNotImplemented: If the method is not
-            implemented in the wrapper model.
-        :raises HTTPInternalServerError: If the call produces
-            an error
-        :raises HTTPException: If the call produces an
-            error, already wrapped as a HTTPException
-        """
-
-        with self._catch_error():
-            return self._run_in_pool(self.model_obj.train, *args, **kwargs)
-
-    def get_train_args(self):
-        """Add training arguments into the training parser.
-
-        :param parser: an argparse like object
-
-        This method will call the wrapped model ``add_train_args``.
-        """
-        try:
-            args = self.model_obj.get_train_args()
-        except (NotImplementedError, AttributeError):
-            args = {}
-        return args
+            return await anyio.to_thread.run_sync(fn, limiter=self._get_limiter())
 
     def get_predict_args(self):
         """Add predict arguments into the predict parser.
@@ -338,86 +316,3 @@ class ModelWrapper(object):
         except (NotImplementedError, AttributeError):
             args = {}
         return args
-
-
-class NonDaemonProcess(multiprocessing.context.SpawnProcess):
-    """Processes must use 'spawn' instead of 'fork' (which is the default
-    in Linux) in order to work CUDA [1] or Tensorflow [2].
-
-    [1] https://pytorch.org/docs/stable/notes/multiprocessing.html
-    #cuda-in-multiprocessing
-    [2] https://github.com/tensorflow/tensorflow/issues/5448
-    #issuecomment-258934405
-    """
-
-    @property
-    def daemon(self):
-        return False
-
-    @daemon.setter
-    def daemon(self, value):
-        pass
-
-
-class NonDaemonPool(multiprocessing.pool.Pool):
-    # Based on https://stackoverflow.com/questions/6974695/
-    def Process(self, *args, **kwds):  # noqa
-        proc = super(NonDaemonPool, self).Process(*args, **kwds)
-        proc.__class__ = NonDaemonProcess
-
-        return proc
-
-
-class CancellablePool(object):
-    def __init__(self, max_workers=None):
-        self._free = {self._new_pool() for _ in range(max_workers)}
-        self._working = set()
-        self._change = asyncio.Event()
-
-    def _new_pool(self):
-        return NonDaemonPool(1, context=multiprocessing.get_context("spawn"))
-
-    async def apply(self, fn, *args):
-        """
-        Like multiprocessing.Pool.apply_async, but:
-         * is an asyncio coroutine
-         * terminates the process if cancelled
-        """
-        while not self._free:
-            await self._change.wait()
-            self._change.clear()
-        pool = usable_pool = self._free.pop()
-        self._working.add(pool)
-
-        loop = asyncio.get_event_loop()
-        fut = loop.create_future()
-
-        def _on_done(obj):
-            ret = {"output": obj, "finish_date": str(datetime.datetime.now())}
-            loop.call_soon_threadsafe(fut.set_result, ret)
-
-        def _on_err(err):
-            loop.call_soon_threadsafe(fut.set_exception, err)
-
-        pool.apply_async(fn, args, callback=_on_done, error_callback=_on_err)
-
-        try:
-            return await fut
-        except asyncio.CancelledError:
-            # This is ugly, but since our pools only have one slot we can
-            # kill the process before termination
-            try:
-                pool._pool[0].kill()
-            except AttributeError:
-                os.kill(pool._pool[0].pid, signal.SIGKILL)
-            pool.terminate()
-            usable_pool = self._new_pool()
-        finally:
-            self._working.remove(pool)
-            self._free.add(usable_pool)
-            self._change.set()
-
-    def shutdown(self):
-        for p in self._working:
-            p.terminate()
-        self._free.clear()

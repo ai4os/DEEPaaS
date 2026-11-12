@@ -1,0 +1,6 @@
+---
+fixes:
+  - |
+    The debug endpoint now includes the DEEPaaS log messages, as documented.
+    Previously, only what was printed to the standard output and error was
+    returned.

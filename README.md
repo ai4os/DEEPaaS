@@ -15,7 +15,7 @@
 <img src="https://marketplace.deep-hybrid-datacloud.eu/images/logo-deep.png" width=200 alt="DEEP-Hybrid-DataCloud logo"/>
 
 DEEP as a Service API (DEEPaaS API) is a REST API built on
-[aiohttp](https://docs.aiohttp.org/) that allows to provide easy access to
+[FastAPI](https://fastapi.tiangolo.com/) that allows to provide easy access to
 machine learning, deep learning and artificial intelligence models. By using
 the DEEPaaS API users can easily run a REST API in front of their model, thus
 accessing its functionality via HTTP calls. DEEPaaS API leverages the [OpenAPI
@@ -33,9 +33,11 @@ The best way to quickly try the DEEPaaS API is through:
     make run
 
 This command will install a virtualenv (in the `virtualenv` directory) with
-DEEPaaS and all its dependencies and will run the DEEPaaS REST API, listening
-on `127.0.0.1:5000`. If you browse to `http://127.0.0.1:5000` you will get the
-Swagger documentation page (i.e. the Swagger web UI).
+DEEPaaS and all its dependencies, together with the [AI4OS demo
+application](https://github.com/ai4os-hub/ai4os-demo-app) as the model to
+serve, and will run the DEEPaaS REST API, listening on `127.0.0.1:5000`. If you
+browse to `http://127.0.0.1:5000/docs` you will get the Swagger documentation
+page (i.e. the Swagger web UI).
 
 ### Develop mode
 

@@ -1,0 +1,16 @@
+---
+upgrade:
+  - |
+    DEEPaaS now uses FastAPI instead of aiohttp. The model API does not
+    change.
+  - |
+    Requesting (via the ``Accept`` header) a media type that the model does
+    not declare in its ``accept`` argument now returns a 406 error.
+deprecations:
+  - |
+    The ``client-max-size`` option is deprecated, as it is ignored by the
+    FastAPI based server.
+fixes:
+  - |
+    Temporary files created for the uploaded files are now removed once the
+    request has been served.
